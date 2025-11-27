@@ -1,6 +1,11 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { body, validationResult } = require('express-validator');
 const db = require('../config/database');
+
+// Password validation regex: min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+const BCRYPT_ROUNDS = 12;
 
 const authController = {
   // Login
@@ -28,19 +33,15 @@ const authController = {
         return res.status(401).json({ error: 'Account is disabled' });
       }
 
-      // For demo purposes, accept any password matching pattern or check hash
+      // Verify password using bcrypt
       let isValidPassword = false;
       
-      // Check if password matches demo pattern (for demo/test users)
-      const demoPasswords = ['Admin@123', 'Manager@123', 'Lead@123', 'Tester@123', 'Viewer@123', 'Test123!', 'Password123!'];
-      if (demoPasswords.includes(password)) {
-        isValidPassword = true;
-      } else if (user.password_hash && user.password_hash.startsWith('$2')) {
-        // Only check bcrypt if it's a valid hash format
+      if (user.password_hash && user.password_hash.startsWith('$2')) {
         try {
           isValidPassword = await bcrypt.compare(password, user.password_hash);
         } catch (e) {
-          console.log('Bcrypt compare failed, trying demo password match');
+          // Log error but don't expose details
+          console.error('Password verification error');
         }
       }
 
@@ -85,10 +86,28 @@ const authController = {
     }
   },
 
+  // Input validation for registration
+  registerValidation: [
+    body('username').trim().isLength({ min: 3, max: 50 }).matches(/^[a-zA-Z0-9_]+$/)
+      .withMessage('Username must be 3-50 alphanumeric characters'),
+    body('email').isEmail().normalizeEmail().withMessage('Invalid email format'),
+    body('password').matches(PASSWORD_REGEX)
+      .withMessage('Password must be 8+ chars with uppercase, lowercase, number, and special char'),
+    body('display_name').trim().isLength({ min: 1, max: 100 }).escape()
+  ],
+
   // Register new user
   register: async (req, res) => {
     try {
-      const { username, display_name, email, password, role = 'Tester' } = req.body;
+      // Validate input
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const { username, display_name, email, password } = req.body;
+      // Force safe role - don't allow role from request body
+      const role = 'Tester';
 
       if (!username || !display_name || !email || !password) {
         return res.status(400).json({ error: 'All fields are required' });
@@ -104,8 +123,8 @@ const authController = {
         return res.status(400).json({ error: 'Email or username already exists' });
       }
 
-      // Hash password
-      const password_hash = await bcrypt.hash(password, 10);
+      // Hash password with secure rounds
+      const password_hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
       // Create user
       const result = await db.query(
@@ -265,11 +284,10 @@ const authController = {
 
       const user = result.rows[0];
 
-      // Verify current password (or demo password)
-      const demoPasswords = ['Admin@123', 'Manager@123', 'Lead@123', 'Tester@123', 'Viewer@123'];
-      let isValid = demoPasswords.includes(current_password);
+      // Verify current password using bcrypt only
+      let isValid = false;
       
-      if (!isValid && user.password_hash) {
+      if (user.password_hash && user.password_hash.startsWith('$2')) {
         isValid = await bcrypt.compare(current_password, user.password_hash);
       }
 
@@ -277,8 +295,15 @@ const authController = {
         return res.status(400).json({ error: 'Current password is incorrect' });
       }
 
-      // Hash new password
-      const password_hash = await bcrypt.hash(new_password, 10);
+      // Validate new password strength
+      if (!PASSWORD_REGEX.test(new_password)) {
+        return res.status(400).json({ 
+          error: 'Password must be at least 8 characters with uppercase, lowercase, number, and special character (@$!%*?&)' 
+        });
+      }
+
+      // Hash new password with secure rounds
+      const password_hash = await bcrypt.hash(new_password, BCRYPT_ROUNDS);
 
       await db.query(
         'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE user_id = $2',

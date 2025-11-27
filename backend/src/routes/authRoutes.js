@@ -3,9 +3,9 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const { authenticate } = require('../middleware/auth');
 
-// Public routes
+// Public routes with validation
 router.post('/login', authController.login);
-router.post('/register', authController.register);
+router.post('/register', authController.registerValidation, authController.register);
 router.get('/sso/:provider', authController.getSSOConfig);
 router.post('/sso/callback', authController.ssoCallback);
 

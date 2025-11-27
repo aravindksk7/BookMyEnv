@@ -6,16 +6,17 @@ services:
     image: postgres:15-alpine
     container_name: tem-postgres
     environment:
-      POSTGRES_USER: tem_user
-      POSTGRES_PASSWORD: tem_password
-      POSTGRES_DB: tem_db
+      POSTGRES_USER: ${POSTGRES_USER:-tem_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tem_password}
+      POSTGRES_DB: ${POSTGRES_DB:-tem_db}
+    # SECURITY: Bind to localhost only for development
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/database/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tem_user -d tem_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tem_user} -d ${POSTGRES_DB:-tem_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -31,10 +32,14 @@ services:
     environment:
       NODE_ENV: development
       PORT: 5000
-      DATABASE_URL: postgresql://tem_user:tem_password@postgres:5432/tem_db
-      JWT_SECRET: tem-super-secret-jwt-key-change-in-production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-tem_user}:${POSTGRES_PASSWORD:-tem_password}@postgres:5432/${POSTGRES_DB:-tem_db}
+      JWT_SECRET: ${JWT_SECRET:-dev-only-change-in-production-4f8a9b2c1d3e5f6a7b8c9d0e1f2a3b4c}
       JWT_EXPIRES_IN: 24h
       CORS_ORIGIN: http://localhost:3000
+      FRONTEND_URL: http://localhost:3000
+      RATE_LIMIT_WINDOW_MS: 900000
+      RATE_LIMIT_MAX_REQUESTS: 100
+      AUTH_RATE_LIMIT_MAX: 10
     ports:
       - "5000:5000"
     depends_on:

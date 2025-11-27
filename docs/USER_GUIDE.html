@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookMyEnv - User Guide</title>
+    <style>
+        :root {
+            --primary: #1976d2;
+            --primary-dark: #1565c0;
+            --primary-light: #42a5f5;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --error: #f44336;
+            --info: #2196f3;
+            --gray-50: #fafafa;
+            --gray-100: #f5f5f5;
+            --gray-200: #eeeeee;
+            --gray-300: #e0e0e0;
+            --gray-400: #bdbdbd;
+            --gray-500: #9e9e9e;
+            --gray-600: #757575;
+            --gray-700: #616161;
+            --gray-800: #424242;
+            --gray-900: #212121;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: white;
+            color: var(--gray-900);
+            line-height: 1.7;
+        }
+        
+        /* Navigation */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 280px;
+            background: var(--gray-900);
+            color: white;
+            padding: 20px 0;
+            overflow-y: auto;
+            z-index: 100;
+        }
+        
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid var(--gray-700);
+            margin-bottom: 20px;
+        }
+        
+        .sidebar-header h2 {
+            font-size: 1.3rem;
+            color: white;
+        }
+        
+        .sidebar-header p {
+            font-size: 0.85rem;
+            color: var(--gray-400);
+            margin-top: 5px;
+        }
+        
+        .nav-section {
+            padding: 0 15px;
+            margin-bottom: 10px;
+        }
+        
+        .nav-section-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--gray-500);
+            padding: 10px 5px 5px;
+            letter-spacing: 0.5px;
+        }
+        
+        .nav-link {
+            display: block;
+            padding: 8px 15px;
+            color: var(--gray-300);
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        
+        .nav-link:hover {
+            background: var(--gray-800);
+            color: white;
+        }
+        
+        .nav-link.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            padding: 40px 60px;
+            max-width: 1000px;
+        }
+        
+        /* Header */
+        .page-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 60px;
+            margin: -40px -60px 40px;
+            border-radius: 0 0 20px 20px;
+        }
+        
+        .page-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .page-header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        /* Typography */
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--gray-900);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        h2 {
+            font-size: 1.8rem;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        h3 {
+            font-size: 1.4rem;
+            color: var(--gray-800);
+        }
+        
+        h4 {
+            font-size: 1.15rem;
+            color: var(--gray-700);
+        }
+        
+        p {
+            margin-bottom: 1rem;
+            color: var(--gray-700);
+        }
+        
+        /* Section */
+        .section {
+            margin-bottom: 3rem;
+            scroll-margin-top: 20px;
+        }
+        
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        th {
+            background: var(--gray-100);
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        tr:hover {
+            background: var(--gray-50);
+        }
+        
+        /* Code */
+        code {
+            background: var(--gray-100);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+            font-size: 0.9em;
+            color: var(--primary-dark);
+        }
+        
+        pre {
+            background: var(--gray-900);
+            color: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        /* Lists */
+        ul, ol {
+            margin: 1rem 0 1rem 1.5rem;
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+            color: var(--gray-700);
+        }
+        
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .badge-primary { background: #e3f2fd; color: #1565c0; }
+        .badge-success { background: #e8f5e9; color: #2e7d32; }
+        .badge-warning { background: #fff3e0; color: #ef6c00; }
+        .badge-error { background: #ffebee; color: #c62828; }
+        .badge-info { background: #e1f5fe; color: #0277bd; }
+        .badge-gray { background: var(--gray-200); color: var(--gray-600); }
+        
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background: var(--gray-100);
+            padding: 15px 20px;
+            font-weight: 600;
+            color: var(--gray-800);
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        /* Info boxes */
+        .info-box {
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        
+        .info-box.tip {
+            background: #e8f5e9;
+            border-left: 4px solid var(--success);
+        }
+        
+        .info-box.warning {
+            background: #fff3e0;
+            border-left: 4px solid var(--warning);
+        }
+        
+        .info-box.info {
+            background: #e3f2fd;
+            border-left: 4px solid var(--info);
+        }
+        
+        .info-box.danger {
+            background: #ffebee;
+            border-left: 4px solid var(--error);
+        }
+        
+        .info-box-icon {
+            font-size: 1.5rem;
+        }
+        
+        .info-box-content {
+            flex: 1;
+        }
+        
+        .info-box-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        /* Steps */
+        .steps {
+            counter-reset: step;
+            list-style: none;
+            margin-left: 0;
+        }
+        
+        .steps li {
+            padding: 15px 0 15px 50px;
+            position: relative;
+            border-left: 2px solid var(--gray-300);
+            margin-left: 15px;
+        }
+        
+        .steps li:last-child {
+            border-left: 2px solid transparent;
+        }
+        
+        .steps li::before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: -16px;
+            top: 12px;
+            width: 30px;
+            height: 30px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        /* Screenshots placeholder */
+        .screenshot {
+            background: var(--gray-100);
+            border: 2px dashed var(--gray-300);
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            color: var(--gray-500);
+            margin: 1.5rem 0;
+        }
+        
+        /* Footer */
+        .footer {
+            margin-top: 60px;
+            padding: 30px 0;
+            border-top: 1px solid var(--gray-200);
+            text-align: center;
+            color: var(--gray-500);
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+            .page-header {
+                margin: -20px -20px 20px;
+                padding: 40px 20px;
+            }
+        }
+        
+        @media print {
+            .sidebar {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .page-header {
+                background: white;
+                color: black;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2>📘 BookMyEnv</h2>
+            <p>User Guide</p>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Getting Started</div>
+            <a href="#getting-started" class="nav-link">Introduction</a>
+            <a href="#login" class="nav-link">Login</a>
+            <a href="#navigation" class="nav-link">Navigation</a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Features</div>
+            <a href="#dashboard" class="nav-link">Dashboard</a>
+            <a href="#environments" class="nav-link">Environments</a>
+            <a href="#bookings" class="nav-link">Bookings</a>
+            <a href="#releases" class="nav-link">Releases</a>
+            <a href="#applications" class="nav-link">Applications</a>
+            <a href="#groups" class="nav-link">Groups</a>
+            <a href="#monitoring" class="nav-link">Monitoring</a>
+            <a href="#integrations" class="nav-link">Integrations</a>
+            <a href="#settings" class="nav-link">Settings</a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Reference</div>
+            <a href="#roles" class="nav-link">User Roles</a>
+            <a href="#best-practices" class="nav-link">Best Practices</a>
+            <a href="#troubleshooting" class="nav-link">Troubleshooting</a>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <h1>BookMyEnv User Guide</h1>
+            <p>Complete guide to using the Environment Booking and Management System</p>
+        </div>
+        
+        <!-- Getting Started -->
+        <section id="getting-started" class="section">
+            <h2>Getting Started</h2>
+            
+            <p>BookMyEnv (BME) is a comprehensive environment booking and management system designed to help teams coordinate their use of test environments, track releases, and manage applications.</p>
+            
+            <h3>Accessing the Application</h3>
+            <ol class="steps">
+                <li>Open your web browser and navigate to: <code>http://localhost:3000</code> (or your deployed URL)</li>
+                <li>You will be redirected to the login page</li>
+            </ol>
+        </section>
+        
+        <!-- Login -->
+        <section id="login" class="section">
+            <h3>Login</h3>
+            
+            <ol class="steps">
+                <li>Enter your <strong>Email</strong> (e.g., <code>admin@bme.local</code>)</li>
+                <li>Enter your <strong>Password</strong> (e.g., <code>Admin@123</code>)</li>
+                <li>Click <strong>Sign In</strong></li>
+            </ol>
+            
+            <h4>Demo Accounts</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Role</th>
+                        <th>Email</th>
+                        <th>Password</th>
+                        <th>Access Level</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge-error">Admin</span></td>
+                        <td><code>admin@bme.local</code></td>
+                        <td><code>Admin@123</code></td>
+                        <td>Full system access</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-warning">Environment Manager</span></td>
+                        <td><code>envmgr@bme.local</code></td>
+                        <td><code>Manager@123</code></td>
+                        <td>Manage environments & approve bookings</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-info">Project Lead</span></td>
+                        <td><code>lead@bme.local</code></td>
+                        <td><code>Lead@123</code></td>
+                        <td>Create bookings & manage releases</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">Tester</span></td>
+                        <td><code>tester@bme.local</code></td>
+                        <td><code>Tester@123</code></td>
+                        <td>Create bookings & view resources</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-gray">Viewer</span></td>
+                        <td><code>viewer@bme.local</code></td>
+                        <td><code>Viewer@123</code></td>
+                        <td>Read-only access</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        
+        <!-- Navigation -->
+        <section id="navigation" class="section">
+            <h3>Navigation</h3>
+            
+            <p>After logging in, you'll see the main navigation sidebar on the left with:</p>
+            
+            <ul>
+                <li><strong>Dashboard</strong> - Overview and statistics</li>
+                <li><strong>Monitoring</strong> - Real-time environment health</li>
+                <li><strong>Environments</strong> - Manage environments and instances</li>
+                <li><strong>Bookings</strong> - Book and manage environment reservations</li>
+                <li><strong>Releases</strong> - Plan and track releases</li>
+                <li><strong>Applications</strong> - Manage applications and components</li>
+                <li><strong>Groups</strong> - User groups management</li>
+                <li><strong>Integrations</strong> - External tool connections</li>
+                <li><strong>Settings</strong> - User profile and system settings</li>
+            </ul>
+        </section>
+        
+        <!-- Dashboard -->
+        <section id="dashboard" class="section">
+            <h2>Dashboard Overview</h2>
+            
+            <p>The Dashboard provides a quick summary of system status:</p>
+            
+            <h3>Statistics Cards</h3>
+            <ul>
+                <li><strong>Environments</strong> - Total number of environments in the system</li>
+                <li><strong>Total Instances</strong> - Count of all environment instances</li>
+                <li><strong>Available Instances</strong> - Instances currently available for booking</li>
+                <li><strong>Active Bookings</strong> - Currently active environment reservations</li>
+                <li><strong>In-Progress Releases</strong> - Releases currently being deployed</li>
+                <li><strong>Applications</strong> - Total applications managed</li>
+            </ul>
+            
+            <h3>Instance Availability</h3>
+            <p>Visual indicator showing the percentage of available vs. total instances.</p>
+            
+            <h3>Recent Activity</h3>
+            <p>Live feed of recent actions in the system including environment creations/updates, booking requests and approvals, release status changes, and user actions.</p>
+        </section>
+        
+        <!-- Environments -->
+        <section id="environments" class="section">
+            <h2>Environments Management</h2>
+            
+            <h3>Viewing Environments</h3>
+            <ol class="steps">
+                <li>Click <strong>Environments</strong> in the sidebar</li>
+                <li>View the list of all environments with Name, Category, Lifecycle Stage, Owner Team, and Instance Count</li>
+            </ol>
+            
+            <h3>Creating an Environment</h3>
+            <ol class="steps">
+                <li>Click the <strong>+ Add Environment</strong> button</li>
+                <li>Fill in the required fields:
+                    <ul>
+                        <li><strong>Name</strong> - Unique environment name (e.g., "SIT Environment 1")</li>
+                        <li><strong>Category</strong> - Select: NonProd, PreProd, or DR</li>
+                        <li><strong>Description</strong> - Brief description of the environment</li>
+                        <li><strong>Lifecycle Stage</strong> - Active, Provisioning, Decommissioned</li>
+                        <li><strong>Owner Team</strong> - Team responsible for the environment</li>
+                        <li><strong>Support Group</strong> - Support contact group</li>
+                        <li><strong>Data Sensitivity</strong> - NonProdDummy, MaskedProd, ProdClone, LiveProd</li>
+                    </ul>
+                </li>
+                <li>Click <strong>Create</strong></li>
+            </ol>
+            
+            <h3>Managing Environment Instances</h3>
+            <p>Each environment can have multiple instances (actual deployments):</p>
+            
+            <h4>Creating an Instance</h4>
+            <ol class="steps">
+                <li>Click on an environment row to view details</li>
+                <li>Go to the <strong>Instances</strong> tab</li>
+                <li>Click <strong>+ Add Instance</strong></li>
+                <li>Fill in: Name, Operational Status, Availability Window, Capacity, Primary Location, Bookable</li>
+                <li>Click <strong>Create</strong></li>
+            </ol>
+            
+            <div class="info-box tip">
+                <span class="info-box-icon">💡</span>
+                <div class="info-box-content">
+                    <div class="info-box-title">Tip</div>
+                    Keep instance status updated to help others know availability at a glance.
+                </div>
+            </div>
+        </section>
+        
+        <!-- Bookings -->
+        <section id="bookings" class="section">
+            <h2>Bookings Management</h2>
+            
+            <h3>Viewing Bookings</h3>
+            <ol class="steps">
+                <li>Click <strong>Bookings</strong> in the sidebar</li>
+                <li>Choose view mode: <strong>Table View</strong> (list format) or <strong>Calendar View</strong> (monthly visualization)</li>
+            </ol>
+            
+            <h3>Creating a Booking</h3>
+            <ol class="steps">
+                <li>Click <strong>+ New Booking</strong></li>
+                <li>Fill in the booking details:
+                    <ul>
+                        <li><strong>Booking Type</strong> - SingleEnv (one environment) or MultiEnvE2E (multiple)</li>
+                        <li><strong>Test Phase</strong> - Select the testing phase</li>
+                        <li><strong>Title</strong> - Descriptive booking title</li>
+                        <li><strong>Description</strong> - Detailed purpose of the booking</li>
+                        <li><strong>Start/End Date/Time</strong> - When the booking begins and ends</li>
+                    </ul>
+                </li>
+                <li>Select environment instances to book</li>
+                <li>Click <strong>Create</strong></li>
+            </ol>
+            
+            <h3>Booking Statuses</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge-info">Requested</span></td>
+                        <td>Initial state, awaiting review</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-warning">PendingApproval</span></td>
+                        <td>Conflicts detected, needs approval</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">Approved</span></td>
+                        <td>Approved and confirmed</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">Active</span></td>
+                        <td>Currently in use</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-gray">Completed</span></td>
+                        <td>Booking period ended</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-error">Cancelled</span></td>
+                        <td>Booking was cancelled</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="info-box warning">
+                <span class="info-box-icon">⚠️</span>
+                <div class="info-box-content">
+                    <div class="info-box-title">Conflict Detection</div>
+                    The system automatically detects scheduling conflicts. Bookings with conflicts go to "PendingApproval" status.
+                </div>
+            </div>
+        </section>
+        
+        <!-- Releases -->
+        <section id="releases" class="section">
+            <h2>Releases Management</h2>
+            
+            <h3>Creating a Release</h3>
+            <ol class="steps">
+                <li>Click <strong>+ New Release</strong></li>
+                <li>Fill in: Name, Description, Version, Release Type, Planned Start/End</li>
+                <li>Select Target Environments and Applications</li>
+                <li>Click <strong>Create</strong></li>
+            </ol>
+            
+            <h3>Release Statuses</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge-info">Planned</span></td>
+                        <td>Scheduled but not started</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-warning">InProgress</span></td>
+                        <td>Currently being deployed</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">Completed</span></td>
+                        <td>Successfully deployed</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-error">RolledBack</span></td>
+                        <td>Deployment was reversed</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-gray">Cancelled</span></td>
+                        <td>Release was cancelled</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        
+        <!-- Applications -->
+        <section id="applications" class="section">
+            <h2>Applications Management</h2>
+            
+            <h3>Creating an Application</h3>
+            <ol class="steps">
+                <li>Click <strong>+ Add Application</strong></li>
+                <li>Fill in: Name, Description, Business Domain, Criticality, Data Sensitivity, Owner Team, Test Owner</li>
+                <li>Click <strong>Create</strong></li>
+            </ol>
+            
+            <h3>Managing Components</h3>
+            <p>Applications can have components (services, modules). To add a component:</p>
+            <ol class="steps">
+                <li>Select an application</li>
+                <li>Go to <strong>Components</strong> tab</li>
+                <li>Click <strong>+ Add Component</strong></li>
+                <li>Fill in: Name, Component Type, Source Repo, Build Pipeline ID, Runtime Platform, Owner Team</li>
+                <li>Click <strong>Create</strong></li>
+            </ol>
+        </section>
+        
+        <!-- Groups -->
+        <section id="groups" class="section">
+            <h2>Groups Management</h2>
+            
+            <h3>Creating a Group</h3>
+            <ol class="steps">
+                <li>Click <strong>+ Add Group</strong></li>
+                <li>Fill in: Name, Description, Group Type</li>
+                <li>Click <strong>Create</strong></li>
+            </ol>
+            
+            <h3>Managing Members</h3>
+            <ol class="steps">
+                <li>Select a group</li>
+                <li>Go to <strong>Members</strong> tab</li>
+                <li>Click <strong>+ Add Member</strong></li>
+                <li>Select users to add</li>
+                <li>Click <strong>Add</strong></li>
+            </ol>
+        </section>
+        
+        <!-- Monitoring -->
+        <section id="monitoring" class="section">
+            <h2>Monitoring</h2>
+            
+            <p>The Monitoring page provides real-time system health including:</p>
+            
+            <ul>
+                <li><strong>Environment Statistics</strong> - Total environments and instances</li>
+                <li><strong>Breakdown by Category</strong> - NonProd, PreProd, DR</li>
+                <li><strong>Instance Availability Status</strong> - Available, In Use, Maintenance, Offline</li>
+                <li><strong>Infrastructure Components</strong> - View components deployed across environments</li>
+            </ul>
+        </section>
+        
+        <!-- Integrations -->
+        <section id="integrations" class="section">
+            <h2>Integrations</h2>
+            
+            <h3>Supported Integrations</h3>
+            <ul>
+                <li><strong>Jira</strong> - Issue tracking and project management</li>
+                <li><strong>GitLab</strong> - Source control and CI/CD</li>
+                <li><strong>ServiceNow</strong> - Change management and CMDB</li>
+            </ul>
+            
+            <h3>Configuring an Integration (Admin only)</h3>
+            <ol class="steps">
+                <li>Click <strong>Integrations</strong> in the sidebar</li>
+                <li>Click <strong>+ Add Integration</strong></li>
+                <li>Select the tool type and fill in connection details</li>
+                <li>Click <strong>Test Connection</strong> to verify</li>
+                <li>Click <strong>Save</strong></li>
+            </ol>
+        </section>
+        
+        <!-- Settings -->
+        <section id="settings" class="section">
+            <h2>Settings & Administration</h2>
+            
+            <h3>Profile Tab</h3>
+            <ul>
+                <li>View and update your profile information</li>
+                <li>Change display name</li>
+                <li>Update time zone</li>
+            </ul>
+            
+            <h3>Notifications Tab</h3>
+            <ul>
+                <li>Configure notification preferences</li>
+                <li>Enable/disable email notifications</li>
+            </ul>
+            
+            <h3>User Management (Admin only)</h3>
+            <ul>
+                <li>View all users</li>
+                <li>Create new users</li>
+                <li>Edit user roles</li>
+                <li>Activate/deactivate accounts</li>
+                <li>Reset passwords</li>
+            </ul>
+            
+            <h3>SSO Configuration (Admin only)</h3>
+            <ul>
+                <li>Configure identity providers (Azure AD, Okta, etc.)</li>
+                <li>Set up SAML/OIDC authentication</li>
+                <li>Map SSO groups to BME roles</li>
+            </ul>
+        </section>
+        
+        <!-- Roles -->
+        <section id="roles" class="section">
+            <h2>User Roles & Permissions</h2>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Action</th>
+                        <th>Admin</th>
+                        <th>EnvManager</th>
+                        <th>ProjectLead</th>
+                        <th>Tester</th>
+                        <th>Viewer</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Create/Edit Environments</td>
+                        <td style="color: var(--success);">✓</td>
+                        <td style="color: var(--success);">✓</td>
+                        <td style="color: var(--error);">✗</td>
+                        <td style="color: var(--error);">✗</td>
+                        <td style="color: var(--error);">✗</td>
+                    </tr>
+                    <tr>
+                        <td>Create Bookings</td>
+                        <td style="color: var(--success);">✓</td>
+                        <td style="color: var(--success);">✓</td>
+                        <td style="color: var(--success);">✓</td>
+                        <td style="color: var(--success);">✓</td>
+                        <td style="color: var(--error);">✗</td>
+                    </tr>
+                    <tr>
+                        <td>Approve Bookings</td>
+                        <td style="color: var(--success);">✓</td>
+                        <td style="color: var(--success);">✓</td>
+                        <td style="color: var(--error);">✗</td>
+                        <td style="color: var(--error);">✗</td>
+                        <td style="color: var(--error);">✗</td>
+                    </tr>
+                    <tr>
+                        <td>Create Releases</td>
+                        <td style="color: var(--success);">✓</td>
+                        <td style="color: var(--error);">✗</td>
+                        <td style="color: var(--success);">✓</td>
+                        <td style="color: var(--error);">✗</td>
+                        <td style="color: var(--error);">✗</td>
+                    </tr>
+                    <tr>
+                        <td>Manage Users</td>
+                        <td style="color: var(--success);">✓</td>
+                        <td style="color: var(--error);">✗</td>
+                        <td style="color: var(--error);">✗</td>
+                        <td style="color: var(--error);">✗</td>
+                        <td style="color: var(--error);">✗</td>
+                    </tr>
+                    <tr>
+                        <td>View All Resources</td>
+                        <td style="color: var(--success);">✓</td>
+                        <td style="color: var(--success);">✓</td>
+                        <td style="color: var(--success);">✓</td>
+                        <td style="color: var(--success);">✓</td>
+                        <td style="color: var(--success);">✓</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        
+        <!-- Best Practices -->
+        <section id="best-practices" class="section">
+            <h2>Best Practices</h2>
+            
+            <h3>Booking Best Practices</h3>
+            <div class="card">
+                <div class="card-body">
+                    <ol>
+                        <li><strong>Book in Advance</strong> - Reserve environments early for critical testing</li>
+                        <li><strong>Accurate Timeframes</strong> - Set realistic start/end times</li>
+                        <li><strong>Descriptive Titles</strong> - Use clear, descriptive booking names</li>
+                        <li><strong>Check Conflicts</strong> - Review conflicts before submitting</li>
+                        <li><strong>Release on Time</strong> - Complete bookings promptly to free resources</li>
+                    </ol>
+                </div>
+            </div>
+            
+            <h3>Environment Management</h3>
+            <div class="card">
+                <div class="card-body">
+                    <ol>
+                        <li><strong>Keep Status Updated</strong> - Mark instances accurately (Available, Maintenance, etc.)</li>
+                        <li><strong>Document Changes</strong> - Add descriptions when updating environments</li>
+                        <li><strong>Regular Cleanup</strong> - Remove obsolete instances and environments</li>
+                        <li><strong>Capacity Planning</strong> - Monitor instance utilization</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Troubleshooting -->
+        <section id="troubleshooting" class="section">
+            <h2>Troubleshooting</h2>
+            
+            <h3>Common Issues</h3>
+            
+            <div class="card">
+                <div class="card-header">Login Failed</div>
+                <div class="card-body">
+                    <ul>
+                        <li>Verify email and password</li>
+                        <li>Check if account is active</li>
+                        <li>Clear browser cache and cookies</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">Booking Conflicts</div>
+                <div class="card-body">
+                    <ul>
+                        <li>Check the calendar view for overlapping bookings</li>
+                        <li>Contact the conflicting booking owner</li>
+                        <li>Request approval if conflict is acceptable</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">Environment Not Available</div>
+                <div class="card-body">
+                    <ul>
+                        <li>Check operational status</li>
+                        <li>Verify booking end time hasn't expired</li>
+                        <li>Contact environment owner</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="info-box info">
+                <span class="info-box-icon">ℹ️</span>
+                <div class="info-box-content">
+                    <div class="info-box-title">Getting Help</div>
+                    If you continue to experience issues, contact your system administrator or submit a support ticket.
+                </div>
+            </div>
+        </section>
+        
+        <div class="footer">
+            <p>© 2025 BookMyEnv. All rights reserved.</p>
+            <p style="margin-top: 10px; font-size: 0.9rem;">Version 1.0.0 | Last Updated: November 2025</p>
+        </div>
+    </main>
+</body>
+</html>

@@ -8,42 +8,81 @@ A comprehensive, enterprise-grade Environment Booking and Management System (BME
 - Docker Desktop installed and running
 - PowerShell (Windows) or Bash (Linux/Mac)
 
-### Start the Application
+### Start the Application (HTTPS - Recommended)
 
 ```powershell
-# Windows
-.\start.ps1
+# Windows - Generate SSL certs and start
+.\generate-ssl.ps1
+.\start-https.ps1
 
 # Or using Docker Compose directly
-docker-compose up --build
+docker-compose -f docker-compose.https.yml up -d
 ```
 
-### Access Points
+### Access Points (HTTPS - Production)
+- **Frontend**: https://localhost
+- **Backend API**: https://localhost/api
+- **Health Check**: https://localhost/health
+
+> **Note**: Accept the self-signed certificate warning in your browser for development.
+
+### Development Mode (HTTP)
+
+```powershell
+# HTTP only (no SSL)
+docker-compose up -d
+```
+
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:5000
-- **PostgreSQL**: localhost:5432
 
 ### Demo Credentials
 
 | Role | Email | Password |
 |------|-------|----------|
 | Admin | admin@bme.local | Admin@123 |
-| Environment Manager | envmgr@bme.local | Manager@123 |
-| Project Lead | lead@bme.local | Lead@123 |
-| Tester | tester@bme.local | Tester@123 |
-| Viewer | viewer@bme.local | Viewer@123 |
+| Environment Manager | envmgr@bme.local | Admin@123 |
+| Project Lead | lead@bme.local | Admin@123 |
+| Tester | tester@bme.local | Admin@123 |
+| Viewer | viewer@bme.local | Admin@123 |
+
+> ⚠️ **Security**: All demo users share the same password. Change in production!
+
+## 🔒 Security Features
+
+| Feature | Description |
+|---------|-------------|
+| **HTTPS/TLS** | TLS 1.2/1.3 via Nginx reverse proxy |
+| **Rate Limiting** | 5 login attempts per 15 minutes |
+| **Password Policy** | Min 8 chars, uppercase, lowercase, number, special char |
+| **JWT Auth** | Secure tokens with configurable expiry |
+| **CORS** | Explicit origin whitelist |
+| **Security Headers** | CSP, HSTS, X-Frame-Options, etc. |
+| **Input Validation** | express-validator on all endpoints |
+| **bcrypt** | 12 rounds password hashing |
+
+See [docs/SECURITY.md](docs/SECURITY.md) for complete security documentation.
 
 ## 🏗️ Architecture
+
+```
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│    Nginx     │────▶│   Frontend   │────▶│   Backend    │────▶│  PostgreSQL  │
+│   (HTTPS)    │     │  (Next.js)   │     │  (Express)   │     │   Database   │
+│   Port 443   │     │   Port 3000  │     │   Port 5000  │     │  (Internal)  │
+└──────────────┘     └──────────────┘     └──────────────┘     └──────────────┘
+```
 
 ### Technology Stack
 
 | Layer | Technology |
 |-------|------------|
+| Reverse Proxy | Nginx (SSL termination, security headers) |
 | Frontend | Next.js 14, React 18, Tailwind CSS, MUI |
-| Backend | Node.js, Express.js |
+| Backend | Node.js 22, Express.js, express-validator |
 | Database | PostgreSQL 15 |
 | Real-time | Socket.io |
-| Auth | JWT + SSO (OIDC/SAML) |
+| Auth | JWT + bcrypt + Rate Limiting |
 | Containerization | Docker, Docker Compose |
 
 ### Domain Model (30+ Entities)
@@ -154,9 +193,19 @@ POST   /api/webhooks/:tool/:id              - Webhook receivers
 
 ```
 test-env-management/
-├── docker-compose.yml
-├── start.ps1
-├── README.md
+├── docker-compose.yml          # HTTP development mode
+├── docker-compose.https.yml    # HTTPS production mode
+├── .env                        # Environment variables (not in git)
+├── .env.example                # Template for environment variables
+├── start.ps1                   # HTTP startup script
+├── start-https.ps1             # HTTPS startup script
+├── generate-ssl.ps1            # SSL certificate generator
+├── test-functional.ps1         # Functional test suite
+│
+├── nginx/                      # Reverse proxy configuration
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   └── ssl/                    # SSL certificates
 │
 ├── backend/
 │   ├── Dockerfile
@@ -168,19 +217,33 @@ test-env-management/
 │       ├── controllers/
 │       ├── middleware/
 │       ├── routes/
-│       ├── services/
 │       └── server.js
 │
-└── frontend/
-    ├── Dockerfile
-    ├── package.json
-    ├── next.config.js
-    ├── tailwind.config.js
-    └── src/
-        ├── app/
-        ├── components/
-        └── lib/
+├── frontend/
+│   ├── Dockerfile
+│   ├── package.json
+│   ├── next.config.js
+│   ├── tailwind.config.js
+│   └── src/
+│       ├── app/
+│       ├── contexts/
+│       └── lib/
+│
+└── docs/
+    ├── ARCHITECTURE.md         # System architecture
+    ├── USER_GUIDE.md           # User documentation
+    ├── QUICK_REFERENCE.md      # Quick reference card
+    └── SECURITY.md             # Security documentation
 ```
+
+## 📚 Documentation
+
+| Document | Description |
+|----------|-------------|
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture, data model, flows |
+| [USER_GUIDE.md](docs/USER_GUIDE.md) | Complete user documentation |
+| [QUICK_REFERENCE.md](docs/QUICK_REFERENCE.md) | Quick reference card |
+| [SECURITY.md](docs/SECURITY.md) | Security features and configuration |
 
 ## 🛠️ Development
 

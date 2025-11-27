@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookMyEnv - Quick Reference Card</title>
+    <style>
+        :root {
+            --primary: #1976d2;
+            --primary-dark: #1565c0;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --error: #f44336;
+            --info: #2196f3;
+            --gray-50: #fafafa;
+            --gray-100: #f5f5f5;
+            --gray-200: #eeeeee;
+            --gray-300: #e0e0e0;
+            --gray-600: #757575;
+            --gray-800: #424242;
+            --gray-900: #212121;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--gray-100);
+            color: var(--gray-900);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background: var(--primary);
+            color: white;
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-header.success { background: var(--success); }
+        .card-header.warning { background: var(--warning); }
+        .card-header.info { background: var(--info); }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        th {
+            background: var(--gray-50);
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        tr:hover {
+            background: var(--gray-50);
+        }
+        
+        code {
+            background: var(--gray-100);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.9em;
+            color: var(--primary-dark);
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .badge-success { background: #e8f5e9; color: #2e7d32; }
+        .badge-warning { background: #fff3e0; color: #ef6c00; }
+        .badge-info { background: #e3f2fd; color: #1565c0; }
+        .badge-error { background: #ffebee; color: #c62828; }
+        .badge-gray { background: var(--gray-200); color: var(--gray-600); }
+        
+        .check { color: var(--success); }
+        .cross { color: var(--error); }
+        
+        .url-list {
+            list-style: none;
+        }
+        
+        .url-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .url-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .steps {
+            counter-reset: step;
+        }
+        
+        .steps li {
+            padding: 8px 0 8px 35px;
+            position: relative;
+            list-style: none;
+        }
+        
+        .steps li::before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 8px;
+            width: 24px;
+            height: 24px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .pre-block {
+            background: var(--gray-900);
+            color: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+        
+        .pre-block .comment { color: #6a9955; }
+        .pre-block .command { color: #9cdcfe; }
+        
+        .tips {
+            list-style: none;
+        }
+        
+        .tips li {
+            padding: 10px 0 10px 30px;
+            position: relative;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .tips li:last-child {
+            border-bottom: none;
+        }
+        
+        .tips li::before {
+            content: "💡";
+            position: absolute;
+            left: 0;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--gray-600);
+            margin-top: 30px;
+        }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .card {
+                box-shadow: none;
+                border: 1px solid var(--gray-300);
+                break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 BookMyEnv Quick Reference</h1>
+            <p>Your one-page guide to environment booking and management</p>
+        </div>
+        
+        <div class="grid">
+            <!-- Login Credentials -->
+            <div class="card">
+                <div class="card-header">
+                    🔐 Login Credentials
+                </div>
+                <div class="card-body">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Role</th>
+                                <th>Email</th>
+                                <th>Password</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="badge badge-error">Admin</span></td>
+                                <td><code>admin@bme.local</code></td>
+                                <td><code>Admin@123</code></td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-warning">Manager</span></td>
+                                <td><code>envmgr@bme.local</code></td>
+                                <td><code>Manager@123</code></td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-info">Lead</span></td>
+                                <td><code>lead@bme.local</code></td>
+                                <td><code>Lead@123</code></td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-success">Tester</span></td>
+                                <td><code>tester@bme.local</code></td>
+                                <td><code>Tester@123</code></td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-gray">Viewer</span></td>
+                                <td><code>viewer@bme.local</code></td>
+                                <td><code>Viewer@123</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- URLs -->
+            <div class="card">
+                <div class="card-header info">
+                    🌐 Service URLs
+                </div>
+                <div class="card-body">
+                    <ul class="url-list">
+                        <li>
+                            <strong>Frontend</strong>
+                            <code>http://localhost:3000</code>
+                        </li>
+                        <li>
+                            <strong>Backend API</strong>
+                            <code>http://localhost:5000</code>
+                        </li>
+                        <li>
+                            <strong>PostgreSQL</strong>
+                            <code>localhost:5432</code>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header success">
+                    ⚡ Quick Actions
+                </div>
+                <div class="card-body">
+                    <h4 style="margin-bottom: 10px; color: var(--gray-800);">Create a Booking</h4>
+                    <ol class="steps">
+                        <li>Bookings → + New Booking</li>
+                        <li>Select Test Phase & Dates</li>
+                        <li>Add Environment Instances</li>
+                        <li>Submit</li>
+                    </ol>
+                    
+                    <h4 style="margin: 20px 0 10px; color: var(--gray-800);">Create an Environment</h4>
+                    <ol class="steps">
+                        <li>Environments → + Add Environment</li>
+                        <li>Fill: Name, Category</li>
+                        <li>Create</li>
+                    </ol>
+                </div>
+            </div>
+            
+            <!-- Booking Status -->
+            <div class="card">
+                <div class="card-header warning">
+                    📊 Booking Status Codes
+                </div>
+                <div class="card-body">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th>Meaning</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="badge badge-info">Requested</span></td>
+                                <td>Awaiting review</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-warning">PendingApproval</span></td>
+                                <td>Has conflicts</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-success">Approved</span></td>
+                                <td>Confirmed</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-success">Active</span></td>
+                                <td>In use</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-gray">Completed</span></td>
+                                <td>Finished</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-error">Cancelled</span></td>
+                                <td>Cancelled</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Role Permissions -->
+            <div class="card">
+                <div class="card-header">
+                    🔑 Role Permissions
+                </div>
+                <div class="card-body">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Action</th>
+                                <th>Admin</th>
+                                <th>Mgr</th>
+                                <th>Lead</th>
+                                <th>Tester</th>
+                                <th>View</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Create Environment</td>
+                                <td class="check">✓</td>
+                                <td class="check">✓</td>
+                                <td class="cross">✗</td>
+                                <td class="cross">✗</td>
+                                <td class="cross">✗</td>
+                            </tr>
+                            <tr>
+                                <td>Create Booking</td>
+                                <td class="check">✓</td>
+                                <td class="check">✓</td>
+                                <td class="check">✓</td>
+                                <td class="check">✓</td>
+                                <td class="cross">✗</td>
+                            </tr>
+                            <tr>
+                                <td>Approve Booking</td>
+                                <td class="check">✓</td>
+                                <td class="check">✓</td>
+                                <td class="cross">✗</td>
+                                <td class="cross">✗</td>
+                                <td class="cross">✗</td>
+                            </tr>
+                            <tr>
+                                <td>Create Release</td>
+                                <td class="check">✓</td>
+                                <td class="cross">✗</td>
+                                <td class="check">✓</td>
+                                <td class="cross">✗</td>
+                                <td class="cross">✗</td>
+                            </tr>
+                            <tr>
+                                <td>Manage Users</td>
+                                <td class="check">✓</td>
+                                <td class="cross">✗</td>
+                                <td class="cross">✗</td>
+                                <td class="cross">✗</td>
+                                <td class="cross">✗</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Environment Categories -->
+            <div class="card">
+                <div class="card-header info">
+                    🗂️ Environment Categories
+                </div>
+                <div class="card-body">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Use Case</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="badge badge-info">NonProd</span></td>
+                                <td>Development, SIT, Testing</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-warning">PreProd</span></td>
+                                <td>UAT, Staging, Pre-Production</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-error">DR</span></td>
+                                <td>Disaster Recovery</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Test Phases -->
+            <div class="card">
+                <div class="card-header success">
+                    🧪 Test Phases
+                </div>
+                <div class="card-body">
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td><strong>SIT</strong></td>
+                                <td>System Integration Testing</td>
+                            </tr>
+                            <tr>
+                                <td><strong>UAT</strong></td>
+                                <td>User Acceptance Testing</td>
+                            </tr>
+                            <tr>
+                                <td><strong>NFT</strong></td>
+                                <td>Non-Functional Testing</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Performance</strong></td>
+                                <td>Load/Stress Testing</td>
+                            </tr>
+                            <tr>
+                                <td><strong>DRRehearsal</strong></td>
+                                <td>DR Testing</td>
+                            </tr>
+                            <tr>
+                                <td><strong>PenTest</strong></td>
+                                <td>Security Testing</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- API Endpoints -->
+            <div class="card">
+                <div class="card-header">
+                    📡 API Endpoints
+                </div>
+                <div class="card-body">
+                    <div class="pre-block">
+<span class="command">POST</span> /api/auth/login        <span class="comment"># Login</span>
+<span class="command">GET</span>  /api/environments      <span class="comment"># List envs</span>
+<span class="command">GET</span>  /api/bookings          <span class="comment"># List bookings</span>
+<span class="command">POST</span> /api/bookings          <span class="comment"># Create booking</span>
+<span class="command">GET</span>  /api/releases          <span class="comment"># List releases</span>
+<span class="command">GET</span>  /api/applications      <span class="comment"># List apps</span>
+<span class="command">GET</span>  /api/groups            <span class="comment"># List groups</span>
+<span class="command">GET</span>  /api/dashboard/stats   <span class="comment"># Statistics</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Docker Commands -->
+            <div class="card">
+                <div class="card-header warning">
+                    🐳 Docker Commands
+                </div>
+                <div class="card-body">
+                    <div class="pre-block">
+<span class="comment"># Start all services</span>
+docker-compose up -d
+
+<span class="comment"># View logs</span>
+docker logs tem-backend
+docker logs tem-frontend
+
+<span class="comment"># Restart services</span>
+docker-compose restart
+
+<span class="comment"># Stop all</span>
+docker-compose down
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tips -->
+            <div class="card">
+                <div class="card-header success">
+                    💡 Pro Tips
+                </div>
+                <div class="card-body">
+                    <ul class="tips">
+                        <li><strong>Book Early</strong> - Reserve environments in advance</li>
+                        <li><strong>Check Calendar</strong> - Use calendar view for availability</li>
+                        <li><strong>Clear Description</strong> - Help others understand your booking</li>
+                        <li><strong>Update Status</strong> - Keep booking status current</li>
+                        <li><strong>Release On Time</strong> - Free resources when done</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p><strong>Need Help?</strong> Contact your system administrator or check the full User Guide.</p>
+            <p style="margin-top: 10px;">© 2025 BookMyEnv. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

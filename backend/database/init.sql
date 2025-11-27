@@ -144,7 +144,7 @@ CREATE TABLE environments (
     environment_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(50) NOT NULL UNIQUE,
     description TEXT,
-    environment_category VARCHAR(20) CHECK (environment_category IN ('NonProd', 'PreProd', 'DR', 'Training', 'Sandpit')),
+    environment_category VARCHAR(20) CHECK (environment_category IN ('NonProd', 'PreProd', 'DR', 'Training', 'Sandpit','E2E','Integration','Performance','NFT','UAT','ITE','IWT','Staging','Production','Other')),
     lifecycle_stage VARCHAR(20) CHECK (lifecycle_stage IN ('Planned', 'Active', 'Retiring', 'Decommissioned')),
     owner_team VARCHAR(100),
     support_group VARCHAR(100),
@@ -686,13 +686,15 @@ INSERT INTO user_groups (group_id, name, description, group_type) VALUES
     ('33333333-3333-3333-3333-333333333333', 'Core Banking Team', 'Core banking development team', 'Team'),
     ('44444444-4444-4444-4444-444444444444', 'QA Team', 'Quality assurance team', 'Team');
 
--- Insert Demo Users (passwords are hashed 'Admin@123', 'Manager@123', etc.)
+-- Insert Demo Users (bcrypt hashed passwords with 12 rounds)
+-- All demo users use password: Admin@123
+-- Hash generated with: bcrypt.hash('Admin@123', 12)
 INSERT INTO users (user_id, username, display_name, email, password_hash, role, auth_mode, default_group_id, is_active) VALUES
-    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'admin', 'System Administrator', 'admin@bme.local', '$2b$10$rQEY7.FXGZ5Q5YoKT5.kFOjL6rYnHKN5Q5ztN5z5KGxQ5Q5Q5Q5Q5', 'Admin', 'Local', '11111111-1111-1111-1111-111111111111', true),
-    ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'envmgr', 'Environment Manager', 'envmgr@bme.local', '$2b$10$rQEY7.FXGZ5Q5YoKT5.kFOjL6rYnHKN5Q5ztN5z5KGxQ5Q5Q5Q5Q5', 'EnvironmentManager', 'Local', '11111111-1111-1111-1111-111111111111', true),
-    ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'lead', 'Project Lead', 'lead@bme.local', '$2b$10$rQEY7.FXGZ5Q5YoKT5.kFOjL6rYnHKN5Q5ztN5z5KGxQ5Q5Q5Q5Q5', 'ProjectLead', 'Local', '22222222-2222-2222-2222-222222222222', true),
-    ('dddddddd-dddd-dddd-dddd-dddddddddddd', 'tester', 'Test Engineer', 'tester@bme.local', '$2b$10$rQEY7.FXGZ5Q5YoKT5.kFOjL6rYnHKN5Q5ztN5z5KGxQ5Q5Q5Q5Q5', 'Tester', 'Local', '44444444-4444-4444-4444-444444444444', true),
-    ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'viewer', 'Read Only User', 'viewer@bme.local', '$2b$10$rQEY7.FXGZ5Q5YoKT5.kFOjL6rYnHKN5Q5ztN5z5KGxQ5Q5Q5Q5Q5', 'Viewer', 'Local', '44444444-4444-4444-4444-444444444444', true);
+    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'admin', 'System Administrator', 'admin@bme.local', '$2a$12$keJpfSQ.XGgJ6emhmsAnwunZxONNvSs26kK6FSUR3rKmGueCxmcbC', 'Admin', 'Local', '11111111-1111-1111-1111-111111111111', true),
+    ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'envmgr', 'Environment Manager', 'envmgr@bme.local', '$2a$12$keJpfSQ.XGgJ6emhmsAnwunZxONNvSs26kK6FSUR3rKmGueCxmcbC', 'EnvironmentManager', 'Local', '11111111-1111-1111-1111-111111111111', true),
+    ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'lead', 'Project Lead', 'lead@bme.local', '$2a$12$keJpfSQ.XGgJ6emhmsAnwunZxONNvSs26kK6FSUR3rKmGueCxmcbC', 'ProjectLead', 'Local', '22222222-2222-2222-2222-222222222222', true),
+    ('dddddddd-dddd-dddd-dddd-dddddddddddd', 'tester', 'Test Engineer', 'tester@bme.local', '$2a$12$keJpfSQ.XGgJ6emhmsAnwunZxONNvSs26kK6FSUR3rKmGueCxmcbC', 'Tester', 'Local', '44444444-4444-4444-4444-444444444444', true),
+    ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'viewer', 'Read Only User', 'viewer@bme.local', '$2a$12$keJpfSQ.XGgJ6emhmsAnwunZxONNvSs26kK6FSUR3rKmGueCxmcbC', 'Viewer', 'Local', '44444444-4444-4444-4444-444444444444', true);
 
 -- Insert Group Memberships
 INSERT INTO user_group_memberships (user_id, group_id, membership_role) VALUES
