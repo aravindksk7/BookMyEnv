@@ -667,6 +667,306 @@ const bookingController = {
       console.error('Remove application error:', error);
       res.status(500).json({ error: 'Failed to remove application' });
     }
+  },
+
+  // Get conflicts for a booking
+  getConflicts: async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      // Validate UUID format
+      if (!isValidUUID(id)) {
+        return res.status(400).json({ error: 'Invalid booking ID format' });
+      }
+
+      // Get booking details
+      const bookingResult = await db.query(
+        `SELECT eb.*, u.display_name as requested_by_name
+         FROM environment_bookings eb
+         JOIN users u ON eb.requested_by_user_id = u.user_id
+         WHERE eb.booking_id = $1`,
+        [id]
+      );
+
+      if (bookingResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+
+      const booking = bookingResult.rows[0];
+
+      // Get all resource conflicts for this booking
+      const conflictsResult = await db.query(
+        `SELECT br.booking_resource_id, br.resource_type, br.resource_ref_id, 
+                br.logical_role, br.resource_conflict_status, br.conflicting_booking_id,
+                CASE 
+                  WHEN br.resource_type = 'EnvironmentInstance' THEN ei.name
+                  WHEN br.resource_type = 'InfraComponent' THEN ic.name
+                END as resource_name,
+                e.name as environment_name,
+                cb.title as conflicting_booking_title,
+                cb.start_datetime as conflicting_start,
+                cb.end_datetime as conflicting_end,
+                cb.booking_status as conflicting_booking_status,
+                cu.display_name as conflicting_requested_by
+         FROM booking_resources br
+         LEFT JOIN environment_instances ei ON br.resource_type = 'EnvironmentInstance' AND br.resource_ref_id = ei.env_instance_id
+         LEFT JOIN environments e ON ei.environment_id = e.environment_id
+         LEFT JOIN infra_components ic ON br.resource_type = 'InfraComponent' AND br.resource_ref_id = ic.infra_id
+         LEFT JOIN environment_bookings cb ON br.conflicting_booking_id = cb.booking_id
+         LEFT JOIN users cu ON cb.requested_by_user_id = cu.user_id
+         WHERE br.booking_id = $1 AND br.resource_conflict_status != 'None'
+         ORDER BY br.resource_type, resource_name`,
+        [id]
+      );
+
+      // Also find all overlapping bookings for resources in this booking
+      const overlappingResult = await db.query(
+        `SELECT DISTINCT ob.booking_id, ob.title, ob.start_datetime, ob.end_datetime, 
+                ob.booking_status, ob.test_phase, ob.conflict_status,
+                ou.display_name as requested_by_name,
+                br2.resource_type, br2.resource_ref_id,
+                CASE 
+                  WHEN br2.resource_type = 'EnvironmentInstance' THEN ei.name
+                  WHEN br2.resource_type = 'InfraComponent' THEN ic.name
+                END as resource_name
+         FROM environment_bookings ob
+         JOIN booking_resources br2 ON ob.booking_id = br2.booking_id
+         JOIN booking_resources br ON br.resource_ref_id = br2.resource_ref_id AND br.resource_type = br2.resource_type
+         LEFT JOIN environment_instances ei ON br2.resource_type = 'EnvironmentInstance' AND br2.resource_ref_id = ei.env_instance_id
+         LEFT JOIN infra_components ic ON br2.resource_type = 'InfraComponent' AND br2.resource_ref_id = ic.infra_id
+         JOIN users ou ON ob.requested_by_user_id = ou.user_id
+         WHERE br.booking_id = $1 
+           AND ob.booking_id != $1
+           AND ob.booking_status NOT IN ('Cancelled', 'Completed')
+           AND ob.start_datetime < $2
+           AND ob.end_datetime > $3
+         ORDER BY ob.start_datetime`,
+        [id, booking.end_datetime, booking.start_datetime]
+      );
+
+      res.json({
+        booking: {
+          booking_id: booking.booking_id,
+          title: booking.title,
+          start_datetime: booking.start_datetime,
+          end_datetime: booking.end_datetime,
+          conflict_status: booking.conflict_status,
+          conflict_notes: booking.conflict_notes,
+          requested_by_name: booking.requested_by_name
+        },
+        resource_conflicts: conflictsResult.rows,
+        overlapping_bookings: overlappingResult.rows
+      });
+    } catch (error) {
+      console.error('Get conflicts error:', error);
+      res.status(500).json({ error: 'Failed to fetch conflicts' });
+    }
+  },
+
+  // Resolve conflict for a booking
+  resolveConflict: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { resolution_type, conflict_notes, resource_changes } = req.body;
+
+      // Validate UUID format
+      if (!isValidUUID(id)) {
+        return res.status(400).json({ error: 'Invalid booking ID format' });
+      }
+
+      // Valid resolution types
+      const validResolutions = ['AcceptOverlap', 'RemoveResource', 'AdjustTiming', 'RejectBooking', 'MarkResolved'];
+      if (!validResolutions.includes(resolution_type)) {
+        return res.status(400).json({ error: 'Invalid resolution type. Must be one of: ' + validResolutions.join(', ') });
+      }
+
+      // Get booking
+      const bookingResult = await db.query(
+        'SELECT * FROM environment_bookings WHERE booking_id = $1',
+        [id]
+      );
+
+      if (bookingResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+
+      const booking = bookingResult.rows[0];
+
+      // Handle different resolution types
+      switch (resolution_type) {
+        case 'AcceptOverlap':
+          // Mark conflict as resolved but keep the booking as-is
+          await db.query(
+            `UPDATE environment_bookings 
+             SET conflict_status = 'Resolved', 
+                 conflict_notes = $1,
+                 updated_at = NOW()
+             WHERE booking_id = $2`,
+            [conflict_notes || 'Overlap accepted by manager', id]
+          );
+          await db.query(
+            `UPDATE booking_resources 
+             SET resource_conflict_status = 'Resolved'
+             WHERE booking_id = $1 AND resource_conflict_status = 'PotentialConflict'`,
+            [id]
+          );
+          break;
+
+        case 'RemoveResource':
+          // Remove specific conflicting resources
+          if (resource_changes && resource_changes.remove) {
+            for (const resourceId of resource_changes.remove) {
+              await db.query(
+                'DELETE FROM booking_resources WHERE booking_id = $1 AND booking_resource_id = $2',
+                [id, resourceId]
+              );
+            }
+          }
+          // Recheck if conflicts remain
+          const remainingConflicts = await db.query(
+            `SELECT COUNT(*) FROM booking_resources 
+             WHERE booking_id = $1 AND resource_conflict_status != 'None'`,
+            [id]
+          );
+          if (parseInt(remainingConflicts.rows[0].count) === 0) {
+            await db.query(
+              `UPDATE environment_bookings 
+               SET conflict_status = 'None', 
+                   conflict_notes = $1,
+                   updated_at = NOW()
+               WHERE booking_id = $2`,
+              [conflict_notes || 'Conflicting resources removed', id]
+            );
+          }
+          break;
+
+        case 'AdjustTiming':
+          // Update booking times (provided in resource_changes.new_times)
+          if (resource_changes && resource_changes.new_times) {
+            await db.query(
+              `UPDATE environment_bookings 
+               SET start_datetime = $1, 
+                   end_datetime = $2,
+                   conflict_notes = $3,
+                   updated_at = NOW()
+               WHERE booking_id = $4`,
+              [resource_changes.new_times.start, resource_changes.new_times.end, 
+               conflict_notes || 'Timing adjusted to resolve conflict', id]
+            );
+            // Recheck conflicts with new timing
+            const resources = await db.query(
+              'SELECT resource_type, resource_ref_id FROM booking_resources WHERE booking_id = $1',
+              [id]
+            );
+            const newConflicts = await checkConflicts(
+              resources.rows, 
+              resource_changes.new_times.start, 
+              resource_changes.new_times.end, 
+              id
+            );
+            if (newConflicts.length === 0) {
+              await db.query(
+                `UPDATE environment_bookings SET conflict_status = 'None' WHERE booking_id = $1`,
+                [id]
+              );
+              await db.query(
+                `UPDATE booking_resources SET resource_conflict_status = 'None', conflicting_booking_id = NULL WHERE booking_id = $1`,
+                [id]
+              );
+            }
+          }
+          break;
+
+        case 'RejectBooking':
+          // Cancel the booking due to unresolvable conflict
+          await db.query(
+            `UPDATE environment_bookings 
+             SET booking_status = 'Cancelled', 
+                 conflict_status = 'ConflictConfirmed',
+                 conflict_notes = $1,
+                 updated_at = NOW()
+             WHERE booking_id = $2`,
+            [conflict_notes || 'Booking cancelled due to unresolvable conflict', id]
+          );
+          // Notify the requester
+          await db.query(
+            `INSERT INTO notifications (user_id, title, message, type, related_entity_type, related_entity_id)
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+            [booking.requested_by_user_id, 'Booking Rejected', 
+             `Your booking "${booking.title}" was rejected due to conflicts. ${conflict_notes || ''}`,
+             'Warning', 'EnvironmentBooking', id]
+          );
+          break;
+
+        case 'MarkResolved':
+          // Simply mark the conflict as resolved without changes
+          await db.query(
+            `UPDATE environment_bookings 
+             SET conflict_status = 'Resolved', 
+                 conflict_notes = $1,
+                 booking_status = CASE WHEN booking_status = 'PendingApproval' THEN 'Requested' ELSE booking_status END,
+                 updated_at = NOW()
+             WHERE booking_id = $2`,
+            [conflict_notes || 'Conflict marked as resolved', id]
+          );
+          await db.query(
+            `UPDATE booking_resources 
+             SET resource_conflict_status = 'Resolved'
+             WHERE booking_id = $1`,
+            [id]
+          );
+          break;
+      }
+
+      // Log activity
+      await db.query(
+        `INSERT INTO activities (user_id, action, entity_type, entity_id, entity_name, details)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [req.user.user_id, 'CONFLICT_RESOLVED', 'EnvironmentBooking', id, booking.title,
+         JSON.stringify({ resolution_type, conflict_notes })]
+      );
+
+      // Get updated booking
+      const updatedBooking = await db.query(
+        'SELECT * FROM environment_bookings WHERE booking_id = $1',
+        [id]
+      );
+
+      res.json({
+        message: 'Conflict resolution applied',
+        resolution_type,
+        booking: updatedBooking.rows[0]
+      });
+    } catch (error) {
+      console.error('Resolve conflict error:', error);
+      res.status(500).json({ error: 'Failed to resolve conflict' });
+    }
+  },
+
+  // Get all bookings with conflicts
+  getConflictingBookings: async (req, res) => {
+    try {
+      const result = await db.query(
+        `SELECT eb.*, 
+                u.display_name as requested_by_name,
+                ug.name as owning_group_name,
+                COUNT(DISTINCT br.booking_resource_id) as resource_count,
+                COUNT(DISTINCT CASE WHEN br.resource_conflict_status != 'None' THEN br.booking_resource_id END) as conflicting_resources_count
+         FROM environment_bookings eb
+         JOIN users u ON eb.requested_by_user_id = u.user_id
+         LEFT JOIN user_groups ug ON eb.owning_group_id = ug.group_id
+         LEFT JOIN booking_resources br ON eb.booking_id = br.booking_id
+         WHERE eb.conflict_status IN ('PotentialConflict', 'ConflictConfirmed')
+           AND eb.booking_status NOT IN ('Cancelled', 'Completed')
+         GROUP BY eb.booking_id, u.display_name, ug.name
+         ORDER BY eb.start_datetime`,
+      );
+
+      res.json({ bookings: result.rows });
+    } catch (error) {
+      console.error('Get conflicting bookings error:', error);
+      res.status(500).json({ error: 'Failed to fetch conflicting bookings' });
+    }
   }
 };
 

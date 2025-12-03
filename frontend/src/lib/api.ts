@@ -138,6 +138,10 @@ export const bookingsAPI = {
   removeApplication: (id: string, applicationId: string) => api.delete(`/bookings/${id}/applications/${applicationId}`),
   getRelatedInterfaces: (id: string) => api.get(`/bookings/${id}/interfaces`),
   getRelatedInstances: (id: string) => api.get(`/bookings/${id}/instances`),
+  // Conflict management
+  getBookingConflicts: (id: string) => api.get(`/bookings/${id}/conflicts`),
+  resolveConflict: (id: string, data: any) => api.post(`/bookings/${id}/conflicts/resolve`, data),
+  getAllConflictingBookings: () => api.get('/bookings/all-conflicts'),
 };
 
 // Releases API

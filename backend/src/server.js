@@ -89,22 +89,23 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Rate limiting for API protection
+// Rate limiting for API protection (disabled for development)
 const generalLimiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 10000, // High limit for dev
   message: { error: 'Too many requests, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => process.env.NODE_ENV === 'development' && req.path === '/health'
+  skip: (req) => process.env.NODE_ENV !== 'production' // Skip rate limiting in non-production
 });
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.AUTH_RATE_LIMIT_MAX) || 5, // 5 login attempts per 15 min
+  max: parseInt(process.env.AUTH_RATE_LIMIT_MAX) || 100, // Higher limit for dev
   message: { error: 'Too many login attempts, please try again later' },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  skip: (req) => process.env.NODE_ENV !== 'production' // Skip rate limiting in non-production
 });
 
 app.use(generalLimiter);

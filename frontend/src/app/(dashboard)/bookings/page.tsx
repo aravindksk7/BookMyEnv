@@ -38,6 +38,10 @@ import {
   Divider,
   Autocomplete,
   Collapse,
+  RadioGroup,
+  Radio,
+  FormControlLabel,
+  FormLabel,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -59,6 +63,8 @@ import {
   SwapHoriz as InterfaceIcon,
   Storage as InstanceIcon,
   Link as LinkIcon,
+  Gavel as ResolveIcon,
+  PriorityHigh as ConflictIcon,
 } from '@mui/icons-material';
 import { bookingsAPI, environmentsAPI, applicationsAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -139,6 +145,56 @@ interface Instance {
   resource_booking_status?: string;
 }
 
+interface ResourceConflict {
+  booking_resource_id: string;
+  resource_type: string;
+  resource_ref_id: string;
+  resource_name: string;
+  environment_name: string;
+  resource_conflict_status: string;
+  conflicting_booking_id: string;
+  conflicting_booking_title: string;
+  conflicting_start: string;
+  conflicting_end: string;
+  conflicting_booking_status: string;
+  conflicting_requested_by: string;
+}
+
+interface OverlappingBooking {
+  booking_id: string;
+  title: string;
+  start_datetime: string;
+  end_datetime: string;
+  booking_status: string;
+  test_phase: string;
+  conflict_status: string;
+  requested_by_name: string;
+  resource_type: string;
+  resource_name: string;
+}
+
+interface ConflictDetails {
+  booking: {
+    booking_id: string;
+    title: string;
+    start_datetime: string;
+    end_datetime: string;
+    conflict_status: string;
+    conflict_notes: string;
+    requested_by_name: string;
+  };
+  resource_conflicts: ResourceConflict[];
+  overlapping_bookings: OverlappingBooking[];
+}
+
+const RESOLUTION_TYPES = [
+  { value: 'AcceptOverlap', label: 'Accept Overlap', description: 'Both bookings will share the resource. Suitable when coordination is possible.' },
+  { value: 'MarkResolved', label: 'Mark as Resolved', description: 'Mark conflict as resolved without changes. Use when conflict has been manually handled.' },
+  { value: 'RemoveResource', label: 'Remove Conflicting Resource', description: 'Remove the conflicting resource from this booking.' },
+  { value: 'AdjustTiming', label: 'Adjust Booking Time', description: 'Change start/end times to avoid the conflict.' },
+  { value: 'RejectBooking', label: 'Reject Booking', description: 'Cancel this booking due to unresolvable conflict.' },
+];
+
 const TEST_PHASES = ['SIT', 'UAT', 'NFT', 'Performance', 'DRRehearsal', 'PenTest', 'Other'];
 const BOOKING_TYPES = ['SingleEnv', 'MultiEnvE2E'];
 const BOOKING_STATUSES = ['Requested', 'PendingApproval', 'Approved', 'Active', 'Completed', 'Cancelled'];
@@ -164,6 +220,18 @@ export default function BookingsPage() {
   const [relatedInterfaces, setRelatedInterfaces] = useState<Interface[]>([]);
   const [relatedInstances, setRelatedInstances] = useState<Instance[]>([]);
   const [loadingRelated, setLoadingRelated] = useState(false);
+
+  // Conflict management state
+  const [conflictDetails, setConflictDetails] = useState<ConflictDetails | null>(null);
+  const [conflictingBookings, setConflictingBookings] = useState<Booking[]>([]);
+  const [loadingConflicts, setLoadingConflicts] = useState(false);
+  const [resolveDialogOpen, setResolveDialogOpen] = useState(false);
+  const [selectedResolutionType, setSelectedResolutionType] = useState('AcceptOverlap');
+  const [resolutionNotes, setResolutionNotes] = useState('');
+  const [resolvingBookingId, setResolvingBookingId] = useState<string | null>(null);
+  const [adjustedStartTime, setAdjustedStartTime] = useState('');
+  const [adjustedEndTime, setAdjustedEndTime] = useState('');
+  const [resourcesToRemove, setResourcesToRemove] = useState<string[]>([]);
 
   // View mode
   const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table');
@@ -277,6 +345,84 @@ export default function BookingsPage() {
     }
   }, []);
 
+  // Fetch conflict details for a booking
+  const fetchConflictDetails = useCallback(async (bookingId: string) => {
+    try {
+      setLoadingConflicts(true);
+      const response = await bookingsAPI.getBookingConflicts(bookingId);
+      setConflictDetails(response.data);
+    } catch (err: any) {
+      console.error('Failed to fetch conflict details:', err);
+      setError('Failed to fetch conflict details');
+    } finally {
+      setLoadingConflicts(false);
+    }
+  }, []);
+
+  // Fetch all conflicting bookings
+  const fetchConflictingBookings = useCallback(async () => {
+    try {
+      setLoadingConflicts(true);
+      const response = await bookingsAPI.getAllConflictingBookings();
+      setConflictingBookings(response.data.bookings || []);
+    } catch (err: any) {
+      console.error('Failed to fetch conflicting bookings:', err);
+    } finally {
+      setLoadingConflicts(false);
+    }
+  }, []);
+
+  // Open resolve conflict dialog
+  const openResolveDialog = (bookingId: string) => {
+    setResolvingBookingId(bookingId);
+    setSelectedResolutionType('AcceptOverlap');
+    setResolutionNotes('');
+    setResourcesToRemove([]);
+    setAdjustedStartTime('');
+    setAdjustedEndTime('');
+    fetchConflictDetails(bookingId);
+    setResolveDialogOpen(true);
+  };
+
+  // Handle conflict resolution
+  const handleResolveConflict = async () => {
+    if (!resolvingBookingId) return;
+
+    try {
+      const data: any = {
+        resolution_type: selectedResolutionType,
+        conflict_notes: resolutionNotes,
+      };
+
+      if (selectedResolutionType === 'RemoveResource' && resourcesToRemove.length > 0) {
+        data.resource_changes = { remove: resourcesToRemove };
+      }
+
+      if (selectedResolutionType === 'AdjustTiming' && adjustedStartTime && adjustedEndTime) {
+        data.resource_changes = {
+          new_times: {
+            start: adjustedStartTime,
+            end: adjustedEndTime,
+          },
+        };
+      }
+
+      await bookingsAPI.resolveConflict(resolvingBookingId, data);
+      setSuccess('Conflict resolved successfully');
+      setResolveDialogOpen(false);
+      fetchData();
+      fetchConflictingBookings();
+      
+      // Refresh viewing booking if applicable
+      if (viewingBooking?.booking_id === resolvingBookingId) {
+        await fetchBookingDetails(resolvingBookingId);
+        await fetchConflictDetails(resolvingBookingId);
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.error || err.message || 'Failed to resolve conflict');
+    }
+  };
+
   // Open Booking View
   const openBookingView = async (booking: Booking) => {
     setViewingBooking(booking);
@@ -284,6 +430,11 @@ export default function BookingsPage() {
     setMainTab('view');
     await fetchBookingDetails(booking.booking_id);
     await fetchBookingRelatedData(booking.booking_id);
+    if (booking.conflict_status !== 'None') {
+      await fetchConflictDetails(booking.booking_id);
+    } else {
+      setConflictDetails(null);
+    }
   };
 
   // Close Booking View and return to list
@@ -294,6 +445,7 @@ export default function BookingsPage() {
     setRelatedApplications([]);
     setRelatedInterfaces([]);
     setRelatedInstances([]);
+    setConflictDetails(null);
   };
 
   const checkConflicts = async () => {
@@ -482,6 +634,11 @@ export default function BookingsPage() {
     if (tabValue === 1 && !['Active', 'Approved'].includes(booking.booking_status)) return false;
     if (tabValue === 2 && !['Requested', 'PendingApproval'].includes(booking.booking_status)) return false;
     if (tabValue === 3 && !['Completed', 'Cancelled'].includes(booking.booking_status)) return false;
+    if (tabValue === 4) {
+      // Conflicts tab - show only bookings with active conflicts
+      if (booking.conflict_status === 'None' || booking.conflict_status === 'Resolved') return false;
+      if (['Completed', 'Cancelled'].includes(booking.booking_status)) return false;
+    }
 
     // Search filter
     if (searchQuery) {
@@ -703,12 +860,20 @@ export default function BookingsPage() {
           </CardContent>
         </Card>
 
-        {/* Tabs for Applications, Interfaces, Instances */}
+        {/* Tabs for Applications, Interfaces, Instances, Conflicts */}
         <Card>
           <Tabs value={viewTabValue} onChange={(_, v) => setViewTabValue(v)} sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}>
             <Tab icon={<AppsIcon />} iconPosition="start" label={`Applications (${relatedApplications.length})`} />
             <Tab icon={<InterfaceIcon />} iconPosition="start" label={`Interfaces (${relatedInterfaces.length})`} />
             <Tab icon={<InstanceIcon />} iconPosition="start" label={`Instances (${relatedInstances.length})`} />
+            <Tab 
+              icon={<ConflictIcon />} 
+              iconPosition="start" 
+              label={`Conflicts ${viewingBooking.conflict_status !== 'None' ? `(${conflictDetails?.overlapping_bookings?.length || 0})` : ''}`}
+              sx={{ 
+                color: viewingBooking.conflict_status !== 'None' && viewingBooking.conflict_status !== 'Resolved' ? 'warning.main' : undefined 
+              }}
+            />
           </Tabs>
 
           {loadingRelated ? (
@@ -859,6 +1024,142 @@ export default function BookingsPage() {
                     </TableBody>
                   </Table>
                 </TableContainer>
+              )}
+
+              {/* Conflicts Tab */}
+              {viewTabValue === 3 && (
+                <Box sx={{ p: 2 }}>
+                  {loadingConflicts ? (
+                    <LinearProgress />
+                  ) : viewingBooking.conflict_status === 'None' ? (
+                    <Alert severity="success" sx={{ mb: 2 }}>
+                      <Typography>No conflicts detected for this booking.</Typography>
+                    </Alert>
+                  ) : (
+                    <>
+                      {/* Conflict Summary */}
+                      <Alert 
+                        severity={viewingBooking.conflict_status === 'Resolved' ? 'success' : 'warning'} 
+                        sx={{ mb: 2 }}
+                        action={
+                          viewingBooking.conflict_status !== 'Resolved' && canEdit && (
+                            <Button 
+                              color="inherit" 
+                              size="small" 
+                              startIcon={<ResolveIcon />}
+                              onClick={() => openResolveDialog(viewingBooking.booking_id)}
+                            >
+                              Resolve
+                            </Button>
+                          )
+                        }
+                      >
+                        <Typography variant="subtitle2" gutterBottom>
+                          Conflict Status: {viewingBooking.conflict_status}
+                        </Typography>
+                        {viewingBooking.conflict_notes && (
+                          <Typography variant="body2">{viewingBooking.conflict_notes}</Typography>
+                        )}
+                      </Alert>
+
+                      {/* Overlapping Bookings */}
+                      {conflictDetails?.overlapping_bookings && conflictDetails.overlapping_bookings.length > 0 && (
+                        <Box sx={{ mb: 3 }}>
+                          <Typography variant="h6" gutterBottom>
+                            <WarningIcon sx={{ verticalAlign: 'middle', mr: 1, color: 'warning.main' }} />
+                            Overlapping Bookings ({conflictDetails.overlapping_bookings.length})
+                          </Typography>
+                          <TableContainer component={Paper} variant="outlined">
+                            <Table size="small">
+                              <TableHead>
+                                <TableRow>
+                                  <TableCell>Booking</TableCell>
+                                  <TableCell>Time Period</TableCell>
+                                  <TableCell>Status</TableCell>
+                                  <TableCell>Requested By</TableCell>
+                                  <TableCell>Conflicting Resource</TableCell>
+                                </TableRow>
+                              </TableHead>
+                              <TableBody>
+                                {conflictDetails.overlapping_bookings.map((ob, idx) => (
+                                  <TableRow key={`${ob.booking_id}-${idx}`} hover>
+                                    <TableCell>
+                                      <Typography fontWeight={500}>{ob.title || 'Untitled'}</Typography>
+                                      <Typography variant="caption" color="text.secondary">{ob.test_phase}</Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Typography variant="body2">
+                                        {new Date(ob.start_datetime).toLocaleDateString()} - {new Date(ob.end_datetime).toLocaleDateString()}
+                                      </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Chip label={ob.booking_status} size="small" color={getStatusColor(ob.booking_status)} />
+                                    </TableCell>
+                                    <TableCell>{ob.requested_by_name}</TableCell>
+                                    <TableCell>
+                                      <Chip label={ob.resource_name || 'Unknown'} size="small" variant="outlined" />
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </TableContainer>
+                        </Box>
+                      )}
+
+                      {/* Resource Conflicts */}
+                      {conflictDetails?.resource_conflicts && conflictDetails.resource_conflicts.length > 0 && (
+                        <Box>
+                          <Typography variant="h6" gutterBottom>
+                            <InstanceIcon sx={{ verticalAlign: 'middle', mr: 1 }} />
+                            Resource Conflicts ({conflictDetails.resource_conflicts.length})
+                          </Typography>
+                          <TableContainer component={Paper} variant="outlined">
+                            <Table size="small">
+                              <TableHead>
+                                <TableRow>
+                                  <TableCell>Resource</TableCell>
+                                  <TableCell>Environment</TableCell>
+                                  <TableCell>Conflict Status</TableCell>
+                                  <TableCell>Conflicting Booking</TableCell>
+                                </TableRow>
+                              </TableHead>
+                              <TableBody>
+                                {conflictDetails.resource_conflicts.map((rc) => (
+                                  <TableRow key={rc.booking_resource_id} hover>
+                                    <TableCell>
+                                      <Typography fontWeight={500}>{rc.resource_name || rc.resource_ref_id}</Typography>
+                                      <Typography variant="caption" color="text.secondary">{rc.resource_type}</Typography>
+                                    </TableCell>
+                                    <TableCell>{rc.environment_name || '-'}</TableCell>
+                                    <TableCell>
+                                      <Chip 
+                                        label={rc.resource_conflict_status} 
+                                        size="small" 
+                                        color={getConflictColor(rc.resource_conflict_status)} 
+                                      />
+                                    </TableCell>
+                                    <TableCell>
+                                      {rc.conflicting_booking_title ? (
+                                        <Box>
+                                          <Typography variant="body2">{rc.conflicting_booking_title}</Typography>
+                                          <Typography variant="caption" color="text.secondary">
+                                            {rc.conflicting_start && new Date(rc.conflicting_start).toLocaleDateString()} - 
+                                            {rc.conflicting_end && new Date(rc.conflicting_end).toLocaleDateString()}
+                                          </Typography>
+                                        </Box>
+                                      ) : '-'}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </TableContainer>
+                        </Box>
+                      )}
+                    </>
+                  )}
+                </Box>
               )}
             </>
           )}
@@ -1106,6 +1407,14 @@ export default function BookingsPage() {
               <Tab label={`Active (${bookings.filter((b: any) => ['Active', 'Approved'].includes(b.booking_status)).length})`} />
               <Tab label={`Pending (${bookings.filter((b: any) => ['Requested', 'PendingApproval'].includes(b.booking_status)).length})`} />
               <Tab label="Past" />
+              <Tab 
+                label={`Conflicts (${bookings.filter((b: any) => b.conflict_status !== 'None' && b.conflict_status !== 'Resolved' && !['Completed', 'Cancelled'].includes(b.booking_status)).length})`}
+                icon={<WarningIcon />}
+                iconPosition="start"
+                sx={{
+                  color: bookings.filter((b: any) => b.conflict_status !== 'None' && b.conflict_status !== 'Resolved' && !['Completed', 'Cancelled'].includes(b.booking_status)).length > 0 ? 'warning.main' : undefined
+                }}
+              />
             </Tabs>
           </Card>
 
@@ -1163,6 +1472,13 @@ export default function BookingsPage() {
                           </Tooltip>
                           {canEdit && !['Completed', 'Cancelled'].includes(booking.booking_status) && (
                             <>
+                              {booking.conflict_status !== 'None' && booking.conflict_status !== 'Resolved' && (
+                                <Tooltip title="Resolve Conflict">
+                                  <IconButton size="small" color="warning" onClick={() => openResolveDialog(booking.booking_id)}>
+                                    <ResolveIcon />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
                               <Tooltip title="Edit">
                                 <IconButton size="small" onClick={() => openEditDialog(booking)}>
                                   <EditIcon />
@@ -1514,6 +1830,169 @@ export default function BookingsPage() {
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
           <Button color="error" variant="contained" onClick={handleDeleteBooking}>
             Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Resolve Conflict Dialog */}
+      <Dialog open={resolveDialogOpen} onClose={() => setResolveDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <ResolveIcon />
+            Resolve Booking Conflict
+          </Box>
+        </DialogTitle>
+        <DialogContent dividers>
+          {loadingConflicts ? (
+            <LinearProgress />
+          ) : (
+            <>
+              {/* Conflict Summary */}
+              {conflictDetails && (
+                <Alert severity="info" sx={{ mb: 3 }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Booking: {conflictDetails.booking.title}
+                  </Typography>
+                  <Typography variant="body2">
+                    Period: {new Date(conflictDetails.booking.start_datetime).toLocaleDateString()} - {new Date(conflictDetails.booking.end_datetime).toLocaleDateString()}
+                  </Typography>
+                  {conflictDetails.overlapping_bookings.length > 0 && (
+                    <Typography variant="body2" sx={{ mt: 1 }}>
+                      <WarningIcon sx={{ fontSize: 16, verticalAlign: 'middle', mr: 0.5 }} />
+                      {conflictDetails.overlapping_bookings.length} overlapping booking(s) detected
+                    </Typography>
+                  )}
+                </Alert>
+              )}
+
+              {/* Resolution Type Selection */}
+              <FormControl component="fieldset" sx={{ mb: 3, width: '100%' }}>
+                <FormLabel component="legend" sx={{ mb: 2 }}>Select Resolution Method</FormLabel>
+                <RadioGroup
+                  value={selectedResolutionType}
+                  onChange={(e) => setSelectedResolutionType(e.target.value)}
+                >
+                  {RESOLUTION_TYPES.map((rt) => (
+                    <Paper 
+                      key={rt.value} 
+                      variant="outlined" 
+                      sx={{ 
+                        mb: 1, 
+                        p: 1.5,
+                        border: selectedResolutionType === rt.value ? 2 : 1,
+                        borderColor: selectedResolutionType === rt.value ? 'primary.main' : 'divider',
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => setSelectedResolutionType(rt.value)}
+                    >
+                      <FormControlLabel
+                        value={rt.value}
+                        control={<Radio />}
+                        label={
+                          <Box>
+                            <Typography fontWeight={500}>{rt.label}</Typography>
+                            <Typography variant="body2" color="text.secondary">{rt.description}</Typography>
+                          </Box>
+                        }
+                        sx={{ width: '100%', m: 0 }}
+                      />
+                    </Paper>
+                  ))}
+                </RadioGroup>
+              </FormControl>
+
+              {/* Conditional Fields based on Resolution Type */}
+              {selectedResolutionType === 'AdjustTiming' && (
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="subtitle2" gutterBottom>New Booking Time</Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
+                      <TextField
+                        label="New Start Date/Time"
+                        type="datetime-local"
+                        fullWidth
+                        value={adjustedStartTime}
+                        onChange={(e) => setAdjustedStartTime(e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <TextField
+                        label="New End Date/Time"
+                        type="datetime-local"
+                        fullWidth
+                        value={adjustedEndTime}
+                        onChange={(e) => setAdjustedEndTime(e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </Grid>
+                  </Grid>
+                </Box>
+              )}
+
+              {selectedResolutionType === 'RemoveResource' && conflictDetails?.resource_conflicts && (
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="subtitle2" gutterBottom>Select Resources to Remove</Typography>
+                  <Paper variant="outlined" sx={{ p: 2 }}>
+                    {conflictDetails.resource_conflicts.map((rc) => (
+                      <FormControlLabel
+                        key={rc.booking_resource_id}
+                        control={
+                          <Radio
+                            checked={resourcesToRemove.includes(rc.booking_resource_id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setResourcesToRemove([...resourcesToRemove, rc.booking_resource_id]);
+                              } else {
+                                setResourcesToRemove(resourcesToRemove.filter(id => id !== rc.booking_resource_id));
+                              }
+                            }}
+                          />
+                        }
+                        label={
+                          <Box>
+                            <Typography>{rc.resource_name || rc.resource_ref_id}</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Conflicts with: {rc.conflicting_booking_title || 'Unknown'}
+                            </Typography>
+                          </Box>
+                        }
+                      />
+                    ))}
+                    {conflictDetails.resource_conflicts.length === 0 && (
+                      <Typography color="text.secondary">No specific resource conflicts found</Typography>
+                    )}
+                  </Paper>
+                </Box>
+              )}
+
+              {/* Resolution Notes */}
+              <TextField
+                label="Resolution Notes"
+                fullWidth
+                multiline
+                rows={3}
+                value={resolutionNotes}
+                onChange={(e) => setResolutionNotes(e.target.value)}
+                placeholder="Add notes about how this conflict was resolved..."
+                helperText="These notes will be saved with the booking for future reference"
+              />
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setResolveDialogOpen(false)}>Cancel</Button>
+          <Button 
+            variant="contained" 
+            color={selectedResolutionType === 'RejectBooking' ? 'error' : 'primary'}
+            onClick={handleResolveConflict}
+            disabled={
+              (selectedResolutionType === 'AdjustTiming' && (!adjustedStartTime || !adjustedEndTime)) ||
+              (selectedResolutionType === 'RemoveResource' && resourcesToRemove.length === 0)
+            }
+            startIcon={<ResolveIcon />}
+          >
+            {selectedResolutionType === 'RejectBooking' ? 'Reject Booking' : 'Apply Resolution'}
           </Button>
         </DialogActions>
       </Dialog>

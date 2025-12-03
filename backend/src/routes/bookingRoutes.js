@@ -10,6 +10,9 @@ router.use(authenticate);
 // Statistics (must be before :id routes)
 router.get('/statistics', bookingController.getStatistics);
 
+// Conflict management routes (must be before :id routes)
+router.get('/all-conflicts', bookingController.getConflictingBookings);
+
 // Bookings
 router.get('/', bookingController.getAll);
 router.get('/calendar', bookingController.getCalendar);
@@ -22,6 +25,10 @@ router.delete('/:id', bookingController.delete);
 
 // Booking status
 router.put('/:id/status', bookingController.updateStatus);
+
+// Booking conflict management
+router.get('/:id/conflicts', bookingController.getConflicts);
+router.post('/:id/conflicts/resolve', bookingController.resolveConflict);
 
 // Booking resources
 router.post('/:id/resources', bookingController.addResource);
