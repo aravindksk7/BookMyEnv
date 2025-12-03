@@ -80,7 +80,11 @@ export const environmentsAPI = {
   update: (id: string, data: any) => api.put(`/environments/${id}`, data),
   delete: (id: string) => api.delete(`/environments/${id}`),
   getStatistics: () => api.get('/environments/statistics'),
+  // Related entities
+  getRelatedConfigs: (id: string) => api.get(`/environments/${id}/related-configs`),
+  getRelatedInterfaces: (id: string) => api.get(`/environments/${id}/related-interfaces`),
   // Instances
+  getAllInstances: () => api.get('/instances'), // Get all instances across environments
   getInstances: (envId: string) => api.get(`/environments/${envId}/instances`),
   createInstance: (envId: string, data: any) => api.post(`/environments/${envId}/instances`, data),
   updateInstance: (envId: string, instanceId: string, data: any) => api.put(`/environments/${envId}/instances/${instanceId}`, data),
@@ -103,6 +107,10 @@ export const applicationsAPI = {
   create: (data: any) => api.post('/applications', data),
   update: (id: string, data: any) => api.put(`/applications/${id}`, data),
   delete: (id: string) => api.delete(`/applications/${id}`),
+  // Related entities
+  getRelatedConfigs: (id: string) => api.get(`/applications/${id}/related-configs`),
+  getRelatedInterfaces: (id: string) => api.get(`/applications/${id}/related-interfaces`),
+  getRelatedTestData: (id: string) => api.get(`/applications/${id}/related-testdata`),
   // Components
   getComponents: (appId: string) => api.get(`/applications/${appId}/components`),
   createComponent: (appId: string, data: any) => api.post(`/applications/${appId}/components`, data),
@@ -124,6 +132,12 @@ export const bookingsAPI = {
   getMyBookings: () => api.get('/bookings/my'),
   getConflicts: (params: any) => api.get('/bookings/conflicts', { params }),
   getStatistics: () => api.get('/bookings/statistics'),
+  // Related entities
+  getRelatedApplications: (id: string) => api.get(`/bookings/${id}/applications`),
+  addApplication: (id: string, data: any) => api.post(`/bookings/${id}/applications`, data),
+  removeApplication: (id: string, applicationId: string) => api.delete(`/bookings/${id}/applications/${applicationId}`),
+  getRelatedInterfaces: (id: string) => api.get(`/bookings/${id}/interfaces`),
+  getRelatedInstances: (id: string) => api.get(`/bookings/${id}/instances`),
 };
 
 // Releases API
@@ -170,6 +184,76 @@ export const changesAPI = {
 export const dashboardAPI = {
   getStats: () => api.get('/dashboard/stats'),
   getActivities: (params?: any) => api.get('/activities', { params }),
+};
+
+// Interfaces API
+export const interfacesAPI = {
+  getAll: (params?: any) => api.get('/interfaces', { params }),
+  getById: (id: string) => api.get(`/interfaces/${id}`),
+  create: (data: any) => api.post('/interfaces', data),
+  update: (id: string, data: any) => api.put(`/interfaces/${id}`, data),
+  delete: (id: string) => api.delete(`/interfaces/${id}`),
+  // Endpoints
+  getEndpoints: (interfaceId: string) => api.get(`/interfaces/${interfaceId}/endpoints`),
+  createEndpoint: (interfaceId: string, data: any) => api.post(`/interfaces/${interfaceId}/endpoints`, data),
+  updateEndpoint: (interfaceId: string, endpointId: string, data: any) => api.put(`/interfaces/${interfaceId}/endpoints/${endpointId}`, data),
+  deleteEndpoint: (interfaceId: string, endpointId: string) => api.delete(`/interfaces/${interfaceId}/endpoints/${endpointId}`),
+};
+
+// Component Instances API (for linking)
+export const componentInstancesAPI = {
+  getAll: (params?: any) => api.get('/component-instances', { params }),
+};
+
+// Config API
+export const configsAPI = {
+  getAll: (params?: any) => api.get('/configs', { params }),
+  getById: (id: string) => api.get(`/configs/${id}`),
+  create: (data: any) => api.post('/configs', data),
+  update: (id: string, data: any) => api.put(`/configs/${id}`, data),
+  delete: (id: string) => api.delete(`/configs/${id}`),
+  // Items
+  getItems: (configId: string) => api.get(`/configs/${configId}/items`),
+  createItem: (configId: string, data: any) => api.post(`/configs/${configId}/items`, data),
+  updateItem: (configId: string, itemId: string, data: any) => api.put(`/configs/${configId}/items/${itemId}`, data),
+  deleteItem: (configId: string, itemId: string) => api.delete(`/configs/${configId}/items/${itemId}`),
+};
+
+// Test Data API
+export const testDataAPI = {
+  getAll: (params?: any) => api.get('/test-data', { params }),
+  getById: (id: string) => api.get(`/test-data/${id}`),
+  create: (data: any) => api.post('/test-data', data),
+  update: (id: string, data: any) => api.put(`/test-data/${id}`, data),
+  delete: (id: string) => api.delete(`/test-data/${id}`),
+  markRefreshed: (id: string) => api.post(`/test-data/${id}/refresh`),
+};
+
+// Infra Components API (additional for direct access)
+export const infraAPI = {
+  getByInstance: (envId: string, instanceId: string) => api.get(`/environments/${envId}/instances/${instanceId}/infra`),
+  create: (envId: string, instanceId: string, data: any) => api.post(`/environments/${envId}/instances/${instanceId}/infra`, data),
+  update: (envId: string, instanceId: string, infraId: string, data: any) => api.put(`/environments/${envId}/instances/${instanceId}/infra/${infraId}`, data),
+  delete: (envId: string, instanceId: string, infraId: string) => api.delete(`/environments/${envId}/instances/${instanceId}/infra/${infraId}`),
+};
+
+// Topology API
+export const topologyAPI = {
+  getAll: () => api.get('/topology'),
+  getEnvironmentTopology: (envId: string) => api.get(`/topology/environments/${envId}`),
+  getApplicationTopology: (appId: string) => api.get(`/topology/applications/${appId}`),
+};
+
+// Bulk Upload API
+export const bulkUploadAPI = {
+  getTemplate: (type: string) => api.get(`/bulk-upload/template/${type}`, { responseType: 'blob' }),
+  uploadEnvironments: (csvContent: string) => api.post('/bulk-upload/environments', { csvContent }),
+  uploadInstances: (csvContent: string) => api.post('/bulk-upload/instances', { csvContent }),
+  uploadApplications: (csvContent: string) => api.post('/bulk-upload/applications', { csvContent }),
+  uploadInterfaces: (csvContent: string) => api.post('/bulk-upload/interfaces', { csvContent }),
+  uploadComponents: (csvContent: string) => api.post('/bulk-upload/components', { csvContent }),
+  uploadAppInstances: (csvContent: string) => api.post('/bulk-upload/app-instances', { csvContent }),
+  uploadInfraComponents: (csvContent: string) => api.post('/bulk-upload/infra-components', { csvContent }),
 };
 
 export default api;

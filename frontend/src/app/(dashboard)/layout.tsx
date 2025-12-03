@@ -32,7 +32,6 @@ import {
   Computer as EnvironmentIcon,
   CalendarMonth as BookingIcon,
   Rocket as ReleaseIcon,
-  Apps as ApplicationIcon,
   Group as GroupIcon,
   Settings as SettingsIcon,
   IntegrationInstructions as IntegrationIcon,
@@ -40,6 +39,8 @@ import {
   Logout as LogoutIcon,
   Person as PersonIcon,
   Analytics as MonitoringIcon,
+  Storage as TestDataIcon,
+  AccountTree as TopologyIcon,
 } from '@mui/icons-material';
 import { useAuth } from '@/contexts/AuthContext';
 import { dashboardAPI } from '@/lib/api';
@@ -92,10 +93,11 @@ const drawerWidth = 260;
 const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
   { text: 'Monitoring', icon: <MonitoringIcon />, path: '/monitoring' },
+  { text: 'Topology', icon: <TopologyIcon />, path: '/topology' },
   { text: 'Environments', icon: <EnvironmentIcon />, path: '/environments' },
   { text: 'Bookings', icon: <BookingIcon />, path: '/bookings' },
   { text: 'Releases', icon: <ReleaseIcon />, path: '/releases' },
-  { text: 'Applications', icon: <ApplicationIcon />, path: '/applications' },
+  { text: 'Test Data', icon: <TestDataIcon />, path: '/testdata' },
   { text: 'Groups', icon: <GroupIcon />, path: '/groups' },
   { text: 'Integrations', icon: <IntegrationIcon />, path: '/integrations' },
   { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },

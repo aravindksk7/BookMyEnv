@@ -201,6 +201,8 @@ CREATE TABLE interfaces (
     external_party VARCHAR(255),
     sla VARCHAR(100),
     contract_id VARCHAR(100),
+    source_application_id UUID,
+    target_application_id UUID,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -374,6 +376,12 @@ CREATE TABLE environment_bookings (
 -- Add foreign key for infra_components
 ALTER TABLE infra_components ADD CONSTRAINT fk_infra_current_booking 
     FOREIGN KEY (current_booking_id) REFERENCES environment_bookings(booking_id) ON DELETE SET NULL;
+
+-- Add foreign keys for interfaces (applications are defined later)
+ALTER TABLE interfaces ADD CONSTRAINT fk_interface_source_application
+    FOREIGN KEY (source_application_id) REFERENCES applications(application_id) ON DELETE SET NULL;
+ALTER TABLE interfaces ADD CONSTRAINT fk_interface_target_application
+    FOREIGN KEY (target_application_id) REFERENCES applications(application_id) ON DELETE SET NULL;
 
 -- Booking Resources
 CREATE TABLE booking_resources (

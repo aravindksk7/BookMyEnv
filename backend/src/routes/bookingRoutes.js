@@ -27,4 +27,11 @@ router.put('/:id/status', bookingController.updateStatus);
 router.post('/:id/resources', bookingController.addResource);
 router.delete('/:id/resources/:resourceId', bookingController.removeResource);
 
+// Booking relationships
+router.get('/:id/applications', bookingController.getRelatedApplications);
+router.post('/:id/applications', bookingController.addApplication);
+router.delete('/:id/applications/:applicationId', bookingController.removeApplication);
+router.get('/:id/interfaces', bookingController.getRelatedInterfaces);
+router.get('/:id/instances', bookingController.getRelatedInstances);
+
 module.exports = router;

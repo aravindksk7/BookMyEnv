@@ -1,0 +1,13 @@
+environment_name,name,operational_status,availability_window,capacity,primary_location,bookable
+Development-Alpha,DEV-Alpha-1,Available,24x7,5,Sydney DC,true
+Development-Alpha,DEV-Alpha-2,Available,24x7,5,Sydney DC,true
+Development-Beta,DEV-Beta-1,Available,24x7,5,Sydney DC,true
+Integration-Testing,INT-Instance-A,Available,Business Hours,10,Sydney DC,true
+Integration-Testing,INT-Instance-B,Available,Business Hours,10,Melbourne DC,true
+Integration-Testing,INT-Instance-C,Maintenance,Business Hours,10,Sydney DC,false
+UAT-Environment,UAT-Instance-1,Available,Business Hours,20,Sydney DC,true
+UAT-Environment,UAT-Instance-2,Available,Business Hours,20,Melbourne DC,true
+Performance-Testing,PERF-Instance-1,Available,24x7,50,Sydney DC,true
+DR-Failover,DR-Instance-1,Available,24x7,100,Brisbane DC,true
+Training-Environment,TRAIN-Instance-1,Available,Business Hours,30,Sydney DC,true
+Sandbox-Innovation,SANDBOX-1,Available,24x7,5,Sydney DC,true

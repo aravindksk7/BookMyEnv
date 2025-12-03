@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const http = require('http');
 const { Server } = require('socket.io');
 const rateLimit = require('express-rate-limit');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 // Import routes
@@ -17,6 +18,11 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const releaseRoutes = require('./routes/releaseRoutes');
 const integrationRoutes = require('./routes/integrationRoutes');
 const changeRoutes = require('./routes/changeRoutes');
+const interfaceRoutes = require('./routes/interfaceRoutes');
+const configRoutes = require('./routes/configRoutes');
+const testDataRoutes = require('./routes/testDataRoutes');
+const topologyRoutes = require('./routes/topologyRoutes');
+const bulkUploadRoutes = require('./routes/bulkUploadRoutes');
 
 // Import database
 const db = require('./config/database');
@@ -83,13 +89,14 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Rate limiting
+// Rate limiting for API protection
 const generalLimiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
   message: { error: 'Too many requests, please try again later' },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  skip: (req) => process.env.NODE_ENV === 'development' && req.path === '/health'
 });
 
 const authLimiter = rateLimit({
@@ -131,11 +138,19 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/releases', releaseRoutes);
 app.use('/api/integrations', integrationRoutes);
 app.use('/api/changes', changeRoutes);
+app.use('/api/interfaces', interfaceRoutes);
+app.use('/api/configs', configRoutes);
+app.use('/api/test-data', testDataRoutes);
+app.use('/api/topology', topologyRoutes);
+app.use('/api/bulk-upload', bulkUploadRoutes);
 
 // Import auth middleware for protected routes
 const { authenticate } = require('./middleware/auth');
 const { requireRole } = require('./middleware/rbac');
 const environmentController = require('./controllers/environmentController');
+
+// Instance-level route for getting all instances
+app.get('/api/instances', authenticate, environmentController.getAllInstances);
 
 // Instance-level route for linking applications (separate from environment routes)
 app.post('/api/instances/:instanceId/applications', authenticate, requireRole('Admin', 'EnvironmentManager'), environmentController.linkApplicationToInstance);
@@ -143,6 +158,40 @@ app.post('/api/instances/:instanceId/applications', authenticate, requireRole('A
 // App-environment instance routes (update and delete)
 app.put('/api/app-env-instances/:appEnvInstanceId', authenticate, requireRole('Admin', 'EnvironmentManager'), environmentController.updateAppEnvInstance);
 app.delete('/api/app-env-instances/:appEnvInstanceId', authenticate, requireRole('Admin', 'EnvironmentManager'), environmentController.deleteAppEnvInstance);
+
+// Get all component instances (for interface endpoint linking)
+app.get('/api/component-instances', authenticate, async (req, res) => {
+  try {
+    const { env_instance_id } = req.query;
+    let query = `
+      SELECT ci.*, 
+             ac.name as component_name,
+             app.name as application_name,
+             app.application_id,
+             ei.name as env_instance_name,
+             e.name as environment_name
+      FROM component_instances ci
+      JOIN app_components ac ON ci.component_id = ac.component_id
+      JOIN applications app ON ac.application_id = app.application_id
+      JOIN environment_instances ei ON ci.env_instance_id = ei.env_instance_id
+      JOIN environments e ON ei.environment_id = e.environment_id
+    `;
+    const params = [];
+    
+    if (env_instance_id) {
+      params.push(env_instance_id);
+      query += ` WHERE ci.env_instance_id = $${params.length}`;
+    }
+    
+    query += ' ORDER BY app.name, ac.name, e.name, ei.name';
+    
+    const result = await db.query(query, params);
+    res.json({ componentInstances: result.rows });
+  } catch (error) {
+    console.error('Get component instances error:', error);
+    res.status(500).json({ error: 'Failed to fetch component instances' });
+  }
+});
 
 // Identity Provider Management API (Admin only)
 app.get('/api/identity-providers', authenticate, requireRole('Admin'), async (req, res) => {
@@ -304,24 +353,65 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// Socket.IO connection handling
-io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
+// Socket.IO connection handling with authentication
+io.use((socket, next) => {
+  const token = socket.handshake.auth.token || socket.handshake.headers.authorization?.split(' ')[1];
+  if (!token) {
+    // Allow connection but mark as unauthenticated (for public rooms only)
+    socket.authenticated = false;
+    return next();
+  }
+  
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    socket.userId = decoded.userId;
+    socket.authenticated = true;
+    next();
+  } catch (err) {
+    socket.authenticated = false;
+    next();
+  }
+});
 
-  // Join room for real-time updates
+io.on('connection', (socket) => {
+  // Don't log socket IDs in production (potential security info leak)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Client connected:', socket.id, socket.authenticated ? '(authenticated)' : '(anonymous)');
+  }
+
+  // Join room for real-time updates - only allow authenticated users to join protected rooms
   socket.on('join', (room) => {
+    // Sanitize room name to prevent injection
+    const sanitizedRoom = String(room).replace(/[^a-zA-Z0-9_-]/g, '');
+    if (sanitizedRoom !== room) {
+      socket.emit('error', { message: 'Invalid room name' });
+      return;
+    }
+    
+    // Protected rooms require authentication
+    const protectedPrefixes = ['user_', 'admin_', 'booking_', 'release_'];
+    const isProtected = protectedPrefixes.some(p => room.startsWith(p));
+    
+    if (isProtected && !socket.authenticated) {
+      socket.emit('error', { message: 'Authentication required for this room' });
+      return;
+    }
+    
     socket.join(room);
-    console.log(`Socket ${socket.id} joined room: ${room}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Socket ${socket.id} joined room: ${room}`);
+    }
   });
 
   // Leave room
   socket.on('leave', (room) => {
     socket.leave(room);
-    console.log(`Socket ${socket.id} left room: ${room}`);
   });
 
   socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Client disconnected:', socket.id);
+    }
   });
 });
 

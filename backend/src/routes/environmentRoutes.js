@@ -17,6 +17,10 @@ router.post('/', requireRole('Admin', 'EnvironmentManager'), environmentControll
 router.put('/:id', requireRole('Admin', 'EnvironmentManager'), environmentController.update);
 router.delete('/:id', requireRole('Admin'), environmentController.delete);
 
+// Related entities
+router.get('/:id/related-configs', environmentController.getRelatedConfigs);
+router.get('/:id/related-interfaces', environmentController.getRelatedInterfaces);
+
 // Environment Instances
 router.get('/:id/instances', environmentController.getInstances);
 router.post('/:id/instances', requireRole('Admin', 'EnvironmentManager'), environmentController.createInstance);

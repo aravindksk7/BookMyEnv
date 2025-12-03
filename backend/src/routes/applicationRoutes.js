@@ -14,6 +14,11 @@ router.post('/', requireRole('Admin', 'ProjectLead'), applicationController.crea
 router.put('/:id', requireRole('Admin', 'ProjectLead'), applicationController.update);
 router.delete('/:id', requireRole('Admin'), applicationController.delete);
 
+// Related entities
+router.get('/:id/related-configs', applicationController.getRelatedConfigs);
+router.get('/:id/related-interfaces', applicationController.getRelatedInterfaces);
+router.get('/:id/related-testdata', applicationController.getRelatedTestData);
+
 // Application components
 router.get('/:id/components', applicationController.getComponents);
 router.post('/:id/components', requireRole('Admin', 'ProjectLead'), applicationController.createComponent);

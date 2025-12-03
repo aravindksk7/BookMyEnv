@@ -404,6 +404,96 @@ const applicationController = {
       console.error('Delete component instance error:', error);
       res.status(500).json({ error: 'Failed to delete component instance' });
     }
+  },
+
+  // Get related configs for an application
+  getRelatedConfigs: async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      // Get configs where scope is Application or ComponentInstance of this app
+      const result = await db.query(
+        `SELECT cs.*, u.display_name as created_by_name,
+                COUNT(DISTINCT ci.config_item_id) as item_count
+         FROM config_sets cs
+         LEFT JOIN config_items ci ON cs.config_set_id = ci.config_set_id
+         LEFT JOIN users u ON cs.created_by = u.user_id
+         WHERE (cs.scope_type = 'Application' AND cs.scope_ref_id = $1)
+            OR (cs.scope_type = 'ComponentInstance' AND cs.scope_ref_id IN (
+                SELECT component_instance_id FROM component_instances comp_ci
+                JOIN app_components ac ON comp_ci.component_id = ac.component_id
+                WHERE ac.application_id = $1
+            ))
+         GROUP BY cs.config_set_id, u.display_name
+         ORDER BY cs.name`,
+        [id]
+      );
+
+      res.json({ configs: result.rows });
+    } catch (error) {
+      console.error('Get related configs error:', error);
+      res.status(500).json({ error: 'Failed to fetch related configs' });
+    }
+  },
+
+  // Get related interfaces for an application (via direct link or component instances)
+  getRelatedInterfaces: async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      // Get interfaces where:
+      // 1. source_application_id or target_application_id directly references this app, OR
+      // 2. source or target component instance belongs to this app
+      const result = await db.query(
+        `SELECT DISTINCT i.*, 
+                COALESCE(src_app.name, src_a.name) as source_app_name,
+                COALESCE(tgt_app.name, tgt_a.name) as target_app_name,
+                COUNT(DISTINCT ie.interface_endpoint_id) as endpoint_count
+         FROM interfaces i
+         LEFT JOIN applications src_app ON i.source_application_id = src_app.application_id
+         LEFT JOIN applications tgt_app ON i.target_application_id = tgt_app.application_id
+         LEFT JOIN interface_endpoints ie ON i.interface_id = ie.interface_id
+         LEFT JOIN component_instances src_ci ON ie.source_component_instance_id = src_ci.component_instance_id
+         LEFT JOIN app_components src_ac ON src_ci.component_id = src_ac.component_id
+         LEFT JOIN applications src_a ON src_ac.application_id = src_a.application_id
+         LEFT JOIN component_instances tgt_ci ON ie.target_component_instance_id = tgt_ci.component_instance_id
+         LEFT JOIN app_components tgt_ac ON tgt_ci.component_id = tgt_ac.component_id
+         LEFT JOIN applications tgt_a ON tgt_ac.application_id = tgt_a.application_id
+         WHERE i.source_application_id = $1 
+            OR i.target_application_id = $1
+            OR src_ac.application_id = $1 
+            OR tgt_ac.application_id = $1
+         GROUP BY i.interface_id, src_app.name, tgt_app.name, src_a.name, tgt_a.name
+         ORDER BY i.name`,
+        [id]
+      );
+
+      res.json({ interfaces: result.rows });
+    } catch (error) {
+      console.error('Get related interfaces error:', error);
+      res.status(500).json({ error: 'Failed to fetch related interfaces' });
+    }
+  },
+
+  // Get related test data for an application
+  getRelatedTestData: async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const result = await db.query(
+        `SELECT tds.*, ei.name as env_instance_name
+         FROM test_data_sets tds
+         LEFT JOIN environment_instances ei ON tds.env_instance_id = ei.env_instance_id
+         WHERE tds.application_id = $1
+         ORDER BY tds.name`,
+        [id]
+      );
+
+      res.json({ testDataSets: result.rows });
+    } catch (error) {
+      console.error('Get related test data error:', error);
+      res.status(500).json({ error: 'Failed to fetch related test data' });
+    }
   }
 };
 

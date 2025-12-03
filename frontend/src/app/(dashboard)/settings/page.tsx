@@ -59,7 +59,9 @@ import {
   Group as GroupIcon,
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
+  CloudUpload as BulkUploadIcon,
 } from '@mui/icons-material';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { usersAPI, groupsAPI, identityProvidersAPI } from '@/lib/api';
 
@@ -110,6 +112,7 @@ function TabPanel(props: TabPanelProps) {
 
 export default function SettingsPage() {
   const { user: currentUser } = useAuth();
+  const router = useRouter();
   const [tabValue, setTabValue] = useState(0);
   const [users, setUsers] = useState<User[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
@@ -432,6 +435,7 @@ export default function SettingsPage() {
           <Tab icon={<NotificationsIcon />} label="Notifications" iconPosition="start" />
           {isAdmin && <Tab icon={<GroupIcon />} label="User Management" iconPosition="start" />}
           {isAdmin && <Tab icon={<SsoIcon />} label="SSO Configuration" iconPosition="start" />}
+          {isAdmin && <Tab icon={<BulkUploadIcon />} label="Data Management" iconPosition="start" />}
         </Tabs>
 
         {/* Profile Tab */}
@@ -884,6 +888,119 @@ export default function SettingsPage() {
               <Button variant="outlined" startIcon={<AddIcon />} sx={{ mt: 2 }}>
                 Add Mapping
               </Button>
+            </CardContent>
+          </TabPanel>
+        )}
+
+        {/* Data Management Tab (Admin only) */}
+        {isAdmin && (
+          <TabPanel value={tabValue} index={4}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Data Management
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Import and manage bulk data for environments, applications, and other entities.
+              </Typography>
+
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <Card variant="outlined" sx={{ height: '100%' }}>
+                    <CardContent>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <BulkUploadIcon sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
+                        <Box>
+                          <Typography variant="h6">Bulk Upload</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Import data from CSV files
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Typography variant="body2" sx={{ mb: 2 }}>
+                        Upload environments, instances, applications, interfaces, and components in bulk using CSV files.
+                      </Typography>
+                      <Button 
+                        variant="contained" 
+                        startIcon={<BulkUploadIcon />}
+                        onClick={() => router.push('/settings/bulk-upload')}
+                        fullWidth
+                      >
+                        Go to Bulk Upload
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Card variant="outlined" sx={{ height: '100%' }}>
+                    <CardContent>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <SecurityIcon sx={{ fontSize: 40, color: 'warning.main', mr: 2 }} />
+                        <Box>
+                          <Typography variant="h6">Data Export</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Export data for backup or migration
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Typography variant="body2" sx={{ mb: 2 }}>
+                        Export your environment data, configurations, and bookings to CSV or JSON format.
+                      </Typography>
+                      <Button 
+                        variant="outlined" 
+                        disabled
+                        fullWidth
+                      >
+                        Coming Soon
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+
+              <Divider sx={{ my: 4 }} />
+
+              <Typography variant="h6" gutterBottom>
+                Supported Entity Types for Bulk Upload
+              </Typography>
+              
+              <TableContainer component={Paper} variant="outlined">
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Entity Type</TableCell>
+                      <TableCell>Required Fields</TableCell>
+                      <TableCell>Optional Fields</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell><strong>Environments</strong></TableCell>
+                      <TableCell>name</TableCell>
+                      <TableCell>description, type, status, region, owner_group</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell><strong>Instances</strong></TableCell>
+                      <TableCell>environment_name, instance_name</TableCell>
+                      <TableCell>instance_url, status, version</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell><strong>Applications</strong></TableCell>
+                      <TableCell>name, application_type</TableCell>
+                      <TableCell>description, owner_group</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell><strong>Interfaces</strong></TableCell>
+                      <TableCell>name, interface_type</TableCell>
+                      <TableCell>description, source_app, target_app, protocol</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell><strong>Components</strong></TableCell>
+                      <TableCell>name, component_type</TableCell>
+                      <TableCell>description, parent_application, version</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </CardContent>
           </TabPanel>
         )}

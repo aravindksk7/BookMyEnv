@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, lazy, Suspense } from 'react';
 import {
   Box,
   Typography,
@@ -47,8 +47,16 @@ import {
   Storage as StorageIcon,
   Refresh as RefreshIcon,
   Link as LinkIcon,
+  Cable as InterfaceIcon,
+  Settings as ConfigIcon,
+  Terrain as EnvironmentIcon,
 } from '@mui/icons-material';
 import { environmentsAPI, applicationsAPI } from '@/lib/api';
+
+// Lazy load the other page components
+const ApplicationsContent = lazy(() => import('../applications/page'));
+const InterfacesContent = lazy(() => import('../interfaces/page'));
+const ConfigsContent = lazy(() => import('../configs/page'));
 
 interface Environment {
   environment_id: string;
@@ -108,9 +116,24 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
+// Main Tab Panel for top-level navigation
+function MainTabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+  return (
+    <div role="tabpanel" hidden={value !== index} {...other}>
+      {value === index && <Box>{children}</Box>}
+    </div>
+  );
+}
+
 export default function EnvironmentsPage() {
+  // Main navigation tab
+  const [mainTabValue, setMainTabValue] = useState(0);
+  
   const [environments, setEnvironments] = useState<Environment[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
+  const [relatedConfigs, setRelatedConfigs] = useState<any[]>([]);
+  const [relatedInterfaces, setRelatedInterfaces] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
@@ -132,7 +155,7 @@ export default function EnvironmentsPage() {
   
   const [formData, setFormData] = useState({
     name: '',
-    environment_category: 'E2E',
+    environment_category: 'NonProd',
     description: '',
     lifecycle_stage: 'Active',
     owner_team: '',
@@ -194,7 +217,7 @@ export default function EnvironmentsPage() {
   const resetForm = () => {
     setFormData({
       name: '',
-      environment_category: 'E2E',
+      environment_category: 'NonProd',
       description: '',
       lifecycle_stage: 'Active',
       owner_team: '',
@@ -221,6 +244,12 @@ export default function EnvironmentsPage() {
   const handleViewEnvironment = async (env: Environment) => {
     setSelectedEnv(env);
     setTabValue(0);
+    setRelatedConfigs([]);
+    setRelatedInterfaces([]);
+    setInstances([]);
+    setAppEnvInstances([]);
+    setViewDialogOpen(true);
+    
     try {
       // Fetch instances
       const instanceResponse = await environmentsAPI.getInstances(env.environment_id);
@@ -229,12 +258,17 @@ export default function EnvironmentsPage() {
       // Fetch linked applications
       const appResponse = await environmentsAPI.getAppEnvInstances(env.environment_id);
       setAppEnvInstances(appResponse.data.appEnvInstances || []);
+      
+      // Fetch related configs and interfaces
+      const [configsRes, interfacesRes] = await Promise.all([
+        environmentsAPI.getRelatedConfigs(env.environment_id),
+        environmentsAPI.getRelatedInterfaces(env.environment_id)
+      ]);
+      setRelatedConfigs(configsRes.data.configs || []);
+      setRelatedInterfaces(interfacesRes.data.interfaces || []);
     } catch (error) {
       console.error('Failed to fetch environment details:', error);
-      setInstances([]);
-      setAppEnvInstances([]);
     }
-    setViewDialogOpen(true);
   };
 
   // EDIT Environment
@@ -242,7 +276,7 @@ export default function EnvironmentsPage() {
     setSelectedEnv(env);
     setFormData({
       name: env.name,
-      environment_category: env.environment_category || 'E2E',
+      environment_category: env.environment_category || 'NonProd',
       description: env.description || '',
       lifecycle_stage: env.lifecycle_stage || 'Active',
       owner_team: env.owner_team || '',
@@ -486,14 +520,15 @@ export default function EnvironmentsPage() {
     return colors[status] || 'default';
   };
 
-  if (loading) {
+  if (loading && mainTabValue === 0) {
     return <LinearProgress />;
   }
 
-  return (
-    <Box>
+  // Environments content (original page content)
+  const EnvironmentsContent = () => (
+    <>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 600 }}>
+        <Typography variant="h5" sx={{ fontWeight: 600 }}>
           Environments
         </Typography>
         <Box>
@@ -598,6 +633,48 @@ export default function EnvironmentsPage() {
           </Table>
         </TableContainer>
       </Card>
+    </>
+  );
+
+  return (
+    <Box>
+      {/* Main Navigation Tabs */}
+      <Paper sx={{ mb: 3 }}>
+        <Tabs 
+          value={mainTabValue} 
+          onChange={(_, v) => setMainTabValue(v)}
+          variant="fullWidth"
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+        >
+          <Tab label="Environments" icon={<EnvironmentIcon />} iconPosition="start" />
+          <Tab label="Applications" icon={<AppIcon />} iconPosition="start" />
+          <Tab label="Interfaces" icon={<InterfaceIcon />} iconPosition="start" />
+          <Tab label="Configs" icon={<ConfigIcon />} iconPosition="start" />
+        </Tabs>
+      </Paper>
+
+      {/* Tab Content */}
+      <MainTabPanel value={mainTabValue} index={0}>
+        <EnvironmentsContent />
+      </MainTabPanel>
+      
+      <MainTabPanel value={mainTabValue} index={1}>
+        <Suspense fallback={<LinearProgress />}>
+          <ApplicationsContent />
+        </Suspense>
+      </MainTabPanel>
+      
+      <MainTabPanel value={mainTabValue} index={2}>
+        <Suspense fallback={<LinearProgress />}>
+          <InterfacesContent />
+        </Suspense>
+      </MainTabPanel>
+      
+      <MainTabPanel value={mainTabValue} index={3}>
+        <Suspense fallback={<LinearProgress />}>
+          <ConfigsContent />
+        </Suspense>
+      </MainTabPanel>
 
       {/* Create Environment Dialog */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
@@ -618,12 +695,11 @@ export default function EnvironmentsPage() {
               label="Category"
               onChange={(e) => setFormData({ ...formData, environment_category: e.target.value })}
             >
-              <MenuItem value="E2E">E2E</MenuItem>
-              <MenuItem value="Integration">Integration</MenuItem>
-              <MenuItem value="Performance">Performance</MenuItem>
-              <MenuItem value="UAT">UAT</MenuItem>
-              <MenuItem value="Staging">Staging</MenuItem>
-              <MenuItem value="Production">Production</MenuItem>
+              <MenuItem value="NonProd">NonProd</MenuItem>
+              <MenuItem value="PreProd">PreProd</MenuItem>
+              <MenuItem value="DR">DR</MenuItem>
+              <MenuItem value="Training">Training</MenuItem>
+              <MenuItem value="Sandpit">Sandpit</MenuItem>
             </Select>
           </FormControl>
           <FormControl fullWidth margin="normal">
@@ -702,12 +778,11 @@ export default function EnvironmentsPage() {
               label="Category"
               onChange={(e) => setFormData({ ...formData, environment_category: e.target.value })}
             >
-              <MenuItem value="E2E">E2E</MenuItem>
-              <MenuItem value="Integration">Integration</MenuItem>
-              <MenuItem value="Performance">Performance</MenuItem>
-              <MenuItem value="UAT">UAT</MenuItem>
-              <MenuItem value="Staging">Staging</MenuItem>
-              <MenuItem value="Production">Production</MenuItem>
+              <MenuItem value="NonProd">NonProd</MenuItem>
+              <MenuItem value="PreProd">PreProd</MenuItem>
+              <MenuItem value="DR">DR</MenuItem>
+              <MenuItem value="Training">Training</MenuItem>
+              <MenuItem value="Sandpit">Sandpit</MenuItem>
             </Select>
           </FormControl>
           <FormControl fullWidth margin="normal">
@@ -826,6 +901,8 @@ export default function EnvironmentsPage() {
           <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)}>
             <Tab label={`Instances (${instances.length})`} icon={<InstanceIcon />} iconPosition="start" />
             <Tab label={`Applications (${appEnvInstances.length})`} icon={<AppIcon />} iconPosition="start" />
+            <Tab label={`Interfaces (${relatedInterfaces.length})`} icon={<InterfaceIcon />} iconPosition="start" />
+            <Tab label={`Configs (${relatedConfigs.length})`} icon={<ConfigIcon />} iconPosition="start" />
           </Tabs>
 
           <TabPanel value={tabValue} index={0}>
@@ -999,6 +1076,98 @@ export default function EnvironmentsPage() {
                   </Paper>
                 ))}
               </List>
+            )}
+          </TabPanel>
+
+          <TabPanel value={tabValue} index={2}>
+            <Typography variant="subtitle1" sx={{ mb: 2 }}>Related Interfaces</Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+              Interfaces with endpoints deployed on this environment's instances
+            </Typography>
+            {relatedInterfaces.length > 0 ? (
+              <TableContainer component={Paper} variant="outlined">
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Name</TableCell>
+                      <TableCell>Instance</TableCell>
+                      <TableCell>Direction</TableCell>
+                      <TableCell>Pattern</TableCell>
+                      <TableCell>Frequency</TableCell>
+                      <TableCell align="center">Endpoints</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {relatedInterfaces.map((iface: any, idx: number) => (
+                      <TableRow key={`${iface.interface_id}-${idx}`} hover>
+                        <TableCell>{iface.name}</TableCell>
+                        <TableCell>{iface.instance_name}</TableCell>
+                        <TableCell>
+                          <Chip label={iface.direction} size="small" color={iface.direction === 'Inbound' ? 'info' : iface.direction === 'Outbound' ? 'warning' : 'default'} />
+                        </TableCell>
+                        <TableCell>{iface.pattern}</TableCell>
+                        <TableCell>{iface.frequency}</TableCell>
+                        <TableCell align="center">{iface.endpoint_count || 0}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <Paper sx={{ p: 3, textAlign: 'center' }}>
+                <InterfaceIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
+                <Typography color="text.secondary">No interfaces found</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Go to Interfaces page to create interface endpoints for this environment's instances
+                </Typography>
+              </Paper>
+            )}
+          </TabPanel>
+
+          <TabPanel value={tabValue} index={3}>
+            <Typography variant="subtitle1" sx={{ mb: 2 }}>Related Configurations</Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+              Configuration sets scoped to this environment's instances
+            </Typography>
+            {relatedConfigs.length > 0 ? (
+              <TableContainer component={Paper} variant="outlined">
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Name</TableCell>
+                      <TableCell>Instance</TableCell>
+                      <TableCell>Version</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell align="center">Items</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {relatedConfigs.map((config: any) => (
+                      <TableRow key={config.config_set_id} hover>
+                        <TableCell>{config.name}</TableCell>
+                        <TableCell>{config.instance_name}</TableCell>
+                        <TableCell>{config.version}</TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={config.status} 
+                            size="small" 
+                            color={config.status === 'Active' ? 'success' : config.status === 'Draft' ? 'warning' : 'default'} 
+                          />
+                        </TableCell>
+                        <TableCell align="center">{config.item_count || 0}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <Paper sx={{ p: 3, textAlign: 'center' }}>
+                <ConfigIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
+                <Typography color="text.secondary">No configurations found</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Go to Configs page to create configuration sets scoped to this environment's instances
+                </Typography>
+              </Paper>
             )}
           </TabPanel>
         </DialogContent>

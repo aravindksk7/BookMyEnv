@@ -1,0 +1,13 @@
+name,business_domain,description,criticality,data_sensitivity,owner_team,test_owner
+Customer-Portal,Retail Banking,Customer-facing internet banking portal,High,PCI,Digital Banking,QA Team
+Mobile-Banking-App,Retail Banking,Mobile banking application for iOS and Android,High,PCI,Mobile Team,QA Team
+Payment-Gateway,Payments,Core payment processing system,High,PCI,Payments Team,QA Team
+Notification-Service,Communications,Email and SMS notification system,Medium,PII,Platform Team,QA Team
+User-Authentication,Security,Centralized authentication and authorization,High,PII,Security Team,QA Team
+Account-Management,Core Banking,Account creation and management system,High,PII,Core Banking Team,QA Team
+Transaction-History,Reporting,Transaction history and statement generation,Medium,PCI,Reporting Team,QA Team
+Fraud-Detection,Risk,Real-time fraud detection and prevention,High,PCI,Risk Team,QA Team
+API-Gateway,Platform,Centralized API gateway and rate limiting,High,Confidential,Platform Team,QA Team
+Content-Management,Marketing,Marketing content and banner management,Low,NonProdDummy,Marketing Team,QA Team
+Loyalty-Program,Customer Experience,Customer loyalty points and rewards,Medium,PII,CX Team,QA Team
+Support-Ticketing,Operations,Customer support ticket management,Medium,PII,Support Team,QA Team

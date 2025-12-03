@@ -1,0 +1,9 @@
+name,description,environment_category,lifecycle_stage,owner_team,support_group,data_sensitivity,usage_policies
+Development-Alpha,Development environment for Alpha team,NonProd,Active,Alpha Team,IT Support,NonProdDummy,Development and unit testing only
+Development-Beta,Development environment for Beta team,NonProd,Active,Beta Team,IT Support,NonProdDummy,Development and unit testing only
+Integration-Testing,Shared integration testing environment,NonProd,Active,QA Team,IT Support,NonProdDummy,Integration and API testing
+UAT-Environment,User acceptance testing environment,PreProd,Active,UAT Team,IT Support,Confidential,UAT testing with masked production data
+Performance-Testing,Performance and load testing environment,NonProd,Active,Performance Team,IT Support,NonProdDummy,Load and stress testing
+DR-Failover,Disaster recovery failover environment,DR,Active,DR Team,IT Support,PCI,DR testing and failover verification
+Training-Environment,Training and demo environment,Training,Active,Training Team,IT Support,NonProdDummy,User training and product demos
+Sandbox-Innovation,Innovation and experimentation sandbox,Sandpit,Active,Innovation Team,IT Support,NonProdDummy,POCs and experimentation

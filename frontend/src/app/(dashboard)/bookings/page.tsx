@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -55,8 +55,12 @@ import {
   Search as SearchIcon,
   FilterList as FilterListIcon,
   Clear as ClearIcon,
+  Apps as AppsIcon,
+  SwapHoriz as InterfaceIcon,
+  Storage as InstanceIcon,
+  Link as LinkIcon,
 } from '@mui/icons-material';
-import { bookingsAPI, environmentsAPI } from '@/lib/api';
+import { bookingsAPI, environmentsAPI, applicationsAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Booking {
@@ -105,6 +109,36 @@ interface ConflictInfo {
   conflicting_end: string;
 }
 
+interface Application {
+  application_id: string;
+  name: string;
+  short_code: string;
+  tier: string;
+  status: string;
+  owning_group_name?: string;
+}
+
+interface Interface {
+  interface_id: string;
+  name: string;
+  direction: string;
+  pattern: string;
+  frequency: string;
+  status: string;
+  source_application_name?: string;
+  target_application_name?: string;
+}
+
+interface Instance {
+  env_instance_id: string;
+  name: string;
+  environment_name: string;
+  environment_category: string;
+  operational_status: string;
+  logical_role?: string;
+  resource_booking_status?: string;
+}
+
 const TEST_PHASES = ['SIT', 'UAT', 'NFT', 'Performance', 'DRRehearsal', 'PenTest', 'Other'];
 const BOOKING_TYPES = ['SingleEnv', 'MultiEnvE2E'];
 const BOOKING_STATUSES = ['Requested', 'PendingApproval', 'Approved', 'Active', 'Completed', 'Cancelled'];
@@ -115,9 +149,21 @@ export default function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [environments, setEnvironments] = useState<Environment[]>([]);
   const [instances, setInstances] = useState<EnvironmentInstance[]>([]);
+  const [allApplications, setAllApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Main tab - Booking List vs Booking View
+  const [mainTab, setMainTab] = useState<'list' | 'view'>('list');
+  const [viewingBooking, setViewingBooking] = useState<Booking | null>(null);
+  const [viewTabValue, setViewTabValue] = useState(0);
+  
+  // Related data for Booking View
+  const [relatedApplications, setRelatedApplications] = useState<Application[]>([]);
+  const [relatedInterfaces, setRelatedInterfaces] = useState<Interface[]>([]);
+  const [relatedInstances, setRelatedInstances] = useState<Instance[]>([]);
+  const [loadingRelated, setLoadingRelated] = useState(false);
 
   // View mode
   const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table');
@@ -168,12 +214,14 @@ export default function BookingsPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [bookingsRes, envsRes] = await Promise.all([
+      const [bookingsRes, envsRes, appsRes] = await Promise.all([
         bookingsAPI.getAll(),
         environmentsAPI.getAll(),
+        applicationsAPI.getAll(),
       ]);
       setBookings(bookingsRes.data.bookings || []);
       setEnvironments(envsRes.data.environments || []);
+      setAllApplications(appsRes.data.applications || []);
 
       // Fetch all instances
       const envs = envsRes.data.environments || [];
@@ -208,6 +256,44 @@ export default function BookingsPage() {
     } catch (err: any) {
       setError('Failed to fetch booking details');
     }
+  };
+
+  // Fetch related entities for Booking View
+  const fetchBookingRelatedData = useCallback(async (bookingId: string) => {
+    try {
+      setLoadingRelated(true);
+      const [appsRes, interfacesRes, instancesRes] = await Promise.all([
+        bookingsAPI.getRelatedApplications(bookingId),
+        bookingsAPI.getRelatedInterfaces(bookingId),
+        bookingsAPI.getRelatedInstances(bookingId),
+      ]);
+      setRelatedApplications(appsRes.data.applications || []);
+      setRelatedInterfaces(interfacesRes.data.interfaces || []);
+      setRelatedInstances(instancesRes.data.instances || []);
+    } catch (err: any) {
+      console.error('Failed to fetch related data:', err);
+    } finally {
+      setLoadingRelated(false);
+    }
+  }, []);
+
+  // Open Booking View
+  const openBookingView = async (booking: Booking) => {
+    setViewingBooking(booking);
+    setViewTabValue(0);
+    setMainTab('view');
+    await fetchBookingDetails(booking.booking_id);
+    await fetchBookingRelatedData(booking.booking_id);
+  };
+
+  // Close Booking View and return to list
+  const closeBookingView = () => {
+    setMainTab('list');
+    setViewingBooking(null);
+    setDetailedBooking(null);
+    setRelatedApplications([]);
+    setRelatedInterfaces([]);
+    setRelatedInstances([]);
   };
 
   const checkConflicts = async () => {
@@ -487,7 +573,7 @@ export default function BookingsPage() {
               size="small"
               color={getStatusColor(b.booking_status)}
               sx={{ width: '100%', mb: 0.25, fontSize: '0.7rem', height: 20 }}
-              onClick={() => openViewDialog(b)}
+              onClick={() => openBookingView(b)}
             />
           ))}
           {dayBookings.length > 3 && (
@@ -538,6 +624,332 @@ export default function BookingsPage() {
     return <LinearProgress />;
   }
 
+  // Booking View - detailed view of a single booking with tabs
+  if (mainTab === 'view' && viewingBooking) {
+    return (
+      <Box>
+        {/* Header */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <IconButton onClick={closeBookingView}>
+              <ArrowBackIcon />
+            </IconButton>
+            <Box>
+              <Typography variant="h4" sx={{ fontWeight: 600 }}>
+                {viewingBooking.title || 'Booking Details'}
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
+                <Chip label={viewingBooking.booking_status} size="small" color={getStatusColor(viewingBooking.booking_status)} />
+                <Chip label={viewingBooking.test_phase} size="small" variant="outlined" />
+                {viewingBooking.conflict_status !== 'None' && (
+                  <Chip label={viewingBooking.conflict_status} size="small" color={getConflictColor(viewingBooking.conflict_status)} icon={<WarningIcon />} />
+                )}
+              </Box>
+            </Box>
+          </Box>
+          <Box>
+            {canEdit && !['Completed', 'Cancelled'].includes(viewingBooking.booking_status) && (
+              <>
+                {viewingBooking.booking_status === 'Requested' && (
+                  <Button color="success" variant="contained" sx={{ mr: 1 }} onClick={() => handleUpdateStatus(viewingBooking.booking_id, 'Approved')}>
+                    Approve
+                  </Button>
+                )}
+                <Button variant="outlined" sx={{ mr: 1 }} onClick={() => openEditDialog(viewingBooking)}>
+                  Edit
+                </Button>
+              </>
+            )}
+          </Box>
+        </Box>
+
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+            {error}
+          </Alert>
+        )}
+
+        {success && (
+          <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess(null)}>
+            {success}
+          </Alert>
+        )}
+
+        {/* Booking Info Summary */}
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle2" color="text.secondary">Time Period</Typography>
+                <Typography>
+                  {new Date(viewingBooking.start_datetime).toLocaleString()} — {new Date(viewingBooking.end_datetime).toLocaleString()}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Typography variant="subtitle2" color="text.secondary">Requested By</Typography>
+                <Typography>{viewingBooking.requested_by_name || '-'}</Typography>
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Typography variant="subtitle2" color="text.secondary">Owning Group</Typography>
+                <Typography>{viewingBooking.owning_group_name || '-'}</Typography>
+              </Grid>
+              {viewingBooking.description && (
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" color="text.secondary">Description</Typography>
+                  <Typography>{viewingBooking.description}</Typography>
+                </Grid>
+              )}
+            </Grid>
+          </CardContent>
+        </Card>
+
+        {/* Tabs for Applications, Interfaces, Instances */}
+        <Card>
+          <Tabs value={viewTabValue} onChange={(_, v) => setViewTabValue(v)} sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}>
+            <Tab icon={<AppsIcon />} iconPosition="start" label={`Applications (${relatedApplications.length})`} />
+            <Tab icon={<InterfaceIcon />} iconPosition="start" label={`Interfaces (${relatedInterfaces.length})`} />
+            <Tab icon={<InstanceIcon />} iconPosition="start" label={`Instances (${relatedInstances.length})`} />
+          </Tabs>
+
+          {loadingRelated ? (
+            <Box sx={{ p: 3 }}><LinearProgress /></Box>
+          ) : (
+            <>
+              {/* Applications Tab */}
+              {viewTabValue === 0 && (
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Name</TableCell>
+                        <TableCell>Short Code</TableCell>
+                        <TableCell>Tier</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell>Owner</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {relatedApplications.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} align="center">
+                            <Typography color="text.secondary" sx={{ py: 2 }}>
+                              No applications associated with this booking
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        relatedApplications.map((app) => (
+                          <TableRow key={app.application_id} hover>
+                            <TableCell>
+                              <Typography fontWeight={500}>{app.name}</Typography>
+                            </TableCell>
+                            <TableCell>{app.short_code}</TableCell>
+                            <TableCell>{app.tier}</TableCell>
+                            <TableCell>
+                              <Chip label={app.status} size="small" color={app.status === 'Active' ? 'success' : 'default'} />
+                            </TableCell>
+                            <TableCell>{app.owning_group_name || '-'}</TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+
+              {/* Interfaces Tab */}
+              {viewTabValue === 1 && (
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Name</TableCell>
+                        <TableCell>Direction</TableCell>
+                        <TableCell>Pattern</TableCell>
+                        <TableCell>Frequency</TableCell>
+                        <TableCell>Source App</TableCell>
+                        <TableCell>Target App</TableCell>
+                        <TableCell>Status</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {relatedInterfaces.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} align="center">
+                            <Typography color="text.secondary" sx={{ py: 2 }}>
+                              No interfaces associated with this booking
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        relatedInterfaces.map((iface) => (
+                          <TableRow key={iface.interface_id} hover>
+                            <TableCell>
+                              <Typography fontWeight={500}>{iface.name}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Chip 
+                                label={iface.direction} 
+                                size="small" 
+                                color={iface.direction === 'Inbound' ? 'info' : iface.direction === 'Outbound' ? 'warning' : 'default'}
+                              />
+                            </TableCell>
+                            <TableCell>{iface.pattern}</TableCell>
+                            <TableCell>{iface.frequency}</TableCell>
+                            <TableCell>{iface.source_application_name || '-'}</TableCell>
+                            <TableCell>{iface.target_application_name || '-'}</TableCell>
+                            <TableCell>
+                              <Chip label={iface.status} size="small" color={iface.status === 'Active' ? 'success' : 'default'} />
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+
+              {/* Instances Tab */}
+              {viewTabValue === 2 && (
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Instance Name</TableCell>
+                        <TableCell>Environment</TableCell>
+                        <TableCell>Category</TableCell>
+                        <TableCell>Logical Role</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell>Booking Status</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {relatedInstances.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} align="center">
+                            <Typography color="text.secondary" sx={{ py: 2 }}>
+                              No instances associated with this booking
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        relatedInstances.map((inst) => (
+                          <TableRow key={inst.env_instance_id} hover>
+                            <TableCell>
+                              <Typography fontWeight={500}>{inst.name}</Typography>
+                            </TableCell>
+                            <TableCell>{inst.environment_name}</TableCell>
+                            <TableCell>
+                              <Chip label={inst.environment_category} size="small" variant="outlined" />
+                            </TableCell>
+                            <TableCell>{inst.logical_role || '-'}</TableCell>
+                            <TableCell>
+                              <Chip label={inst.operational_status} size="small" color={inst.operational_status === 'Available' ? 'success' : 'default'} />
+                            </TableCell>
+                            <TableCell>
+                              <Chip 
+                                label={inst.resource_booking_status || 'N/A'} 
+                                size="small" 
+                                color={inst.resource_booking_status === 'Active' ? 'success' : inst.resource_booking_status === 'Reserved' ? 'warning' : 'default'}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </>
+          )}
+        </Card>
+
+        {/* Edit Dialog - reuse existing */}
+        <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="md" fullWidth>
+          <DialogTitle>Edit Booking</DialogTitle>
+          <DialogContent>
+            <TextField
+              label="Title"
+              fullWidth
+              margin="normal"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            />
+            <TextField
+              label="Description"
+              fullWidth
+              margin="normal"
+              multiline
+              rows={2}
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            />
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Grid item xs={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Test Phase</InputLabel>
+                  <Select
+                    value={formData.test_phase}
+                    label="Test Phase"
+                    onChange={(e) => setFormData({ ...formData, test_phase: e.target.value })}
+                  >
+                    {TEST_PHASES.map((phase) => (
+                      <MenuItem key={phase} value={phase}>{phase}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  label="Project ID"
+                  fullWidth
+                  value={formData.project_id}
+                  onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
+                />
+              </Grid>
+            </Grid>
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Grid item xs={6}>
+                <TextField
+                  label="Start Date/Time"
+                  type="datetime-local"
+                  fullWidth
+                  value={formData.start_datetime}
+                  onChange={(e) => setFormData({ ...formData, start_datetime: e.target.value })}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  label="End Date/Time"
+                  type="datetime-local"
+                  fullWidth
+                  value={formData.end_datetime}
+                  onChange={(e) => setFormData({ ...formData, end_datetime: e.target.value })}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+            <Button variant="contained" onClick={async () => {
+              await handleUpdateBooking();
+              // Refresh viewing booking data
+              if (viewingBooking) {
+                const updated = bookings.find(b => b.booking_id === viewingBooking.booking_id);
+                if (updated) setViewingBooking(updated);
+              }
+            }}>
+              Update
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    );
+  }
+
+  // Default: Booking List View
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -745,7 +1157,7 @@ export default function BookingsPage() {
                         </TableCell>
                         <TableCell align="right">
                           <Tooltip title="View Details">
-                            <IconButton size="small" onClick={() => openViewDialog(booking)}>
+                            <IconButton size="small" onClick={() => openBookingView(booking)}>
                               <ViewIcon />
                             </IconButton>
                           </Tooltip>

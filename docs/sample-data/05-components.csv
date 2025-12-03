@@ -1,0 +1,20 @@
+application_name,name,component_type,technology_stack,description
+Customer-Portal,Portal-Frontend,UI,React,Customer-facing web interface
+Customer-Portal,Portal-BFF,Service,Node.js,Backend for frontend service
+Customer-Portal,Portal-Cache,Cache,Redis,Session and data caching
+Mobile-Banking-App,iOS-App,Mobile,Swift,iOS native application
+Mobile-Banking-App,Android-App,Mobile,Kotlin,Android native application
+Mobile-Banking-App,Mobile-BFF,Service,Node.js,Mobile backend for frontend
+Payment-Gateway,Payment-Processor,Service,Java,Core payment processing logic
+Payment-Gateway,Payment-Validator,Service,Java,Payment validation rules
+Payment-Gateway,Payment-DB,Database,PostgreSQL,Payment transaction database
+User-Authentication,Auth-Service,Service,Go,Authentication microservice
+User-Authentication,Token-Service,Service,Go,JWT token management
+User-Authentication,Auth-DB,Database,PostgreSQL,User credentials database
+Notification-Service,Email-Sender,Service,Python,Email notification sender
+Notification-Service,SMS-Sender,Service,Python,SMS notification sender
+Notification-Service,Notification-Queue,Queue,RabbitMQ,Notification message queue
+Fraud-Detection,Fraud-Engine,Service,Python,ML-based fraud detection
+Fraud-Detection,Rules-Engine,Service,Java,Rule-based fraud detection
+API-Gateway,Kong-Gateway,Gateway,Kong,API gateway instance
+API-Gateway,Rate-Limiter,Service,Redis,Rate limiting cache

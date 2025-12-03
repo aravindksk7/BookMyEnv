@@ -1,0 +1,17 @@
+instance_name,name,component_type,hostname,ip_address,os_version,status,owner_team
+DEV-Alpha-1,dev-app-server-1,VM,dev-app-01.local,10.0.1.10,Ubuntu 22.04,Active,Infrastructure
+DEV-Alpha-1,dev-db-server-1,VM,dev-db-01.local,10.0.1.20,Ubuntu 22.04,Active,DBA Team
+DEV-Alpha-1,dev-cache-1,Container,dev-cache-01.local,10.0.1.30,Alpine Linux,Active,Infrastructure
+INT-Instance-A,int-app-server-1,VM,int-app-01.local,10.0.2.10,RHEL 8,Active,Infrastructure
+INT-Instance-A,int-app-server-2,VM,int-app-02.local,10.0.2.11,RHEL 8,Active,Infrastructure
+INT-Instance-A,int-db-primary,VM,int-db-01.local,10.0.2.20,RHEL 8,Active,DBA Team
+INT-Instance-A,int-db-replica,VM,int-db-02.local,10.0.2.21,RHEL 8,Active,DBA Team
+INT-Instance-A,int-mq-server,VM,int-mq-01.local,10.0.2.30,RHEL 8,Active,Middleware Team
+UAT-Instance-1,uat-app-server-1,VM,uat-app-01.local,10.0.3.10,RHEL 8,Active,Infrastructure
+UAT-Instance-1,uat-app-server-2,VM,uat-app-02.local,10.0.3.11,RHEL 8,Active,Infrastructure
+UAT-Instance-1,uat-db-primary,VM,uat-db-01.local,10.0.3.20,RHEL 8,Active,DBA Team
+UAT-Instance-1,uat-lb,LoadBalancer,uat-lb-01.local,10.0.3.5,F5 BIG-IP,Active,Network Team
+PERF-Instance-1,perf-app-cluster,Kubernetes,perf-k8s.local,10.0.4.10,Kubernetes 1.28,Active,Infrastructure
+PERF-Instance-1,perf-db-cluster,Database,perf-db.local,10.0.4.20,PostgreSQL 15,Active,DBA Team
+DR-Instance-1,dr-app-server-1,VM,dr-app-01.local,10.0.5.10,RHEL 8,Active,DR Team
+DR-Instance-1,dr-db-primary,VM,dr-db-01.local,10.0.5.20,RHEL 8,Active,DR Team

@@ -40,7 +40,12 @@ import {
   Visibility as ViewIcon,
   Extension as ComponentIcon,
   Refresh as RefreshIcon,
+  Cable as InterfaceIcon,
+  Settings as ConfigIcon,
+  Storage as TestDataIcon,
+  OpenInNew as OpenInNewIcon,
 } from '@mui/icons-material';
+import { useRouter } from 'next/navigation';
 import { applicationsAPI } from '../../../lib/api';
 import { useAuth } from '../../../contexts/AuthContext';
 
@@ -72,6 +77,33 @@ interface Component {
   updated_at: string;
 }
 
+interface RelatedInterface {
+  interface_id: string;
+  name: string;
+  direction: string;
+  pattern: string;
+  frequency: string;
+  external_party: string;
+  endpoint_count: number;
+}
+
+interface RelatedConfig {
+  config_set_id: string;
+  name: string;
+  scope_type: string;
+  version: string;
+  status: string;
+  item_count: number;
+}
+
+interface RelatedTestData {
+  test_data_set_id: string;
+  name: string;
+  data_type: string;
+  source_type: string;
+  status: string;
+}
+
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
@@ -96,6 +128,9 @@ export default function ApplicationsPage() {
   const { user } = useAuth();
   const [applications, setApplications] = useState<Application[]>([]);
   const [components, setComponents] = useState<{ [key: string]: Component[] }>({});
+  const [relatedInterfaces, setRelatedInterfaces] = useState<RelatedInterface[]>([]);
+  const [relatedConfigs, setRelatedConfigs] = useState<RelatedConfig[]>([]);
+  const [relatedTestData, setRelatedTestData] = useState<RelatedTestData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -137,6 +172,7 @@ export default function ApplicationsPage() {
   });
 
   const canEdit = user?.role === 'Admin' || user?.role === 'ProjectLead';
+  const router = useRouter();
 
   useEffect(() => {
     fetchApplications();
@@ -300,8 +336,34 @@ export default function ApplicationsPage() {
   const openViewDialog = async (app: Application) => {
     setSelectedApp(app);
     setViewTab(0);
-    await fetchComponents(app.application_id);
+    setRelatedInterfaces([]);
+    setRelatedConfigs([]);
+    setRelatedTestData([]);
     setViewDialogOpen(true);
+    
+    // Fetch components
+    try {
+      const response = await applicationsAPI.getComponents(app.application_id);
+      const responseData = response.data;
+      const compList = Array.isArray(responseData) ? responseData : responseData.components || [];
+      setComponents((prev: { [key: string]: Component[] }) => ({ ...prev, [app.application_id]: compList }));
+    } catch (err) {
+      console.error('Failed to fetch components:', err);
+    }
+    
+    // Fetch related entities in parallel
+    try {
+      const [interfacesRes, configsRes, testDataRes] = await Promise.all([
+        applicationsAPI.getRelatedInterfaces(app.application_id),
+        applicationsAPI.getRelatedConfigs(app.application_id),
+        applicationsAPI.getRelatedTestData(app.application_id)
+      ]);
+      setRelatedInterfaces(interfacesRes.data.interfaces || []);
+      setRelatedConfigs(configsRes.data.configs || []);
+      setRelatedTestData(testDataRes.data.testDataSets || []);
+    } catch (err) {
+      console.error('Failed to fetch related entities:', err);
+    }
   };
 
   const openComponentDialog = () => {
@@ -614,7 +676,7 @@ export default function ApplicationsPage() {
       </Dialog>
 
       {/* View Application Dialog with Components */}
-      <Dialog open={viewDialogOpen} onClose={() => setViewDialogOpen(false)} maxWidth="md" fullWidth>
+      <Dialog open={viewDialogOpen} onClose={() => setViewDialogOpen(false)} maxWidth="lg" fullWidth>
         <DialogTitle>
           <Box display="flex" alignItems="center" justifyContent="space-between">
             <Typography variant="h6">{selectedApp?.name}</Typography>
@@ -626,7 +688,10 @@ export default function ApplicationsPage() {
         <DialogContent>
           <Tabs value={viewTab} onChange={(_: React.SyntheticEvent, newValue: number) => setViewTab(newValue)}>
             <Tab label="Details" />
-            <Tab label="Components" icon={<ComponentIcon />} iconPosition="start" />
+            <Tab label={`Components (${selectedApp ? (components[selectedApp.application_id]?.length || 0) : 0})`} icon={<ComponentIcon />} iconPosition="start" />
+            <Tab label={`Interfaces (${relatedInterfaces.length})`} icon={<InterfaceIcon />} iconPosition="start" />
+            <Tab label={`Configs (${relatedConfigs.length})`} icon={<ConfigIcon />} iconPosition="start" />
+            <Tab label={`Test Data (${relatedTestData.length})`} icon={<TestDataIcon />} iconPosition="start" />
           </Tabs>
 
           <TabPanel value={viewTab} index={0}>
@@ -719,6 +784,153 @@ export default function ApplicationsPage() {
             ) : (
               <Typography color="text.secondary" align="center" sx={{ py: 4 }}>
                 No components found. {canEdit && 'Click "Add Component" to create one.'}
+              </Typography>
+            )}
+          </TabPanel>
+
+          <TabPanel value={viewTab} index={2}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+              <Typography variant="subtitle1">Related Interfaces</Typography>
+              <Button
+                size="small"
+                startIcon={<OpenInNewIcon />}
+                onClick={() => router.push('/interfaces')}
+              >
+                Manage Interfaces
+              </Button>
+            </Box>
+            {relatedInterfaces.length > 0 ? (
+              <TableContainer component={Paper} variant="outlined">
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Name</TableCell>
+                      <TableCell>Direction</TableCell>
+                      <TableCell>Pattern</TableCell>
+                      <TableCell>Frequency</TableCell>
+                      <TableCell>External Party</TableCell>
+                      <TableCell align="center">Endpoints</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {relatedInterfaces.map((iface) => (
+                      <TableRow key={iface.interface_id} hover>
+                        <TableCell>{iface.name}</TableCell>
+                        <TableCell>
+                          <Chip label={iface.direction} size="small" color={iface.direction === 'Inbound' ? 'info' : iface.direction === 'Outbound' ? 'warning' : 'default'} />
+                        </TableCell>
+                        <TableCell>{iface.pattern}</TableCell>
+                        <TableCell>{iface.frequency}</TableCell>
+                        <TableCell>{iface.external_party || '-'}</TableCell>
+                        <TableCell align="center">{iface.endpoint_count || 0}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <Typography color="text.secondary" align="center" sx={{ py: 4 }}>
+                No interfaces found for this application. Interfaces are linked via component instances.
+              </Typography>
+            )}
+          </TabPanel>
+
+          <TabPanel value={viewTab} index={3}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+              <Typography variant="subtitle1">Related Configurations</Typography>
+              <Button
+                size="small"
+                startIcon={<OpenInNewIcon />}
+                onClick={() => router.push('/configs')}
+              >
+                Manage Configs
+              </Button>
+            </Box>
+            {relatedConfigs.length > 0 ? (
+              <TableContainer component={Paper} variant="outlined">
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Name</TableCell>
+                      <TableCell>Scope</TableCell>
+                      <TableCell>Version</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell align="center">Items</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {relatedConfigs.map((config) => (
+                      <TableRow key={config.config_set_id} hover>
+                        <TableCell>{config.name}</TableCell>
+                        <TableCell>
+                          <Chip label={config.scope_type} size="small" variant="outlined" />
+                        </TableCell>
+                        <TableCell>{config.version}</TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={config.status} 
+                            size="small" 
+                            color={config.status === 'Active' ? 'success' : config.status === 'Draft' ? 'warning' : 'default'} 
+                          />
+                        </TableCell>
+                        <TableCell align="center">{config.item_count || 0}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <Typography color="text.secondary" align="center" sx={{ py: 4 }}>
+                No configurations found. Go to Configs page to create configs scoped to this application.
+              </Typography>
+            )}
+          </TabPanel>
+
+          <TabPanel value={viewTab} index={4}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+              <Typography variant="subtitle1">Related Test Data Sets</Typography>
+              <Button
+                size="small"
+                startIcon={<OpenInNewIcon />}
+                onClick={() => router.push('/testdata')}
+              >
+                Manage Test Data
+              </Button>
+            </Box>
+            {relatedTestData.length > 0 ? (
+              <TableContainer component={Paper} variant="outlined">
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Name</TableCell>
+                      <TableCell>Data Type</TableCell>
+                      <TableCell>Source Type</TableCell>
+                      <TableCell>Status</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {relatedTestData.map((td) => (
+                      <TableRow key={td.test_data_set_id} hover>
+                        <TableCell>{td.name}</TableCell>
+                        <TableCell>
+                          <Chip label={td.data_type} size="small" variant="outlined" />
+                        </TableCell>
+                        <TableCell>{td.source_type}</TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={td.status} 
+                            size="small" 
+                            color={td.status === 'Active' ? 'success' : td.status === 'Stale' ? 'warning' : 'default'} 
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <Typography color="text.secondary" align="center" sx={{ py: 4 }}>
+                No test data sets found. Go to Test Data page to create data sets for this application.
               </Typography>
             )}
           </TabPanel>

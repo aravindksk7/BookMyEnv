@@ -1,5 +1,19 @@
 const db = require('../config/database');
 
+// UUID validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+// Sanitize search input
+const sanitizeSearch = (input) => {
+  if (!input) return null;
+  return String(input).substring(0, 100).replace(/[;'"\\]/g, '');
+};
+
+// Validate UUID format
+const isValidUUID = (id) => {
+  return id && UUID_REGEX.test(id);
+};
+
 const bookingController = {
   // Get all bookings
   getAll: async (req, res) => {
@@ -42,8 +56,11 @@ const bookingController = {
       }
 
       if (search) {
-        params.push(`%${search}%`);
-        query += ` AND (eb.title ILIKE $${params.length} OR eb.description ILIKE $${params.length})`;
+        const sanitizedSearch = sanitizeSearch(search);
+        if (sanitizedSearch) {
+          params.push(`%${sanitizedSearch}%`);
+          query += ` AND (eb.title ILIKE $${params.length} OR eb.description ILIKE $${params.length})`;
+        }
       }
 
       query += ' GROUP BY eb.booking_id, u.display_name, u2.display_name, ug.name ORDER BY eb.start_datetime DESC';
@@ -60,6 +77,11 @@ const bookingController = {
   getById: async (req, res) => {
     try {
       const { id } = req.params;
+
+      // Validate UUID format
+      if (!isValidUUID(id)) {
+        return res.status(400).json({ error: 'Invalid booking ID format' });
+      }
 
       const result = await db.query(
         `SELECT eb.*, 
@@ -502,6 +524,148 @@ const bookingController = {
     } catch (error) {
       console.error('Get statistics error:', error);
       res.status(500).json({ error: 'Failed to fetch statistics' });
+    }
+  },
+
+  // Get related applications for a booking
+  getRelatedApplications: async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      // Get directly linked applications via booking_applications
+      const directApps = await db.query(
+        `SELECT DISTINCT a.*
+         FROM applications a
+         JOIN booking_applications ba ON a.application_id = ba.application_id
+         WHERE ba.booking_id = $1`,
+        [id]
+      );
+
+      // Also get applications linked via environment instances in booking resources
+      const instanceApps = await db.query(
+        `SELECT DISTINCT a.*
+         FROM applications a
+         JOIN application_environment_instances aei ON a.application_id = aei.application_id
+         JOIN booking_resources br ON aei.env_instance_id = br.resource_ref_id OR aei.env_instance_id = br.source_env_instance_id
+         WHERE br.booking_id = $1 AND br.resource_type = 'EnvironmentInstance'`,
+        [id]
+      );
+
+      // Combine and deduplicate
+      const allApps = [...directApps.rows];
+      instanceApps.rows.forEach(app => {
+        if (!allApps.find(a => a.application_id === app.application_id)) {
+          allApps.push(app);
+        }
+      });
+
+      res.json({ applications: allApps });
+    } catch (error) {
+      console.error('Get related applications error:', error);
+      res.status(500).json({ error: 'Failed to fetch related applications' });
+    }
+  },
+
+  // Get related interfaces for a booking
+  getRelatedInterfaces: async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      // Get interfaces linked to applications in this booking (via source or target app)
+      // or via interface endpoints on environment instances in the booking
+      const result = await db.query(
+        `SELECT DISTINCT i.*, 
+                sa.name as source_application_name, 
+                ta.name as target_application_name
+         FROM interfaces i
+         LEFT JOIN applications sa ON i.source_application_id = sa.application_id
+         LEFT JOIN applications ta ON i.target_application_id = ta.application_id
+         WHERE 
+           -- Linked via source or target application in booking
+           i.source_application_id IN (
+             SELECT a.application_id FROM applications a
+             JOIN booking_applications ba ON a.application_id = ba.application_id
+             WHERE ba.booking_id = $1
+           )
+           OR i.target_application_id IN (
+             SELECT a.application_id FROM applications a
+             JOIN booking_applications ba ON a.application_id = ba.application_id
+             WHERE ba.booking_id = $1
+           )
+           -- Or via interface endpoints on environment instances in this booking
+           OR i.interface_id IN (
+             SELECT ie.interface_id FROM interface_endpoints ie
+             JOIN booking_resources br ON ie.env_instance_id = br.resource_ref_id 
+                                       OR ie.env_instance_id = br.source_env_instance_id
+             WHERE br.booking_id = $1 AND br.resource_type = 'EnvironmentInstance'
+           )
+         ORDER BY i.name`,
+        [id]
+      );
+
+      res.json({ interfaces: result.rows });
+    } catch (error) {
+      console.error('Get related interfaces error:', error);
+      res.status(500).json({ error: 'Failed to fetch related interfaces' });
+    }
+  },
+
+  // Get related instances for a booking
+  getRelatedInstances: async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const result = await db.query(
+        `SELECT DISTINCT ei.*, e.name as environment_name, e.environment_category,
+                br.logical_role, br.resource_booking_status
+         FROM environment_instances ei
+         JOIN environments e ON ei.environment_id = e.environment_id
+         JOIN booking_resources br ON (ei.env_instance_id = br.resource_ref_id OR ei.env_instance_id = br.source_env_instance_id)
+         WHERE br.booking_id = $1 AND br.resource_type = 'EnvironmentInstance'
+         ORDER BY e.name, ei.name`,
+        [id]
+      );
+
+      res.json({ instances: result.rows });
+    } catch (error) {
+      console.error('Get related instances error:', error);
+      res.status(500).json({ error: 'Failed to fetch related instances' });
+    }
+  },
+
+  // Link an application to a booking
+  addApplication: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { application_id } = req.body;
+
+      await db.query(
+        `INSERT INTO booking_applications (booking_id, application_id) VALUES ($1, $2)
+         ON CONFLICT (booking_id, application_id) DO NOTHING`,
+        [id, application_id]
+      );
+
+      res.status(201).json({ message: 'Application linked to booking' });
+    } catch (error) {
+      console.error('Add application error:', error);
+      res.status(500).json({ error: 'Failed to add application' });
+    }
+  },
+
+  // Remove application from booking
+  removeApplication: async (req, res) => {
+    try {
+      const { id, applicationId } = req.params;
+
+      await db.query(
+        'DELETE FROM booking_applications WHERE booking_id = $1 AND application_id = $2',
+        [id, applicationId]
+      );
+
+      res.json({ message: 'Application removed from booking' });
+    } catch (error) {
+      console.error('Remove application error:', error);
+      res.status(500).json({ error: 'Failed to remove application' });
     }
   }
 };

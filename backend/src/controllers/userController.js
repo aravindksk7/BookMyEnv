@@ -1,6 +1,22 @@
 const bcrypt = require('bcryptjs');
 const db = require('../config/database');
 
+// Security constants
+const BCRYPT_ROUNDS = 12;
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$/;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+// Sanitize search input
+const sanitizeSearch = (input) => {
+  if (!input) return null;
+  return String(input).substring(0, 100).replace(/[;'"\\]/g, '');
+};
+
+// Validate UUID format
+const isValidUUID = (id) => {
+  return id && UUID_REGEX.test(id);
+};
+
 const userController = {
   // Get all users
   getAll: async (req, res) => {
@@ -28,8 +44,11 @@ const userController = {
       }
 
       if (search) {
-        params.push(`%${search}%`);
-        query += ` AND (u.display_name ILIKE $${params.length} OR u.email ILIKE $${params.length} OR u.username ILIKE $${params.length})`;
+        const sanitizedSearch = sanitizeSearch(search);
+        if (sanitizedSearch) {
+          params.push(`%${sanitizedSearch}%`);
+          query += ` AND (u.display_name ILIKE $${params.length} OR u.email ILIKE $${params.length} OR u.username ILIKE $${params.length})`;
+        }
       }
 
       query += ' ORDER BY u.display_name ASC';
@@ -46,6 +65,11 @@ const userController = {
   getById: async (req, res) => {
     try {
       const { id } = req.params;
+
+      // Validate UUID format
+      if (!isValidUUID(id)) {
+        return res.status(400).json({ error: 'Invalid user ID format' });
+      }
 
       const result = await db.query(
         `SELECT u.*, ug.name as default_group_name
@@ -97,10 +121,15 @@ const userController = {
         return res.status(400).json({ error: 'Email or username already exists' });
       }
 
-      // Hash password if provided
+      // Hash password if provided with secure rounds
       let password_hash = null;
       if (password) {
-        password_hash = await bcrypt.hash(password, 10);
+        if (!PASSWORD_REGEX.test(password)) {
+          return res.status(400).json({ 
+            error: 'Password must be at least 8 characters with uppercase, lowercase, number, and special character (@$!%*?&)' 
+          });
+        }
+        password_hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
       }
 
       const result = await db.query(
@@ -206,7 +235,14 @@ const userController = {
         return res.status(400).json({ error: 'New password is required' });
       }
 
-      const password_hash = await bcrypt.hash(new_password, 10);
+      // Validate password strength
+      if (!PASSWORD_REGEX.test(new_password)) {
+        return res.status(400).json({ 
+          error: 'Password must be at least 8 characters with uppercase, lowercase, number, and special character (@$!%*?&)' 
+        });
+      }
+
+      const password_hash = await bcrypt.hash(new_password, BCRYPT_ROUNDS);
 
       const result = await db.query(
         `UPDATE users SET password_hash = $1, updated_at = NOW() 

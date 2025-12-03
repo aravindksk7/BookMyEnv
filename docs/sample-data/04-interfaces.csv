@@ -1,0 +1,14 @@
+name,direction,pattern,frequency,protocol,source_application_name,target_application_name,description
+Portal-to-Auth-API,Outbound,REST,RealTime,HTTPS,Customer-Portal,User-Authentication,User login and authentication
+Portal-to-Account-API,Outbound,REST,RealTime,HTTPS,Customer-Portal,Account-Management,Account balance and details
+Portal-to-Payment-API,Outbound,REST,RealTime,HTTPS,Customer-Portal,Payment-Gateway,Payment initiation
+Portal-to-History-API,Outbound,REST,RealTime,HTTPS,Customer-Portal,Transaction-History,Transaction history retrieval
+Mobile-to-Auth-API,Outbound,REST,RealTime,HTTPS,Mobile-Banking-App,User-Authentication,Mobile authentication
+Mobile-to-Account-API,Outbound,REST,RealTime,HTTPS,Mobile-Banking-App,Account-Management,Mobile account access
+Mobile-to-Payment-API,Outbound,REST,RealTime,HTTPS,Mobile-Banking-App,Payment-Gateway,Mobile payments
+Payment-to-Fraud-Check,Outbound,REST,RealTime,HTTPS,Payment-Gateway,Fraud-Detection,Real-time fraud check
+Payment-to-Notification,Outbound,Messaging,RealTime,MQ,Payment-Gateway,Notification-Service,Payment confirmation notifications
+Account-to-Notification,Outbound,Messaging,RealTime,MQ,Account-Management,Notification-Service,Account update notifications
+Fraud-Alert-Notification,Outbound,Messaging,RealTime,MQ,Fraud-Detection,Notification-Service,Fraud alert notifications
+History-Batch-Load,Inbound,File,Batch,SFTP,Transaction-History,,Daily transaction file import
+Loyalty-Points-Sync,Outbound,REST,Batch,HTTPS,Payment-Gateway,Loyalty-Program,Sync loyalty points after purchase

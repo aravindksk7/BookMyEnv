@@ -1,5 +1,20 @@
 const db = require('../config/database');
 
+// UUID validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+// Sanitize search input - remove SQL-injection attempts and limit length
+const sanitizeSearch = (input) => {
+  if (!input) return null;
+  // Limit length and remove potentially dangerous characters
+  return String(input).substring(0, 100).replace(/[;'"\\]/g, '');
+};
+
+// Validate UUID format
+const isValidUUID = (id) => {
+  return id && UUID_REGEX.test(id);
+};
+
 const environmentController = {
   // Get all environments
   getAll: async (req, res) => {
@@ -16,18 +31,29 @@ const environmentController = {
       const params = [];
 
       if (category) {
-        params.push(category);
-        query += ` AND e.environment_category = $${params.length}`;
+        // Validate category against allowed values
+        const validCategories = ['DEV', 'TEST', 'UAT', 'STAGING', 'PROD'];
+        if (validCategories.includes(category)) {
+          params.push(category);
+          query += ` AND e.environment_category = $${params.length}`;
+        }
       }
 
       if (lifecycle_stage) {
-        params.push(lifecycle_stage);
-        query += ` AND e.lifecycle_stage = $${params.length}`;
+        // Validate lifecycle_stage against allowed values
+        const validStages = ['Active', 'Provisioning', 'Decommissioning', 'Archived'];
+        if (validStages.includes(lifecycle_stage)) {
+          params.push(lifecycle_stage);
+          query += ` AND e.lifecycle_stage = $${params.length}`;
+        }
       }
 
       if (search) {
-        params.push(`%${search}%`);
-        query += ` AND (e.name ILIKE $${params.length} OR e.description ILIKE $${params.length})`;
+        const sanitizedSearch = sanitizeSearch(search);
+        if (sanitizedSearch) {
+          params.push(`%${sanitizedSearch}%`);
+          query += ` AND (e.name ILIKE $${params.length} OR e.description ILIKE $${params.length})`;
+        }
       }
 
       query += ' GROUP BY e.environment_id ORDER BY e.name ASC';
@@ -44,6 +70,11 @@ const environmentController = {
   getById: async (req, res) => {
     try {
       const { id } = req.params;
+
+      // Validate UUID format
+      if (!isValidUUID(id)) {
+        return res.status(400).json({ error: 'Invalid environment ID format' });
+      }
 
       const result = await db.query(
         'SELECT * FROM environments WHERE environment_id = $1',
@@ -159,6 +190,29 @@ const environmentController = {
     } catch (error) {
       console.error('Delete environment error:', error);
       res.status(500).json({ error: 'Failed to delete environment' });
+    }
+  },
+
+  // Get all instances across all environments
+  getAllInstances: async (req, res) => {
+    try {
+      const result = await db.query(
+        `SELECT ei.*, 
+                e.name as environment_name,
+                COUNT(DISTINCT ic.infra_id) as infra_count,
+                COUNT(DISTINCT ci.component_instance_id) as component_count
+         FROM environment_instances ei
+         LEFT JOIN environments e ON ei.environment_id = e.environment_id
+         LEFT JOIN infra_components ic ON ei.env_instance_id = ic.env_instance_id
+         LEFT JOIN component_instances ci ON ei.env_instance_id = ci.env_instance_id
+         GROUP BY ei.env_instance_id, e.name
+         ORDER BY e.name, ei.name`
+      );
+
+      res.json({ instances: result.rows });
+    } catch (error) {
+      console.error('Get all instances error:', error);
+      res.status(500).json({ error: 'Failed to fetch instances' });
     }
   },
 
@@ -768,6 +822,62 @@ const environmentController = {
     } catch (error) {
       console.error('Delete app-env instance error:', error);
       res.status(500).json({ error: 'Failed to unlink application' });
+    }
+  },
+
+  // Get related configs for an environment
+  getRelatedConfigs: async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      // Get configs where scope is EnvironmentInstance of this environment
+      const result = await db.query(
+        `SELECT cs.*, u.display_name as created_by_name,
+                ei.name as instance_name,
+                COUNT(DISTINCT ci.config_item_id) as item_count
+         FROM config_sets cs
+         LEFT JOIN config_items ci ON cs.config_set_id = ci.config_set_id
+         LEFT JOIN users u ON cs.created_by = u.user_id
+         LEFT JOIN environment_instances ei ON cs.scope_ref_id = ei.env_instance_id
+         WHERE cs.scope_type = 'EnvironmentInstance' 
+           AND cs.scope_ref_id IN (
+             SELECT env_instance_id FROM environment_instances WHERE environment_id = $1
+           )
+         GROUP BY cs.config_set_id, u.display_name, ei.name
+         ORDER BY cs.name`,
+        [id]
+      );
+
+      res.json({ configs: result.rows });
+    } catch (error) {
+      console.error('Get related configs error:', error);
+      res.status(500).json({ error: 'Failed to fetch related configs' });
+    }
+  },
+
+  // Get related interfaces for an environment (via interface endpoints)
+  getRelatedInterfaces: async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      // Get interfaces where endpoints are in this environment's instances
+      const result = await db.query(
+        `SELECT DISTINCT i.*, 
+                ei.name as instance_name,
+                COUNT(DISTINCT ie.interface_endpoint_id) as endpoint_count
+         FROM interfaces i
+         JOIN interface_endpoints ie ON i.interface_id = ie.interface_id
+         JOIN environment_instances ei ON ie.env_instance_id = ei.env_instance_id
+         WHERE ei.environment_id = $1
+         GROUP BY i.interface_id, ei.name
+         ORDER BY i.name`,
+        [id]
+      );
+
+      res.json({ interfaces: result.rows });
+    } catch (error) {
+      console.error('Get related interfaces error:', error);
+      res.status(500).json({ error: 'Failed to fetch related interfaces' });
     }
   }
 };

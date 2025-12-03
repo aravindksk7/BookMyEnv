@@ -19,9 +19,7 @@ const requireRole = (...allowedRoles) => {
     
     if (!allowedRoles.includes(userRole)) {
       return res.status(403).json({ 
-        error: 'Insufficient permissions',
-        required: allowedRoles,
-        current: userRole
+        error: 'You do not have permission to perform this action'
       });
     }
 
@@ -40,9 +38,7 @@ const requireMinRole = (minRole) => {
     
     if (!allowedRoles.includes(req.user.role)) {
       return res.status(403).json({ 
-        error: 'Insufficient permissions',
-        required: minRole,
-        current: req.user.role
+        error: 'You do not have permission to perform this action'
       });
     }
 
