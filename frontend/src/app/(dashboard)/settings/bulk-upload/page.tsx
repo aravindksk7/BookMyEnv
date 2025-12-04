@@ -47,6 +47,8 @@ import {
   Link as LinkIcon,
   Dns as InfraIcon,
   Refresh as RefreshIcon,
+  Hub as EndpointIcon,
+  AccountTree as ComponentInstanceIcon,
 } from '@mui/icons-material';
 import { bulkUploadAPI } from '@/lib/api';
 
@@ -124,6 +126,20 @@ const uploadTypes = [
     icon: <InfraIcon />,
     description: 'Upload infrastructure components (VMs, servers, etc.)',
     fields: ['instance_name*', 'name*', 'component_type', 'hostname', 'ip_address', 'os_version', 'status', 'owner_team']
+  },
+  { 
+    key: 'interface_endpoints', 
+    label: 'Interface Endpoints', 
+    icon: <EndpointIcon />,
+    description: 'Link interfaces to environment instances with endpoint details',
+    fields: ['interface_name*', 'instance_name*', 'endpoint', 'test_mode', 'enabled', 'source_component_name', 'target_component_name']
+  },
+  { 
+    key: 'component_instances', 
+    label: 'Component Instances', 
+    icon: <ComponentInstanceIcon />,
+    description: 'Deploy application components to environment instances',
+    fields: ['application_name*', 'component_name*', 'instance_name*', 'version', 'deployment_status']
   },
 ];
 
@@ -205,6 +221,12 @@ export default function BulkUploadPage() {
           break;
         case 'infra_components':
           response = await bulkUploadAPI.uploadInfraComponents(content);
+          break;
+        case 'interface_endpoints':
+          response = await bulkUploadAPI.uploadInterfaceEndpoints(content);
+          break;
+        case 'component_instances':
+          response = await bulkUploadAPI.uploadComponentInstances(content);
           break;
         default:
           throw new Error('Invalid upload type');
@@ -496,6 +518,20 @@ export default function BulkUploadPage() {
             <ListItemText 
               primary="App Deployments & Infrastructure" 
               secondary="Link applications to instances and add infrastructure components"
+            />
+          </ListItem>
+          <ListItem>
+            <ListItemIcon><Chip label="6" size="small" color="primary" /></ListItemIcon>
+            <ListItemText 
+              primary="Component Instances" 
+              secondary="Deploy app components to environment instances (requires components and instances)"
+            />
+          </ListItem>
+          <ListItem>
+            <ListItemIcon><Chip label="7" size="small" color="primary" /></ListItemIcon>
+            <ListItemText 
+              primary="Interface Endpoints" 
+              secondary="Link interfaces to instances with optional component instance references"
             />
           </ListItem>
         </List>

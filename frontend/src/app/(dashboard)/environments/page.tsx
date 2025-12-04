@@ -36,6 +36,7 @@ import {
   Paper,
   Divider,
 } from '@mui/material';
+import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -52,6 +53,7 @@ import {
   Terrain as EnvironmentIcon,
 } from '@mui/icons-material';
 import { environmentsAPI, applicationsAPI } from '@/lib/api';
+import DataGridWrapper from '@/components/DataGridWrapper';
 
 // Lazy load the other page components
 const ApplicationsContent = lazy(() => import('../applications/page'));
@@ -145,6 +147,7 @@ export default function EnvironmentsPage() {
   const [appLinkDialogOpen, setAppLinkDialogOpen] = useState(false);
   const [editAppLinkDialogOpen, setEditAppLinkDialogOpen] = useState(false);
   const [deleteAppLinkDialogOpen, setDeleteAppLinkDialogOpen] = useState(false);
+  const [bulkLinkDialogOpen, setBulkLinkDialogOpen] = useState(false);
   const [selectedEnv, setSelectedEnv] = useState<Environment | null>(null);
   const [selectedInstance, setSelectedInstance] = useState<EnvironmentInstance | null>(null);
   const [selectedAppEnvInstance, setSelectedAppEnvInstance] = useState<AppEnvironmentInstance | null>(null);
@@ -152,6 +155,19 @@ export default function EnvironmentsPage() {
   const [appEnvInstances, setAppEnvInstances] = useState<AppEnvironmentInstance[]>([]);
   const [tabValue, setTabValue] = useState(0);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+  const [bulkLinkData, setBulkLinkData] = useState<{
+    selectedApps: string[];
+    selectedInstances: string[];
+    deployment_model: string;
+    version: string;
+    deployment_status: string;
+  }>({
+    selectedApps: [],
+    selectedInstances: [],
+    deployment_model: 'Microservices',
+    version: '',
+    deployment_status: 'Aligned',
+  });
   
   const [formData, setFormData] = useState({
     name: '',
@@ -330,7 +346,7 @@ export default function EnvironmentsPage() {
         name: '',
         operational_status: 'Available',
         availability_window: '24x7',
-        capacity: 'Low',
+        capacity: 10,
         primary_location: '',
         bookable: true,
       });
@@ -495,6 +511,64 @@ export default function EnvironmentsPage() {
     }
   };
 
+  // Bulk link applications to instances
+  const handleBulkLink = async () => {
+    if (bulkLinkData.selectedApps.length === 0 || bulkLinkData.selectedInstances.length === 0) {
+      showSnackbar('Please select at least one application and one instance', 'error');
+      return;
+    }
+
+    let successCount = 0;
+    let errorCount = 0;
+    let skipCount = 0;
+
+    for (const appId of bulkLinkData.selectedApps) {
+      for (const instanceId of bulkLinkData.selectedInstances) {
+        try {
+          await environmentsAPI.linkApplicationToInstance(instanceId, {
+            application_id: appId,
+            deployment_model: bulkLinkData.deployment_model,
+            version: bulkLinkData.version,
+            deployment_status: bulkLinkData.deployment_status,
+          });
+          successCount++;
+        } catch (error: any) {
+          // Skip duplicates silently
+          if (error.response?.data?.error?.includes('already linked') || 
+              error.response?.data?.error?.includes('already exists') ||
+              error.response?.status === 409) {
+            skipCount++;
+            continue;
+          }
+          errorCount++;
+          console.error('Failed to link:', error);
+        }
+      }
+    }
+
+    setBulkLinkDialogOpen(false);
+    setBulkLinkData({
+      selectedApps: [],
+      selectedInstances: [],
+      deployment_model: 'Microservices',
+      version: '',
+      deployment_status: 'Aligned',
+    });
+
+    if (selectedEnv) {
+      const appResponse = await environmentsAPI.getAppEnvInstances(selectedEnv.environment_id);
+      setAppEnvInstances(appResponse.data.appEnvInstances || []);
+    }
+
+    if (errorCount === 0 && skipCount === 0) {
+      showSnackbar(`Successfully linked ${successCount} application-instance combination(s)`, 'success');
+    } else if (errorCount === 0) {
+      showSnackbar(`Linked ${successCount}, skipped ${skipCount} (already linked)`, 'success');
+    } else {
+      showSnackbar(`Linked ${successCount}, skipped ${skipCount}, failed ${errorCount}`, errorCount > successCount ? 'error' : 'success');
+    }
+  };
+
   const getCategoryColor = (category: string) => {
     const colors: { [key: string]: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' } = {
       E2E: 'primary',
@@ -524,6 +598,107 @@ export default function EnvironmentsPage() {
     return <LinearProgress />;
   }
 
+  // DataGrid columns for environments
+  const envColumns: GridColDef[] = [
+    {
+      field: 'name',
+      headerName: 'Name',
+      flex: 1,
+      minWidth: 200,
+      renderCell: (params: GridRenderCellParams) => (
+        <Box>
+          <Typography fontWeight={500}>{params.value}</Typography>
+          <Typography variant="caption" color="text.secondary">
+            {params.row.description || 'No description'}
+          </Typography>
+        </Box>
+      ),
+    },
+    {
+      field: 'environment_category',
+      headerName: 'Category',
+      width: 130,
+      renderCell: (params: GridRenderCellParams) => (
+        <Chip
+          label={params.value || 'N/A'}
+          size="small"
+          color={getCategoryColor(params.value)}
+        />
+      ),
+    },
+    {
+      field: 'lifecycle_stage',
+      headerName: 'Lifecycle',
+      width: 120,
+      renderCell: (params: GridRenderCellParams) => (
+        <Chip
+          label={params.value || 'Active'}
+          size="small"
+          color={getStatusColor(params.value)}
+          variant="outlined"
+        />
+      ),
+    },
+    {
+      field: 'owner_team',
+      headerName: 'Owner Team',
+      width: 150,
+      valueGetter: (value) => value || '-',
+    },
+    {
+      field: 'instance_count',
+      headerName: 'Instances',
+      width: 110,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: (params: GridRenderCellParams) => (
+        <Chip
+          icon={<InstanceIcon />}
+          label={params.value || 0}
+          size="small"
+          variant="outlined"
+        />
+      ),
+    },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 140,
+      sortable: false,
+      filterable: false,
+      disableColumnMenu: true,
+      align: 'right',
+      headerAlign: 'right',
+      renderCell: (params: GridRenderCellParams) => (
+        <Box>
+          <Tooltip title="View Details">
+            <IconButton
+              size="small"
+              color="primary"
+              onClick={() => handleViewEnvironment(params.row)}
+            >
+              <ViewIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Edit">
+            <IconButton size="small" onClick={() => handleEditClick(params.row)}>
+              <EditIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete">
+            <IconButton
+              size="small"
+              color="error"
+              onClick={() => handleDeleteClick(params.row)}
+            >
+              <DeleteIcon />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      ),
+    },
+  ];
+
   // Environments content (original page content)
   const EnvironmentsContent = () => (
     <>
@@ -545,94 +720,19 @@ export default function EnvironmentsPage() {
         </Box>
       </Box>
 
-      <Card>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Category</TableCell>
-                <TableCell>Lifecycle</TableCell>
-                <TableCell>Owner Team</TableCell>
-                <TableCell align="center">Instances</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {environments.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center">
-                    No environments found. Create one to get started.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                environments.map((env) => (
-                  <TableRow key={env.environment_id} hover>
-                    <TableCell>
-                      <Typography fontWeight={500}>{env.name}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {env.description || 'No description'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={env.environment_category || 'N/A'} 
-                        size="small" 
-                        color={getCategoryColor(env.environment_category)} 
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={env.lifecycle_stage || 'Active'}
-                        size="small"
-                        color={getStatusColor(env.lifecycle_stage)}
-                        variant="outlined"
-                      />
-                    </TableCell>
-                    <TableCell>{env.owner_team || '-'}</TableCell>
-                    <TableCell align="center">
-                      <Chip 
-                        icon={<InstanceIcon />} 
-                        label={env.instance_count || 0} 
-                        size="small" 
-                        variant="outlined" 
-                      />
-                    </TableCell>
-                    <TableCell align="right">
-                      <Tooltip title="View Details">
-                        <IconButton 
-                          size="small" 
-                          color="primary"
-                          onClick={() => handleViewEnvironment(env)}
-                        >
-                          <ViewIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Edit">
-                        <IconButton 
-                          size="small"
-                          onClick={() => handleEditClick(env)}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete">
-                        <IconButton 
-                          size="small" 
-                          color="error"
-                          onClick={() => handleDeleteClick(env)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Card>
+      <Paper sx={{ width: '100%' }}>
+        <DataGridWrapper
+          rows={environments}
+          columns={envColumns}
+          getRowId={(row) => row.environment_id}
+          loading={loading}
+          pageSize={10}
+          pageSizeOptions={[10, 25, 50]}
+          noRowsMessage="No environments found. Create one to get started."
+          height={500}
+          density="standard"
+        />
+      </Paper>
     </>
   );
 
@@ -846,15 +946,37 @@ export default function EnvironmentsPage() {
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
         <DialogTitle>Delete Environment</DialogTitle>
         <DialogContent>
-          <Typography>
-            Are you sure you want to delete <strong>{selectedEnv?.name}</strong>? 
-            This will also delete all associated instances and cannot be undone.
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            This action cannot be undone!
+          </Alert>
+          <Typography gutterBottom>
+            Are you sure you want to delete <strong>{selectedEnv?.name}</strong>?
           </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            This will permanently delete:
+          </Typography>
+          <Box component="ul" sx={{ mt: 0.5, mb: 0, pl: 2, '& li': { py: 0.25 } }}>
+            <li><Typography variant="body2" color="text.secondary">
+              {selectedEnv?.instance_count || 0} environment instance(s)
+            </Typography></li>
+            <li><Typography variant="body2" color="text.secondary">
+              All infrastructure components in those instances
+            </Typography></li>
+            <li><Typography variant="body2" color="text.secondary">
+              All application deployments to this environment
+            </Typography></li>
+            <li><Typography variant="body2" color="text.secondary">
+              All interface endpoints in this environment
+            </Typography></li>
+            <li><Typography variant="body2" color="text.secondary">
+              All configuration sets scoped to this environment
+            </Typography></li>
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
           <Button variant="contained" color="error" onClick={handleDeleteEnvironment}>
-            Delete
+            Delete Environment
           </Button>
         </DialogActions>
       </Dialog>
@@ -1001,17 +1123,34 @@ export default function EnvironmentsPage() {
                 Applications linked to this environment's instances
               </Typography>
               {instances.length > 0 && (
-                <Button
-                  variant="outlined"
-                  startIcon={<LinkIcon />}
-                  size="small"
-                  onClick={() => {
-                    setSelectedInstance(instances[0]);
-                    setAppLinkDialogOpen(true);
-                  }}
-                >
-                  Link Application
-                </Button>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<LinkIcon />}
+                    size="small"
+                    onClick={() => {
+                      setBulkLinkData({
+                        ...bulkLinkData,
+                        selectedApps: [],
+                        selectedInstances: instances.map(i => i.env_instance_id),
+                      });
+                      setBulkLinkDialogOpen(true);
+                    }}
+                  >
+                    Bulk Link
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<LinkIcon />}
+                    size="small"
+                    onClick={() => {
+                      setSelectedInstance(instances[0]);
+                      setAppLinkDialogOpen(true);
+                    }}
+                  >
+                    Link Application
+                  </Button>
+                </Box>
               )}
             </Box>
             {appEnvInstances.length === 0 ? (
@@ -1021,7 +1160,7 @@ export default function EnvironmentsPage() {
                 <Typography variant="caption" color="text.secondary">
                   {instances.length === 0 
                     ? 'Create an instance first, then link applications to it'
-                    : 'Click "Link Application" to add applications to this environment'}
+                    : 'Click "Link Application" or "Bulk Link" to add applications'}
                 </Typography>
               </Paper>
             ) : (
@@ -1478,6 +1617,110 @@ export default function EnvironmentsPage() {
           <Button onClick={() => setDeleteAppLinkDialogOpen(false)}>Cancel</Button>
           <Button variant="contained" color="error" onClick={handleDeleteAppLink}>
             Unlink
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Bulk Link Applications Dialog */}
+      <Dialog open={bulkLinkDialogOpen} onClose={() => setBulkLinkDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Bulk Link Applications to Instances</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+            <Alert severity="info">
+              Select multiple applications and instances to link them together with the same deployment settings.
+            </Alert>
+            
+            <Typography variant="subtitle2">Select Applications</Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, maxHeight: 150, overflow: 'auto', p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+              {applications.map((app) => (
+                <Chip
+                  key={app.application_id}
+                  label={app.name}
+                  onClick={() => {
+                    const newSelected = bulkLinkData.selectedApps.includes(app.application_id)
+                      ? bulkLinkData.selectedApps.filter(id => id !== app.application_id)
+                      : [...bulkLinkData.selectedApps, app.application_id];
+                    setBulkLinkData({ ...bulkLinkData, selectedApps: newSelected });
+                  }}
+                  color={bulkLinkData.selectedApps.includes(app.application_id) ? 'primary' : 'default'}
+                  variant={bulkLinkData.selectedApps.includes(app.application_id) ? 'filled' : 'outlined'}
+                />
+              ))}
+            </Box>
+            <Typography variant="caption" color="text.secondary">
+              {bulkLinkData.selectedApps.length} application(s) selected
+            </Typography>
+
+            <Typography variant="subtitle2">Select Environment Instances</Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, maxHeight: 150, overflow: 'auto', p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+              {instances.map((inst) => (
+                <Chip
+                  key={inst.env_instance_id}
+                  label={inst.name}
+                  onClick={() => {
+                    const newSelected = bulkLinkData.selectedInstances.includes(inst.env_instance_id)
+                      ? bulkLinkData.selectedInstances.filter(id => id !== inst.env_instance_id)
+                      : [...bulkLinkData.selectedInstances, inst.env_instance_id];
+                    setBulkLinkData({ ...bulkLinkData, selectedInstances: newSelected });
+                  }}
+                  color={bulkLinkData.selectedInstances.includes(inst.env_instance_id) ? 'primary' : 'default'}
+                  variant={bulkLinkData.selectedInstances.includes(inst.env_instance_id) ? 'filled' : 'outlined'}
+                />
+              ))}
+            </Box>
+            <Typography variant="caption" color="text.secondary">
+              {bulkLinkData.selectedInstances.length} instance(s) selected • 
+              Will create up to {bulkLinkData.selectedApps.length * bulkLinkData.selectedInstances.length} link(s)
+            </Typography>
+
+            <Divider sx={{ my: 1 }} />
+
+            <Typography variant="subtitle2">Deployment Settings (applied to all)</Typography>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Deployment Model</InputLabel>
+                <Select
+                  value={bulkLinkData.deployment_model}
+                  label="Deployment Model"
+                  onChange={(e) => setBulkLinkData({ ...bulkLinkData, deployment_model: e.target.value })}
+                >
+                  <MenuItem value="Monolith">Monolith</MenuItem>
+                  <MenuItem value="Microservices">Microservices</MenuItem>
+                  <MenuItem value="SaaS">SaaS</MenuItem>
+                  <MenuItem value="COTS">COTS</MenuItem>
+                </Select>
+              </FormControl>
+              <TextField
+                label="Version"
+                size="small"
+                fullWidth
+                value={bulkLinkData.version}
+                onChange={(e) => setBulkLinkData({ ...bulkLinkData, version: e.target.value })}
+              />
+              <FormControl fullWidth size="small">
+                <InputLabel>Status</InputLabel>
+                <Select
+                  value={bulkLinkData.deployment_status}
+                  label="Status"
+                  onChange={(e) => setBulkLinkData({ ...bulkLinkData, deployment_status: e.target.value })}
+                >
+                  <MenuItem value="Aligned">Aligned</MenuItem>
+                  <MenuItem value="Mixed">Mixed</MenuItem>
+                  <MenuItem value="OutOfSync">Out of Sync</MenuItem>
+                  <MenuItem value="Broken">Broken</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setBulkLinkDialogOpen(false)}>Cancel</Button>
+          <Button 
+            variant="contained" 
+            onClick={handleBulkLink}
+            disabled={bulkLinkData.selectedApps.length === 0 || bulkLinkData.selectedInstances.length === 0}
+          >
+            Link {bulkLinkData.selectedApps.length * bulkLinkData.selectedInstances.length} Combination(s)
           </Button>
         </DialogActions>
       </Dialog>

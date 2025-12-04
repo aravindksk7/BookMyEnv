@@ -1,339 +1,622 @@
 # BookMyEnv - Data Setup Guide
 
-A simple guide to setting up your test environment management system. This guide explains how to create environments, applications, instances, interfaces, and configurations.
+A comprehensive guide to setting up your test environment management system. This guide explains the data model, entity relationships, and how to create environments, applications, instances, interfaces, components, and their deployments.
 
 ---
 
 ## Table of Contents
 
 1. [Understanding the Data Model](#understanding-the-data-model)
-2. [Getting Started](#getting-started)
-3. [Creating Environments](#creating-environments)
-4. [Creating Instances](#creating-instances)
-5. [Creating Applications](#creating-applications)
-6. [Creating Interfaces](#creating-interfaces)
-7. [Creating Configurations](#creating-configurations)
-8. [Linking It All Together](#linking-it-all-together)
-9. [Bulk Upload Guide](#bulk-upload-guide)
-10. [Sample Data Files](#sample-data-files)
+2. [Core Entity Overview](#core-entity-overview)
+3. [Environments](#environments)
+4. [Environment Instances](#environment-instances)
+5. [Applications](#applications)
+6. [Application Components](#application-components)
+7. [Interfaces](#interfaces)
+8. [Interface Endpoints](#interface-endpoints)
+9. [Component Instances](#component-instances)
+10. [Application Deployments](#application-deployments)
+11. [Entity Relationships](#entity-relationships)
+12. [Bulk Upload Guide](#bulk-upload-guide)
+13. [Sample Data Files](#sample-data-files)
+14. [Quick Reference](#quick-reference)
 
 ---
 
 ## Understanding the Data Model
 
-Think of BookMyEnv like organizing a company's IT landscape:
+BookMyEnv organizes your IT landscape into a hierarchical structure that allows granular control and tracking of test environments and their applications.
+
+### High-Level Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        ENVIRONMENT                               │
-│  (e.g., "Development Environment", "Testing Environment")        │
-│                                                                   │
-│   ┌─────────────────┐    ┌─────────────────┐                     │
-│   │    INSTANCE 1   │    │    INSTANCE 2   │   (Can be booked)   │
-│   │  (e.g., DEV-1)  │    │  (e.g., DEV-2)  │                     │
-│   └────────┬────────┘    └────────┬────────┘                     │
-│            │                      │                               │
-│   ┌────────▼────────┐    ┌────────▼────────┐                     │
-│   │  APPLICATIONS   │    │  APPLICATIONS   │                     │
-│   │  deployed here  │    │  deployed here  │                     │
-│   └─────────────────┘    └─────────────────┘                     │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              ENVIRONMENT HIERARCHY                               │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│   ENVIRONMENT (Category: NonProd, PreProd, DR, Training, Sandpit)               │
+│   └── ENVIRONMENT INSTANCE (Bookable unit - what teams actually reserve)        │
+│       ├── APPLICATION DEPLOYMENTS (Apps deployed to this instance)              │
+│       │   └── Tracks: version, deployment_model, deployment_status              │
+│       ├── COMPONENT INSTANCES (Individual app components in this instance)      │
+│       │   └── Tracks: version, deployment_status, last_deployed_date            │
+│       ├── INTERFACE ENDPOINTS (How interfaces work in this instance)            │
+│       │   └── Tracks: endpoint URL, test_mode (Live/Virtualised/Stubbed)        │
+│       └── INFRASTRUCTURE COMPONENTS (VMs, containers, databases)                │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────────┐
-│                        APPLICATIONS                              │
-│  (e.g., "Payment System", "User Portal", "API Gateway")         │
-│                                                                   │
-│   ┌─────────────────────────────────────────────────────────┐   │
-│   │                     INTERFACES                           │   │
-│   │  (How applications talk to each other)                   │   │
-│   │  e.g., "Payment API", "User Auth Service"               │   │
-│   └─────────────────────────────────────────────────────────┘   │
-│                                                                   │
-│   ┌─────────────────────────────────────────────────────────┐   │
-│   │                   CONFIGURATIONS                         │   │
-│   │  (Settings for each application/environment)            │   │
-│   │  e.g., "Database URL", "API Key", "Timeout"             │   │
-│   └─────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                             APPLICATION HIERARCHY                                │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│   APPLICATION (Business system: Payment Gateway, Customer Portal)               │
+│   ├── APP COMPONENTS (Microservices, APIs, UIs, Databases within the app)       │
+│   │   └── COMPONENT INSTANCES (Component deployed to a specific instance)       │
+│   └── INTERFACES (How this app communicates with other apps)                    │
+│       └── INTERFACE ENDPOINTS (Interface configuration per instance)            │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Key Concepts
+### Why This Structure?
 
-| Term | What It Means | Example |
-|------|---------------|---------|
-| **Environment** | A category or type of testing area | "Non-Production", "Pre-Production", "DR" |
-| **Instance** | A specific copy of an environment that can be booked | "DEV-Instance-1", "TEST-Instance-A" |
-| **Application** | A software system that runs in environments | "Online Banking Portal", "Payment Gateway" |
-| **Interface** | A connection point between applications | "REST API", "Message Queue", "File Transfer" |
-| **Configuration** | Settings and values for applications | "Database connection string", "API timeout" |
+| Layer | Purpose | Example |
+|-------|---------|---------|
+| **Environment** | Categorize environments by purpose | "Non-Production", "Pre-Production" |
+| **Instance** | Provide bookable units | "SIT-1", "UAT-Instance-A" |
+| **Application Deployment** | Track what apps are in each instance | "Payment Gateway v2.1 in SIT-1" |
+| **Component Instance** | Track individual service versions | "payment-api v2.1.0 in SIT-1" |
+| **Interface Endpoint** | Configure interface behavior per instance | "Payment API using stub in SIT" |
 
 ---
 
-## Getting Started
+## Core Entity Overview
 
-### Logging In
+### Entity Summary Table
 
-1. Open your browser and go to `http://localhost:3000`
-2. Log in with your credentials:
-   - **Email:** `admin@bme.local`
-   - **Password:** `Admin@123`
-
-### Navigation
-
-After logging in, you'll see the sidebar with these options:
-- **Dashboard** - Overview of your system
-- **Environments** - Manage environments and instances
-- **Applications** - Manage applications
-- **Interfaces** - Manage application interfaces
-- **Configs** - Manage configurations
-- **Bookings** - Book environment instances
-- **Settings** - User and system settings (including Bulk Upload)
+| Entity | Description | Parent | Key Fields |
+|--------|-------------|--------|------------|
+| **Environment** | Top-level category | None | name, category, lifecycle_stage |
+| **Environment Instance** | Bookable environment copy | Environment | name, operational_status, bookable |
+| **Application** | Business system | None | name, business_domain, criticality |
+| **App Component** | Part of an application | Application | name, component_type, runtime_platform |
+| **Interface** | Communication channel | Application (source/target) | name, direction, pattern, frequency |
+| **App Deployment** | App → Instance link | Application + Instance | version, deployment_model, status |
+| **Component Instance** | Component → Instance link | App Component + Instance | version, deployment_status |
+| **Interface Endpoint** | Interface → Instance link | Interface + Instance | endpoint, test_mode, enabled |
 
 ---
 
-## Creating Environments
+## Environments
 
-Environments are the top-level containers that represent different types of testing areas.
+**Environments** are the top-level containers that categorize your testing landscape. They represent a type or category of environment rather than a specific deployable unit.
 
-### Step-by-Step (Manual)
+### Environment Fields
 
-1. Click **Environments** in the sidebar
-2. Click the **+ Add Environment** button
-3. Fill in the form:
-
-| Field | Description | Example |
-|-------|-------------|---------|
-| **Name*** | Unique name for the environment | `Development-Team-A` |
-| **Description** | What this environment is for | `Development environment for mobile team` |
-| **Category*** | Type of environment | `NonProd`, `PreProd`, `DR`, `Training`, `Sandpit` |
-| **Lifecycle Stage** | Current status | `Active`, `Provisioning`, `Decommissioning`, `Archived` |
-| **Owner Team** | Team responsible | `Mobile Development Team` |
-| **Support Group** | Who to contact for issues | `IT Support` |
-| **Data Sensitivity** | Type of data allowed | `NonProdDummy`, `PII`, `PCI`, `Confidential` |
-
-4. Click **Save**
+| Field | Type | Required | Description | Valid Values |
+|-------|------|----------|-------------|--------------|
+| `name` | String(50) | ✓ | Unique environment name | Any unique name |
+| `description` | Text | | Detailed description | Free text |
+| `environment_category` | Enum | | Type of environment | `NonProd`, `PreProd`, `DR`, `Training`, `Sandpit` |
+| `lifecycle_stage` | Enum | | Current stage | `Planned`, `Active`, `Retiring`, `Decommissioned` |
+| `owner_team` | String(100) | | Responsible team | e.g., "Platform Team" |
+| `support_group` | String(100) | | Support contact | e.g., "IT Support" |
+| `data_sensitivity` | Enum | | Data classification | `PII`, `PCI`, `Confidential`, `NonProdDummy` |
+| `usage_policies` | Text | | Usage guidelines | Free text |
 
 ### Environment Categories Explained
 
-| Category | When to Use |
-|----------|-------------|
-| **NonProd** | Development and general testing |
-| **PreProd** | Final testing before production |
-| **DR** | Disaster recovery environments |
-| **Training** | User training and demos |
-| **Sandpit** | Experimentation and POCs |
+| Category | Purpose | Typical Use |
+|----------|---------|-------------|
+| **NonProd** | Development and general testing | DEV, SIT, Integration Testing |
+| **PreProd** | Final testing before production | UAT, Staging, Pre-Production |
+| **DR** | Disaster recovery testing | DR Failover, Business Continuity |
+| **Training** | User training and demos | Training environments, Demo systems |
+| **Sandpit** | Experimentation | POCs, Innovation, Experimentation |
+
+### Lifecycle Stages
+
+| Stage | Description | Actions Allowed |
+|-------|-------------|-----------------|
+| **Planned** | Environment is being planned | Create instances, configure |
+| **Active** | Fully operational | All operations, bookings |
+| **Retiring** | Being phased out | View only, complete existing bookings |
+| **Decommissioned** | No longer in use | Archive, read-only |
+
+### Creating an Environment
+
+**Via UI:**
+1. Navigate to **Environments** in the sidebar
+2. Click **+ Add Environment**
+3. Fill in the required and optional fields
+4. Click **Save**
+
+**Via Bulk Upload CSV:**
+```csv
+name,description,environment_category,lifecycle_stage,owner_team,support_group,data_sensitivity,usage_policies
+SIT-Environment,System Integration Testing,NonProd,Active,QA Team,IT Support,NonProdDummy,Integration testing only
+UAT-Environment,User Acceptance Testing,PreProd,Active,UAT Team,IT Support,Confidential,UAT with masked prod data
+```
 
 ---
 
-## Creating Instances
+## Environment Instances
 
-Instances are the bookable copies of environments. One environment can have multiple instances.
+**Environment Instances** are the actual deployable units that teams book and use. Each Environment can have multiple Instances, allowing parallel usage.
 
-### Step-by-Step (Manual)
+### Instance Fields
 
-1. Go to **Environments** page
-2. Click on an environment to expand it
-3. Click **+ Add Instance**
-4. Fill in the form:
+| Field | Type | Required | Description | Valid Values |
+|-------|------|----------|-------------|--------------|
+| `name` | String(100) | ✓ | Unique name within environment | Any unique name |
+| `operational_status` | Enum | | Current operational state | `Available`, `Broken`, `Maintenance`, `Provisioning` |
+| `booking_status` | Enum | | Booking availability | `Available`, `PartiallyBooked`, `FullyBooked` |
+| `active_booking_count` | Integer | | Number of active bookings | Auto-calculated |
+| `availability_window` | String(100) | | When available | e.g., "24x7", "Business Hours" |
+| `capacity` | Integer | | Concurrent usage capacity | Number of teams/users |
+| `primary_location` | String(100) | | Physical/cloud location | e.g., "Sydney DC", "AWS ap-southeast-2" |
+| `bookable` | Boolean | | Can be booked | `true` / `false` |
 
-| Field | Description | Example |
-|-------|-------------|---------|
-| **Name*** | Unique name within the environment | `Instance-1` |
-| **Operational Status** | Current availability | `Available`, `InUse`, `Maintenance`, `Offline` |
-| **Availability Window** | When it can be used | `24x7`, `Business Hours`, `Weekdays Only` |
-| **Capacity** | How many users/tests it can handle | `10` |
-| **Primary Location** | Where it's hosted | `Sydney Data Center` |
-| **Bookable** | Can users book this instance? | `Yes` / `No` |
+### Operational vs Booking Status
 
-5. Click **Save**
+**Operational Status** - Physical/technical state:
+| Status | Meaning | Bookable? |
+|--------|---------|-----------|
+| `Available` | Fully functional, ready for use | Yes |
+| `Broken` | Has issues, not usable | No |
+| `Maintenance` | Scheduled maintenance | No |
+| `Provisioning` | Being set up | No |
+
+**Booking Status** - Reservation state:
+| Status | Meaning |
+|--------|---------|
+| `Available` | No active bookings, can be reserved |
+| `PartiallyBooked` | Has some bookings but has capacity |
+| `FullyBooked` | At capacity, cannot accept more bookings |
 
 ### Why Multiple Instances?
 
-Imagine you have a "Development" environment. You might have:
-- **DEV-Instance-1** - For Team Alpha
-- **DEV-Instance-2** - For Team Beta  
-- **DEV-Instance-3** - For automated testing
+Consider a "SIT Environment" that needs to support 3 teams testing simultaneously:
 
-Each team can book their own instance without interfering with others.
+```
+SIT Environment (Category: NonProd)
+├── SIT-Instance-1 → Team Alpha testing Payment module
+├── SIT-Instance-2 → Team Beta testing User module  
+└── SIT-Instance-3 → Automated regression testing
+```
+
+Each instance can have different applications deployed at different versions.
+
+### Creating an Instance
+
+**Via UI:**
+1. Navigate to **Environments**
+2. Click on an environment to expand
+3. Click **+ Add Instance**
+4. Fill in the fields
+5. Click **Save**
+
+**Via Bulk Upload CSV:**
+```csv
+environment_name,name,operational_status,availability_window,capacity,primary_location,bookable
+SIT-Environment,SIT-1,Available,24x7,5,Sydney DC,true
+SIT-Environment,SIT-2,Available,24x7,5,Melbourne DC,true
+SIT-Environment,SIT-3,Maintenance,24x7,5,Sydney DC,false
+```
 
 ---
 
-## Creating Applications
+## Applications
 
-Applications are the software systems that get deployed to your environments.
+**Applications** represent business systems that are deployed to environments. They are the software products your organization develops, purchases, or integrates.
 
-### Step-by-Step (Manual)
+### Application Fields
 
-1. Click **Applications** in the sidebar
+| Field | Type | Required | Description | Valid Values |
+|-------|------|----------|-------------|--------------|
+| `name` | String(255) | ✓ | Unique application name | Any unique name |
+| `business_domain` | String(100) | | Business area | e.g., "Retail Banking", "Payments" |
+| `description` | Text | | What the app does | Free text |
+| `criticality` | Enum | | Business importance | `High`, `Medium`, `Low` |
+| `data_sensitivity` | Enum | | Data it handles | `PII`, `PCI`, `Confidential`, `NonProdDummy` |
+| `owner_team` | String(100) | | Development owner | e.g., "Digital Banking Team" |
+| `test_owner` | String(100) | | QA/Test owner | e.g., "QA Team" |
+
+### Criticality Levels
+
+| Level | Meaning | Typical Applications |
+|-------|---------|---------------------|
+| **High** | Business critical, affects revenue/customers | Payment systems, Core banking |
+| **Medium** | Important but not critical | Reporting, Analytics |
+| **Low** | Nice to have | Internal tools, Utilities |
+
+### Data Sensitivity
+
+| Classification | Description | Example Data |
+|----------------|-------------|--------------|
+| **PCI** | Payment Card Industry data | Credit card numbers, CVV |
+| **PII** | Personally Identifiable Information | Names, addresses, SSN |
+| **Confidential** | Business sensitive | Financial reports, strategies |
+| **NonProdDummy** | Test/dummy data only | Synthetic test data |
+
+### Creating an Application
+
+**Via UI:**
+1. Navigate to **Applications**
 2. Click **+ Add Application**
-3. Fill in the form:
-
-| Field | Description | Example |
-|-------|-------------|---------|
-| **Name*** | Unique application name | `Online Banking Portal` |
-| **Business Domain** | What business area it belongs to | `Retail Banking`, `Payments`, `HR` |
-| **Description** | What the application does | `Customer-facing internet banking application` |
-| **Criticality** | How important is it? | `High`, `Medium`, `Low` |
-| **Data Sensitivity** | What kind of data it handles | `PCI`, `PII`, `Confidential`, `NonProdDummy` |
-| **Owner Team** | Team that owns it | `Digital Banking Team` |
-| **Test Owner** | Team that tests it | `QA Team` |
-
+3. Fill in the fields
 4. Click **Save**
 
-### Linking Applications to Instances
-
-After creating applications and instances, you can link them:
-
-1. Go to the **Topology** page
-2. Or on the Environment page, click on an instance and use "Deploy Application"
-3. This shows which applications are deployed where
+**Via Bulk Upload CSV:**
+```csv
+name,business_domain,description,criticality,data_sensitivity,owner_team,test_owner
+Payment Gateway,Payments,Core payment processing system,High,PCI,Payments Team,QA Team
+Customer Portal,Retail Banking,Customer-facing web application,High,PII,Digital Team,QA Team
+Notification Service,Communications,Email and SMS notifications,Medium,PII,Platform Team,QA Team
+```
 
 ---
 
-## Creating Interfaces
+## Application Components
 
-Interfaces define how applications communicate with each other.
+**App Components** are the individual services, modules, or deployable units that make up an Application. Modern applications often consist of multiple microservices.
 
-### Step-by-Step (Manual)
+### Component Fields
 
-1. Click **Interfaces** in the sidebar
-2. Click **+ Add Interface**
-3. Fill in the form:
+| Field | Type | Required | Description | Valid Values |
+|-------|------|----------|-------------|--------------|
+| `name` | String(255) | ✓ | Component name | Any unique name within app |
+| `application_id` | UUID | ✓ | Parent application | FK to applications |
+| `component_type` | Enum | | Type of component | See below |
+| `source_repo` | String(500) | | Git repository URL | e.g., "github.com/org/repo" |
+| `build_pipeline_id` | String(255) | | CI/CD pipeline ID | e.g., "pipeline-123" |
+| `runtime_platform` | String(100) | | Where it runs | e.g., "Kubernetes", "AWS Lambda" |
+| `owner_team` | String(100) | | Component owner | e.g., "Backend Team" |
 
-| Field | Description | Example |
-|-------|-------------|---------|
-| **Name*** | Unique interface name | `Payment-API` |
-| **Direction** | Flow of data | `Inbound`, `Outbound`, `Bidirectional` |
-| **Pattern** | Type of integration | `REST`, `SOAP`, `GraphQL`, `Messaging`, `File` |
-| **Frequency** | How often it's called | `RealTime`, `Batch`, `OnDemand` |
-| **Protocol** | Technical protocol | `HTTPS`, `SFTP`, `MQ`, `Kafka` |
-| **Source Application** | Where data comes from | `Online Banking Portal` |
-| **Target Application** | Where data goes to | `Payment Gateway` |
-| **Description** | What this interface does | `Sends payment requests to payment processor` |
+### Component Types
 
-4. Click **Save**
+| Type | Description | Examples |
+|------|-------------|----------|
+| **API** | REST/GraphQL/gRPC API service | payment-api, user-service |
+| **UI** | Frontend/User Interface | web-portal, admin-dashboard |
+| **Batch** | Batch processing jobs | daily-report, data-sync |
+| **RuleEngine** | Business rules processing | fraud-rules, pricing-engine |
+| **DBSchema** | Database schema/migrations | payment-db, user-db |
+| **MessageProcessor** | Message queue consumer | order-processor, notification-handler |
+| **Job** | Scheduled/background jobs | cleanup-job, reconciliation |
+| **Lambda** | Serverless functions | image-resize, email-sender |
+| **Other** | Other component types | Custom components |
 
-### Interface Patterns Explained
+### Example: Payment Gateway Components
 
-| Pattern | Description | Example Use Case |
-|---------|-------------|------------------|
-| **REST** | Web API calls | Mobile app calling backend |
-| **SOAP** | XML-based web services | Legacy system integration |
-| **GraphQL** | Flexible query API | Modern web applications |
-| **Messaging** | Async message queues | Order processing |
-| **File** | File-based transfer | Batch data imports |
-| **Database** | Direct DB connections | Reporting systems |
+```
+Payment Gateway (Application)
+├── payment-api (API) - REST API for payment operations
+├── payment-processor (MessageProcessor) - Processes payment queue
+├── payment-validator (API) - Validates payment requests
+├── payment-db (DBSchema) - PostgreSQL database schema
+├── payment-batch (Batch) - End-of-day settlement
+└── payment-ui (UI) - Admin dashboard
+```
+
+### Creating a Component
+
+**Via UI:**
+1. Navigate to **Applications**
+2. Select an application
+3. Go to **Components** tab
+4. Click **+ Add Component**
+5. Fill in the fields
+6. Click **Save**
+
+**Via Bulk Upload CSV:**
+```csv
+application_name,name,component_type,source_repo,runtime_platform,owner_team
+Payment Gateway,payment-api,API,github.com/org/payment-api,Kubernetes,Backend Team
+Payment Gateway,payment-processor,MessageProcessor,github.com/org/payment-proc,Kubernetes,Backend Team
+Payment Gateway,payment-db,DBSchema,github.com/org/payment-db,PostgreSQL,DBA Team
+Customer Portal,portal-ui,UI,github.com/org/portal-ui,Kubernetes,Frontend Team
+Customer Portal,portal-bff,API,github.com/org/portal-bff,Kubernetes,Backend Team
+```
 
 ---
 
-## Creating Configurations
+## Interfaces
 
-Configurations store settings and values for your applications and environments.
+**Interfaces** define how applications communicate with each other. They represent the contracts and channels for data exchange.
 
-### Step-by-Step (Manual)
+### Interface Fields
 
-1. Click **Configs** in the sidebar
-2. Click **+ Add Config**
-3. Fill in the form:
+| Field | Type | Required | Description | Valid Values |
+|-------|------|----------|-------------|--------------|
+| `name` | String(255) | ✓ | Interface name | Any unique name |
+| `direction` | Enum | | Data flow direction | `Inbound`, `Outbound`, `Bidirectional` |
+| `pattern` | Enum | | Integration pattern | See below |
+| `frequency` | Enum | | Call frequency | `RealTime`, `NearRealTime`, `Batch` |
+| `source_application_id` | UUID | | Where data originates | FK to applications |
+| `target_application_id` | UUID | | Where data goes | FK to applications |
+| `external_party` | String(255) | | External system name | e.g., "Visa", "SWIFT" |
+| `sla` | String(100) | | Service level agreement | e.g., "99.9%, <100ms" |
+| `contract_id` | String(100) | | API contract reference | e.g., "SWAGGER-001" |
 
-| Field | Description | Example |
-|-------|-------------|---------|
-| **Key*** | Configuration name | `database.connection.url` |
-| **Value*** | Configuration value | `jdbc:postgresql://db:5432/myapp` |
-| **Environment** | Which environment (optional) | `Development-Team-A` |
-| **Application** | Which application (optional) | `Online Banking Portal` |
-| **Description** | What this config is for | `Database connection string for app` |
-| **Is Secret** | Is this a sensitive value? | `Yes` (will be masked) |
+### Interface Patterns
 
-4. Click **Save**
+| Pattern | Description | Use Case |
+|---------|-------------|----------|
+| **REST** | RESTful HTTP APIs | Web services, mobile backends |
+| **SOAP** | XML-based web services | Legacy enterprise systems |
+| **MQ** | IBM MQ messaging | Enterprise message queues |
+| **Kafka** | Event streaming | Real-time event processing |
+| **FileDrop** | File-based exchange | Batch data transfers |
+| **FTP** | File Transfer Protocol | Legacy file transfers |
+| **SFTP** | Secure FTP | Secure file transfers |
+| **FIX** | Financial Information eXchange | Trading systems |
+| **Other** | Other patterns | Custom integrations |
 
-### Configuration Best Practices
+### Direction Types
 
-- Use consistent naming: `category.subcategory.name`
-  - Examples: `database.pool.size`, `api.timeout.seconds`, `feature.dark-mode.enabled`
-- Mark passwords and API keys as **secrets**
-- Add descriptions so others understand what values to use
+| Direction | Description | Example |
+|-----------|-------------|---------|
+| **Inbound** | App receives data | Payment Gateway receives orders |
+| **Outbound** | App sends data | Portal sends payment requests |
+| **Bidirectional** | Two-way communication | Real-time sync |
+
+### Frequency Types
+
+| Frequency | Description | Typical Latency |
+|-----------|-------------|-----------------|
+| **RealTime** | Immediate, synchronous | < 1 second |
+| **NearRealTime** | Slight delay, async | 1-60 seconds |
+| **Batch** | Scheduled batches | Hours/Daily |
+
+### Example: Portal-to-Payment Interface
+
+```
+Interface: Portal-Payment-API
+├── Source: Customer Portal
+├── Target: Payment Gateway
+├── Direction: Outbound
+├── Pattern: REST
+├── Frequency: RealTime
+└── SLA: 99.9%, response < 200ms
+```
+
+### Creating an Interface
+
+**Via Bulk Upload CSV:**
+```csv
+name,direction,pattern,frequency,source_application_name,target_application_name,sla,external_party
+Portal-to-Payment-API,Outbound,REST,RealTime,Customer Portal,Payment Gateway,99.9% <200ms,
+Payment-to-Fraud-Check,Outbound,REST,RealTime,Payment Gateway,Fraud Detection,99.99% <100ms,
+Payment-to-VISA,Outbound,REST,RealTime,Payment Gateway,,99.9%,VISA
+Daily-Statement-Export,Outbound,FileDrop,Batch,Transaction History,,Daily 6AM,
+```
 
 ---
 
-## Linking It All Together
+## Interface Endpoints
 
-Here's the typical workflow for setting up a complete test environment:
+**Interface Endpoints** define how an interface behaves in a specific environment instance. The same interface may have different configurations (URLs, test modes) across instances.
 
-### 1. Create the Environment
+### Interface Endpoint Fields
+
+| Field | Type | Required | Description | Valid Values |
+|-------|------|----------|-------------|--------------|
+| `interface_id` | UUID | ✓ | Parent interface | FK to interfaces |
+| `env_instance_id` | UUID | ✓ | Environment instance | FK to environment_instances |
+| `endpoint` | String(500) | | URL or connection string | e.g., "https://api.sit.local/v1" |
+| `test_mode` | Enum | | How interface behaves | `Live`, `Virtualised`, `Stubbed`, `Disabled` |
+| `enabled` | Boolean | | Is endpoint active | `true` / `false` |
+| `source_component_instance_id` | UUID | | Source component | FK to component_instances |
+| `target_component_instance_id` | UUID | | Target component | FK to component_instances |
+| `external_stub_id` | String(255) | | Virtual service ID | e.g., "WireMock-stub-001" |
+
+### Test Modes Explained
+
+| Mode | Description | When to Use |
+|------|-------------|-------------|
+| **Live** | Connects to real target system | Production-like testing, E2E tests |
+| **Virtualised** | Uses service virtualization | Isolated testing, parallel testing |
+| **Stubbed** | Uses simple mock responses | Unit testing, development |
+| **Disabled** | Interface is turned off | Focused component testing |
+
+### Why Different Test Modes?
+
+In a **SIT Instance**, you might want:
+- Internal APIs → **Live** (real connections within SIT)
+- External vendor APIs → **Virtualised** (use Parasoft/WireMock stubs)
+- Third-party services → **Stubbed** (simple mocks)
+
+### Example: Same Interface, Different Instances
+
 ```
-Environment: "Integration Testing"
-Category: NonProd
-Description: "Shared integration testing environment"
-```
-
-### 2. Create Instances
-```
-Instance 1: "INT-Instance-A"
-  - Status: Available
-  - Capacity: 5 teams
-  - Bookable: Yes
-
-Instance 2: "INT-Instance-B"  
-  - Status: Available
-  - Capacity: 5 teams
-  - Bookable: Yes
-```
-
-### 3. Create Applications
-```
-Application 1: "Customer Portal"
-  - Domain: Retail
-  - Criticality: High
-
-Application 2: "Payment Service"
-  - Domain: Payments
-  - Criticality: High
-
-Application 3: "Notification Service"
-  - Domain: Communications
-  - Criticality: Medium
-```
-
-### 4. Create Interfaces Between Apps
-```
-Interface 1: "Portal-to-Payment-API"
-  - Source: Customer Portal
-  - Target: Payment Service
-  - Pattern: REST
-  - Direction: Outbound
-
-Interface 2: "Payment-to-Notification"
-  - Source: Payment Service
-  - Target: Notification Service
-  - Pattern: Messaging
-  - Direction: Outbound
+Interface: Payment-to-VISA
+├── SIT-1 Instance
+│   ├── Endpoint: https://stub.internal/visa-mock
+│   ├── Test Mode: Stubbed
+│   └── Enabled: true
+├── UAT-1 Instance
+│   ├── Endpoint: https://virtualservice.internal/visa
+│   ├── Test Mode: Virtualised
+│   └── Enabled: true
+└── PreProd-1 Instance
+    ├── Endpoint: https://sandbox.visa.com/api
+    ├── Test Mode: Live
+    └── Enabled: true
 ```
 
-### 5. Add Configurations
-```
-Config 1: "payment.api.url"
-  - Value: "https://payment-api.int.local"
-  - Environment: Integration Testing
-  - Application: Customer Portal
+### Creating Interface Endpoints via Bulk Upload
 
-Config 2: "notification.queue.name"
-  - Value: "payment-notifications"
-  - Environment: Integration Testing
-  - Application: Payment Service
+```csv
+interface_name,instance_name,endpoint,test_mode,enabled,source_component_name,target_component_name
+Portal-to-Payment-API,SIT-1,https://payment-api.sit.local/v1,Live,true,portal-bff,payment-api
+Portal-to-Payment-API,UAT-1,https://payment-api.uat.local/v1,Live,true,portal-bff,payment-api
+Payment-to-VISA,SIT-1,https://stub.internal/visa-mock,Stubbed,true,payment-processor,
+Payment-to-VISA,UAT-1,https://sandbox.visa.com/api,Virtualised,true,payment-processor,
 ```
 
-### 6. Deploy Applications to Instances
-Link your applications to the instances where they're deployed.
+---
 
-### 7. Book and Use!
-Teams can now book instances for their testing.
+## Component Instances
+
+**Component Instances** track the deployment of individual application components to environment instances. This allows version tracking at the component level.
+
+### Component Instance Fields
+
+| Field | Type | Required | Description | Valid Values |
+|-------|------|----------|-------------|--------------|
+| `component_id` | UUID | ✓ | Parent component | FK to app_components |
+| `env_instance_id` | UUID | ✓ | Environment instance | FK to environment_instances |
+| `version` | String(50) | | Deployed version | e.g., "2.1.0", "2.1.0-SNAPSHOT" |
+| `deployment_status` | Enum | | Current state | `Deployed`, `PartiallyDeployed`, `RollbackPending`, `Failed` |
+| `last_deployed_date` | Timestamp | | Last deployment time | Auto-updated |
+
+### Deployment Statuses
+
+| Status | Description | Action Needed |
+|--------|-------------|---------------|
+| **Deployed** | Successfully deployed and running | None |
+| **PartiallyDeployed** | Some replicas deployed | Monitor, may need retry |
+| **RollbackPending** | Rollback in progress | Wait for completion |
+| **Failed** | Deployment failed | Investigate and retry |
+
+### Example: Tracking Component Versions
+
+```
+SIT-1 Instance:
+├── payment-api v2.1.0 (Deployed)
+├── payment-processor v2.1.0 (Deployed)
+├── payment-db v2.1.0 (Deployed)
+├── portal-ui v3.0.0-beta (Deployed)
+└── portal-bff v2.9.0 (Deployed)
+
+UAT-1 Instance:
+├── payment-api v2.0.0 (Deployed)
+├── payment-processor v2.0.0 (Deployed)
+├── portal-ui v2.9.0 (Deployed)
+└── portal-bff v2.9.0 (Deployed)
+```
+
+This shows SIT has newer payment versions while UAT has stable releases.
+
+### Creating Component Instances via Bulk Upload
+
+```csv
+application_name,component_name,instance_name,version,deployment_status
+Payment Gateway,payment-api,SIT-1,2.1.0,Deployed
+Payment Gateway,payment-api,UAT-1,2.0.0,Deployed
+Payment Gateway,payment-processor,SIT-1,2.1.0,Deployed
+Customer Portal,portal-ui,SIT-1,3.0.0-beta,Deployed
+Customer Portal,portal-ui,UAT-1,2.9.0,Deployed
+```
+
+---
+
+## Application Deployments
+
+**Application Deployments** (stored in `application_environment_instances`) track the high-level relationship between Applications and Environment Instances.
+
+### Deployment Fields
+
+| Field | Type | Required | Description | Valid Values |
+|-------|------|----------|-------------|--------------|
+| `application_id` | UUID | ✓ | Application | FK to applications |
+| `env_instance_id` | UUID | ✓ | Environment instance | FK to environment_instances |
+| `deployment_model` | Enum | | Architecture type | `Monolith`, `Microservices`, `SaaS`, `COTS` |
+| `version` | String(50) | | Overall app version | e.g., "2.1.0" |
+| `deployment_status` | Enum | | Overall health | `Aligned`, `Mixed`, `OutOfSync`, `Broken` |
+
+### Deployment Models
+
+| Model | Description | Use Case |
+|-------|-------------|----------|
+| **Monolith** | Single deployable unit | Traditional applications |
+| **Microservices** | Multiple independent services | Cloud-native apps |
+| **SaaS** | Third-party hosted | Salesforce, ServiceNow |
+| **COTS** | Commercial off-the-shelf | Oracle, SAP |
+
+### Deployment Status
+
+| Status | Meaning | Action |
+|--------|---------|--------|
+| **Aligned** | All components at expected versions | None |
+| **Mixed** | Some components at different versions | Review |
+| **OutOfSync** | Deployment differs from planned state | Investigate |
+| **Broken** | Deployment has failures | Immediate action |
+
+---
+
+## Entity Relationships
+
+### Complete Relationship Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                         COMPLETE ENTITY RELATIONSHIP                             │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────┐                                    ┌──────────────┐
+│  ENVIRONMENT │                                    │ APPLICATION  │
+│              │                                    │              │
+│ • name       │                                    │ • name       │
+│ • category   │                                    │ • domain     │
+│ • stage      │                                    │ • criticality│
+└──────┬───────┘                                    └──────┬───────┘
+       │ 1:N                                               │ 1:N
+       ▼                                                   ▼
+┌──────────────────┐                              ┌─────────────────┐
+│ ENV INSTANCE     │                              │ APP COMPONENT   │
+│                  │                              │                 │
+│ • name           │                              │ • name          │
+│ • op_status      │                              │ • type          │
+│ • bookable       │                              │ • source_repo   │
+└────────┬─────────┘                              └────────┬────────┘
+         │                                                 │
+         │         ┌──────────────────────┐               │
+         │         │ APP_ENV_INSTANCE     │               │
+         ├────────►│ (App Deployment)     │◄──────────────┤
+         │         │                      │               │
+         │         │ • version            │               │
+         │         │ • deployment_model   │               │
+         │         │ • deployment_status  │               │
+         │         └──────────────────────┘               │
+         │                                                │
+         │         ┌──────────────────────┐               │
+         ├────────►│ COMPONENT_INSTANCE   │◄──────────────┘
+         │         │                      │
+         │         │ • version            │
+         │         │ • deployment_status  │
+         │         └──────────────────────┘
+         │
+         │                                        ┌──────────────────┐
+         │         ┌──────────────────────┐      │ INTERFACE        │
+         └────────►│ INTERFACE_ENDPOINT   │◄─────┤                  │
+                   │                      │      │ • name           │
+                   │ • endpoint           │      │ • direction      │
+                   │ • test_mode          │      │ • pattern        │
+                   │ • enabled            │      │ • frequency      │
+                   └──────────────────────┘      │ • source_app_id  │
+                                                 │ • target_app_id  │
+                                                 └──────────────────┘
+```
+
+### Relationship Summary
+
+| From | To | Cardinality | Description |
+|------|-----|-------------|-------------|
+| Environment | Instance | 1:N | One environment has many instances |
+| Application | Component | 1:N | One application has many components |
+| Application | Interface | 1:N | One app can be source/target of many interfaces |
+| Instance + Application | App Deployment | 1:1 | One deployment per app per instance |
+| Instance + Component | Component Instance | 1:1 | One component instance per component per instance |
+| Instance + Interface | Interface Endpoint | 1:1 | One endpoint per interface per instance |
 
 ---
 
 ## Bulk Upload Guide
 
-For setting up many items at once, use the **Bulk Upload** feature.
+For setting up many items at once, use the **Bulk Upload** feature. This is the most efficient way to populate the system with your existing environment data.
 
 ### Accessing Bulk Upload
 
@@ -343,26 +626,117 @@ For setting up many items at once, use the **Bulk Upload** feature.
 
 Or navigate directly to: `/settings/bulk-upload`
 
+### Available Upload Types
+
+| Tab | Entity | Description |
+|-----|--------|-------------|
+| Environments | `environments` | Top-level environment categories |
+| Instances | `environment_instances` | Bookable environment instances |
+| Applications | `applications` | Business applications |
+| Interfaces | `interfaces` | App-to-app communication channels |
+| Components | `app_components` | Application components/services |
+| App Deployments | `application_environment_instances` | App → Instance mappings |
+| Infrastructure | `infra_components` | VMs, containers, databases |
+| **Interface Endpoints** | `interface_endpoints` | Interface configuration per instance |
+| **Component Instances** | `component_instances` | Component deployment per instance |
+
 ### How Bulk Upload Works
 
-1. **Download a Template** - Get the CSV template for the entity type
-2. **Fill in Your Data** - Edit the CSV in Excel or any spreadsheet
-3. **Upload the File** - Drag and drop or browse to select
-4. **Preview** - Review the data before uploading
-5. **Upload** - Click to process the data
-6. **Review Results** - See what succeeded and what failed
+1. **Select Tab** - Choose the entity type you want to upload
+2. **Download Template** - Click the download button to get a CSV template
+3. **Fill in Data** - Edit the CSV in Excel, Google Sheets, or any spreadsheet
+4. **Upload File** - Paste CSV content or upload file
+5. **Review Results** - See success/failure counts and error details
 
-### Upload Order (Important!)
+### Upload Order (Critical!)
 
-Because items reference each other, upload in this order:
+Because entities reference each other, upload in this sequence:
 
-1. **Environments** first (no dependencies)
-2. **Applications** second (no dependencies)
-3. **Instances** third (requires environments to exist)
-4. **Interfaces** fourth (can reference applications)
-5. **Components** fifth (requires applications to exist)
-6. **App-Instance Mappings** sixth (requires both apps and instances)
-7. **Configurations** last (can reference environments and applications)
+```
+1. Environments          ─┐
+2. Applications          ─┼── No dependencies (upload first)
+                          │
+3. Instances             ─┤── Requires Environments
+4. Interfaces            ─┤── Can reference Applications
+5. Components            ─┤── Requires Applications
+                          │
+6. App Deployments       ─┤── Requires Applications + Instances
+7. Infrastructure        ─┤── Requires Instances
+                          │
+8. Interface Endpoints   ─┤── Requires Interfaces + Instances
+9. Component Instances   ─┘── Requires Components + Instances
+```
+
+### Interface Endpoints Bulk Upload
+
+Upload interface configurations per environment instance.
+
+**Required Fields:**
+- `interface_name` - Name of the interface (must exist)
+- `instance_name` - Name of the environment instance (must exist)
+
+**Optional Fields:**
+- `endpoint` - URL or connection string
+- `test_mode` - `Live`, `Virtualised`, `Stubbed`, `Disabled`
+- `enabled` - `true` or `false`
+- `source_component_name` - Source component for tracing
+- `target_component_name` - Target component for tracing
+
+**Example CSV:**
+```csv
+interface_name,instance_name,endpoint,test_mode,enabled
+Portal-to-Payment-API,SIT-1,https://payment-api.sit.local/v1,Live,true
+Portal-to-Payment-API,UAT-1,https://payment-api.uat.local/v1,Live,true
+Payment-to-VISA,SIT-1,https://stub.internal/visa,Stubbed,true
+Payment-to-VISA,UAT-1,https://sandbox.visa.com/api,Virtualised,true
+```
+
+### Component Instances Bulk Upload
+
+Upload component deployments per environment instance.
+
+**Required Fields:**
+- `application_name` - Name of the parent application
+- `component_name` - Name of the component (must exist under application)
+- `instance_name` - Name of the environment instance (must exist)
+
+**Optional Fields:**
+- `version` - Deployed version (e.g., "2.1.0")
+- `deployment_status` - `Deployed`, `PartiallyDeployed`, `RollbackPending`, `Failed`
+
+**Example CSV:**
+```csv
+application_name,component_name,instance_name,version,deployment_status
+Payment Gateway,payment-api,SIT-1,2.1.0,Deployed
+Payment Gateway,payment-api,UAT-1,2.0.0,Deployed
+Payment Gateway,payment-processor,SIT-1,2.1.0,Deployed
+Customer Portal,portal-ui,SIT-1,3.0.0-beta,Deployed
+Customer Portal,portal-bff,SIT-1,2.9.0,Deployed
+```
+
+### CSV Format Guidelines
+
+- Use **UTF-8 encoding** (important for special characters)
+- First row must contain **exact header names** as shown in templates
+- Use **commas** as delimiters
+- Wrap text containing commas in **double quotes**
+- Leave optional fields **empty** (not null or N/A)
+- Date format: **YYYY-MM-DD** or **ISO 8601**
+- Boolean values: `true` or `false` (lowercase)
+
+### Error Messages and Solutions
+
+| Error Message | Cause | Solution |
+|---------------|-------|----------|
+| `Name is required` | Missing required name field | Add name column with values |
+| `Environment not found: X` | Environment doesn't exist | Upload environments first |
+| `Application not found: X` | Application doesn't exist | Upload applications first |
+| `Instance not found: X` | Instance doesn't exist | Upload instances first |
+| `Interface not found: X` | Interface doesn't exist | Upload interfaces first |
+| `Component not found: X in application Y` | Component doesn't exist | Upload components first |
+| `Invalid test_mode: X` | Wrong test_mode value | Use: Live, Virtualised, Stubbed, Disabled |
+| `Invalid deployment_status: X` | Wrong status value | Use: Deployed, PartiallyDeployed, RollbackPending, Failed |
+| `Invalid category: X` | Wrong environment_category | Use: NonProd, PreProd, DR, Training, Sandpit |
 
 ---
 
@@ -538,66 +912,171 @@ DR-Instance-1,dr-db-primary,VM,dr-db-01.local,10.0.5.20,RHEL 8,Active,DR Team
 
 ---
 
-## Quick Reference Card
+### Interface Endpoints CSV
 
-### Environment Categories
+```csv
+interface_name,instance_name,endpoint,test_mode,enabled
+Portal-to-Auth-API,INT-Instance-A,https://auth.int.local/api/v1,Live,true
+Portal-to-Auth-API,UAT-Instance-1,https://auth.uat.local/api/v1,Live,true
+Portal-to-Payment-API,INT-Instance-A,https://payment.int.local/api/v1,Live,true
+Portal-to-Payment-API,UAT-Instance-1,https://payment.uat.local/api/v1,Live,true
+Payment-to-Fraud-Check,INT-Instance-A,https://fraud.int.local/check,Live,true
+Payment-to-Fraud-Check,UAT-Instance-1,https://stub.internal/fraud-mock,Stubbed,true
+API-Gateway-to-All,INT-Instance-A,https://api-gw.int.local,Live,true
+API-Gateway-to-All,UAT-Instance-1,https://api-gw.uat.local,Live,true
+```
+
+**Save as:** `interface_endpoints.csv`
+
+---
+
+### Component Instances CSV
+
+```csv
+application_name,component_name,instance_name,version,deployment_status
+Customer-Portal,Portal-Frontend,INT-Instance-A,2.1.0,Deployed
+Customer-Portal,Portal-Frontend,UAT-Instance-1,2.0.0,Deployed
+Customer-Portal,Portal-BFF,INT-Instance-A,2.1.0,Deployed
+Customer-Portal,Portal-BFF,UAT-Instance-1,2.0.0,Deployed
+Payment-Gateway,Payment-Processor,INT-Instance-A,1.5.0,Deployed
+Payment-Gateway,Payment-Processor,UAT-Instance-1,1.4.0,Deployed
+Payment-Gateway,Payment-Validator,INT-Instance-A,1.5.0,Deployed
+Payment-Gateway,Payment-DB,INT-Instance-A,1.5.0,Deployed
+User-Authentication,Auth-Service,INT-Instance-A,4.0.0,Deployed
+User-Authentication,Auth-Service,UAT-Instance-1,3.9.0,Deployed
+User-Authentication,Token-Service,INT-Instance-A,4.0.0,Deployed
+Fraud-Detection,Fraud-Engine,INT-Instance-A,1.2.0,Deployed
+Fraud-Detection,Rules-Engine,INT-Instance-A,1.2.0,Deployed
+API-Gateway,Kong-Gateway,INT-Instance-A,3.0.0,Deployed
+API-Gateway,Kong-Gateway,UAT-Instance-1,3.0.0,Deployed
+```
+
+**Save as:** `component_instances.csv`
+
+---
+
+## Quick Reference
+
+### All Valid Enum Values
+
+#### Environment Categories
 | Value | Description |
 |-------|-------------|
-| `NonProd` | Development, Testing |
-| `PreProd` | UAT, Staging |
+| `NonProd` | Development, SIT, Integration Testing |
+| `PreProd` | UAT, Staging, Pre-Production |
 | `DR` | Disaster Recovery |
 | `Training` | Training environments |
-| `Sandpit` | Experimentation |
+| `Sandpit` | Experimentation, POCs |
 
-### Lifecycle Stages
+#### Lifecycle Stages (Environments)
 | Value | Description |
 |-------|-------------|
-| `Active` | Currently in use |
+| `Planned` | Being planned, not yet active |
+| `Active` | Currently operational |
+| `Retiring` | Being phased out |
+| `Decommissioned` | No longer in use |
+
+#### Operational Status (Instances)
+| Value | Description |
+|-------|-------------|
+| `Available` | Ready for use/booking |
+| `Broken` | Has issues, not functional |
+| `Maintenance` | Scheduled maintenance |
 | `Provisioning` | Being set up |
-| `Decommissioning` | Being retired |
-| `Archived` | No longer active |
 
-### Operational Status (Instances)
+#### Booking Status (Instances)
 | Value | Description |
 |-------|-------------|
-| `Available` | Ready to use/book |
-| `InUse` | Currently booked |
-| `Maintenance` | Under maintenance |
-| `Offline` | Not available |
+| `Available` | Can accept new bookings |
+| `PartiallyBooked` | Some capacity booked |
+| `FullyBooked` | At maximum capacity |
 
-### Criticality Levels
+#### Criticality Levels (Applications)
 | Value | Description |
 |-------|-------------|
 | `High` | Business critical |
 | `Medium` | Important but not critical |
 | `Low` | Nice to have |
 
-### Data Sensitivity
+#### Data Sensitivity
 | Value | Description |
 |-------|-------------|
-| `PCI` | Payment card data |
-| `PII` | Personal information |
-| `Confidential` | Business sensitive |
-| `NonProdDummy` | Test/dummy data only |
+| `PCI` | Payment Card Industry data |
+| `PII` | Personally Identifiable Information |
+| `Confidential` | Business sensitive data |
+| `NonProdDummy` | Test/synthetic data only |
 
-### Interface Patterns
+#### Interface Patterns
 | Value | Description |
 |-------|-------------|
-| `REST` | RESTful API |
-| `SOAP` | SOAP web service |
-| `GraphQL` | GraphQL API |
-| `gRPC` | gRPC service |
-| `Messaging` | Message queue |
-| `File` | File transfer |
-| `Database` | Direct DB |
-| `EventStream` | Event streaming |
+| `REST` | RESTful HTTP API |
+| `SOAP` | XML SOAP web service |
+| `MQ` | IBM MQ messaging |
+| `Kafka` | Apache Kafka streaming |
+| `FileDrop` | File-based exchange |
+| `FTP` | File Transfer Protocol |
+| `SFTP` | Secure FTP |
+| `FIX` | Financial Information eXchange |
+| `Other` | Other integration patterns |
 
-### Interface Directions
+#### Interface Directions
 | Value | Description |
 |-------|-------------|
-| `Inbound` | Receives data |
-| `Outbound` | Sends data |
-| `Bidirectional` | Both ways |
+| `Inbound` | Receives data from external |
+| `Outbound` | Sends data to external |
+| `Bidirectional` | Two-way communication |
+
+#### Interface Frequency
+| Value | Description |
+|-------|-------------|
+| `RealTime` | Immediate, synchronous |
+| `NearRealTime` | Slight delay, async |
+| `Batch` | Scheduled batches |
+
+#### Component Types
+| Value | Description |
+|-------|-------------|
+| `API` | REST/GraphQL/gRPC API |
+| `UI` | Frontend/User Interface |
+| `Batch` | Batch processing jobs |
+| `RuleEngine` | Business rules engine |
+| `DBSchema` | Database schema |
+| `MessageProcessor` | Message queue consumer |
+| `Job` | Scheduled/background job |
+| `Lambda` | Serverless function |
+| `Other` | Other component types |
+
+#### Test Modes (Interface Endpoints)
+| Value | Description |
+|-------|-------------|
+| `Live` | Real connection to target |
+| `Virtualised` | Service virtualization |
+| `Stubbed` | Simple mock responses |
+| `Disabled` | Interface turned off |
+
+#### Deployment Status (Component Instances)
+| Value | Description |
+|-------|-------------|
+| `Deployed` | Successfully deployed |
+| `PartiallyDeployed` | Partial deployment |
+| `RollbackPending` | Rollback in progress |
+| `Failed` | Deployment failed |
+
+#### Deployment Models (App Deployments)
+| Value | Description |
+|-------|-------------|
+| `Monolith` | Single deployable unit |
+| `Microservices` | Multiple services |
+| `SaaS` | Third-party hosted |
+| `COTS` | Commercial off-the-shelf |
+
+#### App Deployment Status
+| Value | Description |
+|-------|-------------|
+| `Aligned` | All components at expected versions |
+| `Mixed` | Some components at different versions |
+| `OutOfSync` | Differs from planned state |
+| `Broken` | Has failures |
 
 ---
 
@@ -647,4 +1126,4 @@ DR-Instance-1,dr-db-primary,VM,dr-db-01.local,10.0.5.20,RHEL 8,Active,DR Team
 
 ---
 
-*Document Version: 2.1 | Last Updated: December 2025*
+*Document Version: 3.0 | Last Updated: December 2025*

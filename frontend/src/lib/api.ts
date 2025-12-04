@@ -121,6 +121,11 @@ export const applicationsAPI = {
   createComponent: (appId: string, data: any) => api.post(`/applications/${appId}/components`, data),
   updateComponent: (appId: string, componentId: string, data: any) => api.put(`/applications/${appId}/components/${componentId}`, data),
   deleteComponent: (appId: string, componentId: string) => api.delete(`/applications/${appId}/components/${componentId}`),
+  // Component Instances
+  getComponentInstances: (appId: string, componentId: string) => api.get(`/applications/${appId}/components/${componentId}/instances`),
+  createComponentInstance: (appId: string, componentId: string, data: any) => api.post(`/applications/${appId}/components/${componentId}/instances`, data),
+  updateComponentInstance: (appId: string, componentId: string, instanceId: string, data: any) => api.put(`/applications/${appId}/components/${componentId}/instances/${instanceId}`, data),
+  deleteComponentInstance: (appId: string, componentId: string, instanceId: string) => api.delete(`/applications/${appId}/components/${componentId}/instances/${instanceId}`),
 };
 
 // Bookings API
@@ -263,6 +268,8 @@ export const bulkUploadAPI = {
   uploadComponents: (csvContent: string) => api.post('/bulk-upload/components', { csvContent }),
   uploadAppInstances: (csvContent: string) => api.post('/bulk-upload/app-instances', { csvContent }),
   uploadInfraComponents: (csvContent: string) => api.post('/bulk-upload/infra-components', { csvContent }),
+  uploadInterfaceEndpoints: (csvContent: string) => api.post('/bulk-upload/interface-endpoints', { csvContent }),
+  uploadComponentInstances: (csvContent: string) => api.post('/bulk-upload/component-instances', { csvContent }),
 };
 
 export default api;

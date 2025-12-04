@@ -33,6 +33,7 @@ import {
   MenuItem,
   Tooltip,
 } from '@mui/material';
+import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -49,6 +50,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { applicationsAPI, environmentsAPI } from '../../../lib/api';
 import { useAuth } from '../../../contexts/AuthContext';
+import DataGridWrapper, { createActionsColumn } from '../../../components/DataGridWrapper';
 
 interface Application {
   application_id: string;
@@ -541,6 +543,89 @@ export default function ApplicationsPage() {
     }
   };
 
+  // Define DataGrid columns
+  const columns: GridColDef[] = [
+    {
+      field: 'name',
+      headerName: 'Name',
+      flex: 1,
+      minWidth: 200,
+      renderCell: (params: GridRenderCellParams) => (
+        <Box>
+          <Typography fontWeight="medium">{params.value}</Typography>
+          {params.row.description && (
+            <Typography variant="body2" color="text.secondary" noWrap>
+              {params.row.description}
+            </Typography>
+          )}
+        </Box>
+      ),
+    },
+    {
+      field: 'business_domain',
+      headerName: 'Business Domain',
+      width: 150,
+      valueGetter: (value) => value || '-',
+    },
+    {
+      field: 'owner_team',
+      headerName: 'Owner Team',
+      width: 150,
+      valueGetter: (value) => value || '-',
+    },
+    {
+      field: 'criticality',
+      headerName: 'Criticality',
+      width: 120,
+      renderCell: (params: GridRenderCellParams) =>
+        params.value ? (
+          <Chip label={params.value} color={getCriticalityColor(params.value)} size="small" />
+        ) : (
+          '-'
+        ),
+    },
+    {
+      field: 'component_count',
+      headerName: 'Components',
+      width: 110,
+      type: 'number',
+      valueGetter: (value) => value || 0,
+    },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 140,
+      sortable: false,
+      filterable: false,
+      disableColumnMenu: true,
+      align: 'right',
+      headerAlign: 'right',
+      renderCell: (params: GridRenderCellParams) => (
+        <Box>
+          <Tooltip title="View Details & Components">
+            <IconButton size="small" onClick={() => openViewDialog(params.row)}>
+              <ViewIcon />
+            </IconButton>
+          </Tooltip>
+          {canEdit && (
+            <>
+              <Tooltip title="Edit Application">
+                <IconButton size="small" onClick={() => openEditDialog(params.row)}>
+                  <EditIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Delete Application">
+                <IconButton size="small" onClick={() => openDeleteDialog(params.row)} color="error">
+                  <DeleteIcon />
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
+        </Box>
+      ),
+    },
+  ];
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
@@ -579,71 +664,19 @@ export default function ApplicationsPage() {
         </Alert>
       )}
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Business Domain</TableCell>
-              <TableCell>Owner Team</TableCell>
-              <TableCell>Criticality</TableCell>
-              <TableCell>Components</TableCell>
-              <TableCell align="right">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {applications.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} align="center">
-                  No applications found
-                </TableCell>
-              </TableRow>
-            ) : (
-              applications.map((app: Application) => (
-                <TableRow key={app.application_id}>
-                  <TableCell>
-                    <Typography fontWeight="medium">{app.name}</Typography>
-                    {app.description && (
-                      <Typography variant="body2" color="text.secondary" noWrap sx={{ maxWidth: 200 }}>
-                        {app.description}
-                      </Typography>
-                    )}
-                  </TableCell>
-                  <TableCell>{app.business_domain || '-'}</TableCell>
-                  <TableCell>{app.owner_team || '-'}</TableCell>
-                  <TableCell>
-                    {app.criticality ? (
-                      <Chip label={app.criticality} color={getCriticalityColor(app.criticality)} size="small" />
-                    ) : '-'}
-                  </TableCell>
-                  <TableCell>{app.component_count || 0}</TableCell>
-                  <TableCell align="right">
-                    <Tooltip title="View Details & Components">
-                      <IconButton size="small" onClick={() => openViewDialog(app)}>
-                        <ViewIcon />
-                      </IconButton>
-                    </Tooltip>
-                    {canEdit && (
-                      <>
-                        <Tooltip title="Edit Application">
-                          <IconButton size="small" onClick={() => openEditDialog(app)}>
-                            <EditIcon />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Delete Application">
-                          <IconButton size="small" onClick={() => openDeleteDialog(app)} color="error">
-                            <DeleteIcon />
-                          </IconButton>
-                        </Tooltip>
-                      </>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <Paper sx={{ width: '100%' }}>
+        <DataGridWrapper
+          rows={applications}
+          columns={columns}
+          getRowId={(row) => row.application_id}
+          loading={loading}
+          pageSize={10}
+          pageSizeOptions={[10, 25, 50]}
+          noRowsMessage="No applications found. Click 'Add Application' to create one."
+          height={500}
+          density="standard"
+        />
+      </Paper>
 
       {/* Create Application Dialog */}
       <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} maxWidth="sm" fullWidth>
@@ -805,15 +838,31 @@ export default function ApplicationsPage() {
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
         <DialogTitle>Delete Application</DialogTitle>
         <DialogContent>
-          <Typography>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            This action cannot be undone!
+          </Alert>
+          <Typography gutterBottom>
             Are you sure you want to delete <strong>{selectedApp?.name}</strong>?
-            This will also delete all associated components.
           </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            This will permanently delete:
+          </Typography>
+          <Box component="ul" sx={{ mt: 0.5, mb: 0, pl: 2, '& li': { py: 0.25 } }}>
+            <li><Typography variant="body2" color="text.secondary">
+              {selectedApp && components[selectedApp.application_id]?.length || 0} component(s) and their instances
+            </Typography></li>
+            <li><Typography variant="body2" color="text.secondary">
+              {appInstances.length} environment deployment(s)
+            </Typography></li>
+            <li><Typography variant="body2" color="text.secondary">
+              All related configuration sets scoped to this application
+            </Typography></li>
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
           <Button onClick={handleDeleteApp} color="error" variant="contained">
-            Delete
+            Delete Application
           </Button>
         </DialogActions>
       </Dialog>

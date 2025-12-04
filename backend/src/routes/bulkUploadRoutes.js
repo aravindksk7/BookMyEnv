@@ -18,5 +18,7 @@ router.post('/interfaces', authenticate, canBulkUpload, bulkUploadController.upl
 router.post('/components', authenticate, canBulkUpload, bulkUploadController.uploadComponents);
 router.post('/app-instances', authenticate, canBulkUpload, bulkUploadController.uploadAppInstances);
 router.post('/infra-components', authenticate, canBulkUpload, bulkUploadController.uploadInfraComponents);
+router.post('/interface-endpoints', authenticate, canBulkUpload, bulkUploadController.uploadInterfaceEndpoints);
+router.post('/component-instances', authenticate, canBulkUpload, bulkUploadController.uploadComponentInstances);
 
 module.exports = router;

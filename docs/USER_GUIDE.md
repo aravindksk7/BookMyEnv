@@ -492,15 +492,45 @@ You can also manage deployments from the Environment side:
 
 ### Supported Entity Types
 
-| Entity | Required Fields | Optional Fields |
-|--------|-----------------|----------------|
-| **Environments** | name | description, environment_category, lifecycle_stage, owner_team |
-| **Instances** | environment_name, instance_name | instance_url, status, version |
-| **Applications** | name, short_code | description, business_domain, criticality, owner_group |
-| **Interfaces** | name, direction | description, source_app, target_app, pattern, frequency |
-| **App Components** | application_name, component_name | component_type, version |
-| **App Deployments** | application_name, instance_name | deployment_status, version, deployment_model |
-| **Infrastructure** | instance_name, infra_name | infra_type, hostname, ip_address, port |
+| Entity | Tab Name | Required Fields | Key Optional Fields |
+|--------|----------|-----------------|---------------------|
+| **Environments** | Environments | name | environment_category, lifecycle_stage, owner_team |
+| **Instances** | Instances | environment_name, name | operational_status, availability_window, capacity, bookable |
+| **Applications** | Applications | name | business_domain, criticality, owner_team, test_owner |
+| **Interfaces** | Interfaces | name | direction, pattern, frequency, source/target_application_name |
+| **Components** | Components | application_name, name | component_type, source_repo, runtime_platform |
+| **App Deployments** | App Instances | application_name, instance_name | deployment_model, version, deployment_status |
+| **Infrastructure** | Infrastructure | instance_name, name | component_type, hostname, ip_address |
+| **Interface Endpoints** | Interface Endpoints | interface_name, instance_name | endpoint, test_mode, enabled |
+| **Component Instances** | Component Instances | application_name, component_name, instance_name | version, deployment_status |
+
+### New: Interface Endpoints Upload
+
+Configure how interfaces behave in different environment instances:
+
+| Field | Description | Valid Values |
+|-------|-------------|--------------|
+| `interface_name` | Name of existing interface | Must match exactly |
+| `instance_name` | Target environment instance | Must match exactly |
+| `endpoint` | URL or connection string | Any valid URL |
+| `test_mode` | How interface operates | `Live`, `Virtualised`, `Stubbed`, `Disabled` |
+| `enabled` | Is endpoint active | `true`, `false` |
+
+**Example Use Case:** In SIT, connect to real internal APIs (`Live`), but use WireMock stubs (`Stubbed`) for external vendor APIs.
+
+### New: Component Instances Upload
+
+Track individual component deployments per instance:
+
+| Field | Description | Valid Values |
+|-------|-------------|--------------|
+| `application_name` | Parent application name | Must match exactly |
+| `component_name` | Component name | Must exist under application |
+| `instance_name` | Environment instance | Must match exactly |
+| `version` | Deployed version | e.g., "2.1.0", "2.1.0-SNAPSHOT" |
+| `deployment_status` | Current state | `Deployed`, `PartiallyDeployed`, `RollbackPending`, `Failed` |
+
+**Example Use Case:** Track that `payment-api v2.1.0` is in SIT while `payment-api v2.0.0` is in UAT.
 
 ### Upload Process
 
@@ -517,12 +547,14 @@ You can also manage deployments from the Environment side:
 For best results, upload data in this sequence:
 
 1. **Environments** - Base environment definitions
-2. **Instances** - Environment instances (requires environments)
-3. **Applications** - Application definitions
-4. **App Components** - Application components (requires applications)
-5. **Interfaces** - Interface definitions (requires applications)
+2. **Applications** - Application definitions
+3. **Instances** - Environment instances (requires environments)
+4. **Interfaces** - Interface definitions (can reference applications)
+5. **Components** - Application components (requires applications)
 6. **App Deployments** - Links apps to instances (requires both)
 7. **Infrastructure** - Infrastructure components (requires instances)
+8. **Interface Endpoints** - Interface per-instance config (requires interfaces + instances)
+9. **Component Instances** - Component per-instance deployment (requires components + instances)
 
 ### CSV Format Guidelines
 
@@ -532,13 +564,15 @@ For best results, upload data in this sequence:
 - Wrap text containing commas in **double quotes**
 - Leave optional fields **empty** if not needed
 - Date format: **YYYY-MM-DD** or **ISO 8601**
+- Boolean values: **true** or **false** (lowercase)
 
 ### Error Handling
 
 If upload fails:
 - Check the error message for the specific row number
-- Verify field names match exactly
+- Verify field names match exactly (case-sensitive)
 - Ensure referenced entities exist (e.g., environment before instance)
+- Check enum values match exactly (e.g., `Live` not `live`)
 - Check for duplicate names where unique is required
 
 ---
@@ -749,6 +783,7 @@ For programmatic access, see the API documentation:
 
 | Version | Date | Changes |
 |---------|------|--------|
+| 3.0.0 | Dec 2025 | Interface Endpoints and Component Instances bulk upload, enhanced documentation |
 | 2.1.0 | Dec 2025 | Application Deployments management, bidirectional deploy/undeploy |
 | 2.0.0 | Dec 2025 | Conflict detection & resolution, Bulk data upload |
 | 1.0.0 | Nov 2025 | Initial release |

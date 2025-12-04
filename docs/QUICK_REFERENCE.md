@@ -78,7 +78,11 @@
 ### Bulk Upload Data
 1. Settings → Data Management
 2. Go to Bulk Upload
-3. Select entity tab
+3. Select entity tab (9 types available):
+   - Environments, Instances, Applications
+   - Interfaces, Components (App)
+   - App-Instance Links, Infrastructure
+   - Interface Endpoints, Component Instances
 4. Download template → Fill → Upload
 
 ### Create a Release
@@ -105,9 +109,9 @@
 | Status | Meaning |
 |--------|---------|
 | Available | Ready to book |
-| InUse | Currently booked |
+| Broken | Has issues, not functional |
 | Maintenance | Under maintenance |
-| Offline | Not operational |
+| Provisioning | Being set up |
 
 ### Release Status
 | Status | Meaning |
@@ -117,13 +121,29 @@
 | Completed | Done |
 | RolledBack | Reverted |
 
-### Deployment Status
+### Deployment Status (Application)
 | Status | Meaning |
 |--------|--------|
 | Aligned | All components match expected versions |
 | Mixed | Some components at different versions |
 | OutOfSync | Deployment differs from plan |
 | Broken | Deployment has issues |
+
+### Component Instance Status
+| Status | Meaning |
+|--------|--------|
+| Deployed | Successfully deployed |
+| PartiallyDeployed | Partial deployment |
+| RollbackPending | Rollback in progress |
+| Failed | Deployment failed |
+
+### Interface Test Modes
+| Mode | Meaning |
+|------|--------|
+| Live | Real connection to target |
+| Virtualised | Service virtualization |
+| Stubbed | Simple mock responses |
+| Disabled | Interface turned off |
 
 ---
 
@@ -147,6 +167,8 @@
 | **NonProd** | Development, SIT, Testing |
 | **PreProd** | UAT, Staging, Pre-Production |
 | **DR** | Disaster Recovery |
+| **Training** | Training environments |
+| **Sandpit** | Sandbox/experimentation |
 
 ---
 
@@ -176,10 +198,23 @@ GET  /api/applications            # List applications
 GET  /api/applications/:id/instances      # Get app deployments
 POST /api/applications/:id/instances      # Deploy app to instance
 DEL  /api/applications/:id/instances/:iid # Undeploy app
-POST /api/bulk-upload/:entity     # Bulk upload data
+GET  /api/interfaces              # List interfaces
+GET  /api/interfaces/:id/endpoints        # Get interface endpoints
 GET  /api/groups                  # List groups
 GET  /api/dashboard/stats         # Get statistics
 GET  /health                      # Health check
+
+# Bulk Upload Endpoints
+POST /api/bulk-upload/environments        # Upload environments
+POST /api/bulk-upload/instances           # Upload env instances
+POST /api/bulk-upload/applications        # Upload applications
+POST /api/bulk-upload/interfaces          # Upload interfaces
+POST /api/bulk-upload/components          # Upload app components
+POST /api/bulk-upload/app_instances       # Link apps to instances
+POST /api/bulk-upload/infra_components    # Upload infra components
+POST /api/bulk-upload/interface_endpoints # Upload interface endpoints
+POST /api/bulk-upload/component_instances # Upload component instances
+GET  /api/bulk-upload/template/:entity    # Download CSV template
 ```
 
 ---
@@ -244,4 +279,4 @@ docker-compose up -d
 
 ---
 
-**BookMyEnv v2.1.0** | December 2025
+**BookMyEnv v3.0.0** | December 2025

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import {
   Box,
   Typography,
@@ -43,6 +44,7 @@ import {
   FormControlLabel,
   FormLabel,
 } from '@mui/material';
+import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -68,6 +70,13 @@ import {
 } from '@mui/icons-material';
 import { bookingsAPI, environmentsAPI, applicationsAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import DataGridWrapper from '@/components/DataGridWrapper';
+
+// Dynamically import Schedule-X Calendar to avoid SSR issues
+const BookingCalendar = dynamic(
+  () => import('@/components/ScheduleXCalendar'),
+  { ssr: false, loading: () => <LinearProgress /> }
+);
 
 interface Booking {
   booking_id: string;
@@ -577,6 +586,17 @@ export default function BookingsPage() {
 
   const openCreateDialog = () => {
     resetForm();
+    setCreateDialogOpen(true);
+  };
+
+  // Handle calendar date click to create new booking
+  const handleCalendarDateClick = (startDate: string, endDate: string) => {
+    resetForm();
+    setFormData(prev => ({
+      ...prev,
+      start_datetime: startDate,
+      end_datetime: endDate,
+    }));
     setCreateDialogOpen(true);
   };
 
@@ -1398,7 +1418,25 @@ export default function BookingsPage() {
       </Card>
 
       {viewMode === 'calendar' ? (
-        renderCalendar()
+        <Card sx={{ mb: 3, p: 2 }}>
+          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="subtitle1" fontWeight={600}>
+              Booking Calendar
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Chip label="Active" size="small" sx={{ bgcolor: '#c8e6c9', color: '#1b5e20' }} />
+              <Chip label="Approved" size="small" sx={{ bgcolor: '#bbdefb', color: '#0d47a1' }} />
+              <Chip label="Pending" size="small" sx={{ bgcolor: '#ffe0b2', color: '#e65100' }} />
+              <Chip label="Conflict" size="small" sx={{ bgcolor: '#ffcdd2', color: '#b71c1c' }} />
+            </Box>
+          </Box>
+          <BookingCalendar
+            bookings={filteredBookings}
+            onEventClick={(booking) => openBookingView(booking)}
+            onDateClick={handleCalendarDateClick}
+            canEdit={canEdit}
+          />
+        </Card>
       ) : (
         <>
           <Card sx={{ mb: 3 }}>
@@ -1418,99 +1456,127 @@ export default function BookingsPage() {
             </Tabs>
           </Card>
 
-          <Card>
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Title / Phase</TableCell>
-                    <TableCell>Requested By</TableCell>
-                    <TableCell>Start</TableCell>
-                    <TableCell>End</TableCell>
-                    <TableCell align="center">Resources</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Conflicts</TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredBookings.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} align="center">
-                        No bookings found. {(searchQuery || filterStatus || filterTestPhase || filterEnvironment) && 'Try adjusting your filters.'}
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredBookings.map((booking: any) => (
-                      <TableRow key={booking.booking_id} hover>
-                        <TableCell>
-                          <Typography fontWeight={500}>{booking.title || 'Untitled'}</Typography>
-                          <Typography variant="body2" color="text.secondary">{booking.test_phase}</Typography>
-                        </TableCell>
-                        <TableCell>{booking.requested_by_name || 'Unknown'}</TableCell>
-                        <TableCell>{new Date(booking.start_datetime).toLocaleString()}</TableCell>
-                        <TableCell>{new Date(booking.end_datetime).toLocaleString()}</TableCell>
-                        <TableCell align="center">
-                          <Chip label={`${booking.resource_count || 0}`} size="small" />
-                        </TableCell>
-                        <TableCell>
-                          <Chip label={booking.booking_status} size="small" color={getStatusColor(booking.booking_status)} />
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={booking.conflict_status}
-                            size="small"
-                            color={getConflictColor(booking.conflict_status)}
-                            icon={booking.conflict_status !== 'None' ? <WarningIcon /> : undefined}
-                          />
-                        </TableCell>
-                        <TableCell align="right">
-                          <Tooltip title="View Details">
-                            <IconButton size="small" onClick={() => openBookingView(booking)}>
-                              <ViewIcon />
+          <Paper sx={{ width: '100%' }}>
+            <DataGridWrapper
+              rows={filteredBookings}
+              columns={[
+                {
+                  field: 'title',
+                  headerName: 'Title / Phase',
+                  flex: 1,
+                  minWidth: 180,
+                  renderCell: (params: GridRenderCellParams) => (
+                    <Box>
+                      <Typography fontWeight={500}>{params.value || 'Untitled'}</Typography>
+                      <Typography variant="body2" color="text.secondary">{params.row.test_phase}</Typography>
+                    </Box>
+                  ),
+                },
+                {
+                  field: 'requested_by_name',
+                  headerName: 'Requested By',
+                  width: 140,
+                  valueGetter: (value) => value || 'Unknown',
+                },
+                {
+                  field: 'start_datetime',
+                  headerName: 'Start',
+                  width: 160,
+                  valueGetter: (value) => value ? new Date(value).toLocaleString() : '-',
+                },
+                {
+                  field: 'end_datetime',
+                  headerName: 'End',
+                  width: 160,
+                  valueGetter: (value) => value ? new Date(value).toLocaleString() : '-',
+                },
+                {
+                  field: 'resource_count',
+                  headerName: 'Resources',
+                  width: 100,
+                  align: 'center',
+                  headerAlign: 'center',
+                  renderCell: (params: GridRenderCellParams) => (
+                    <Chip label={params.value || 0} size="small" />
+                  ),
+                },
+                {
+                  field: 'booking_status',
+                  headerName: 'Status',
+                  width: 120,
+                  renderCell: (params: GridRenderCellParams) => (
+                    <Chip label={params.value} size="small" color={getStatusColor(params.value)} />
+                  ),
+                },
+                {
+                  field: 'conflict_status',
+                  headerName: 'Conflicts',
+                  width: 130,
+                  renderCell: (params: GridRenderCellParams) => (
+                    <Chip
+                      label={params.value}
+                      size="small"
+                      color={getConflictColor(params.value)}
+                      icon={params.value !== 'None' ? <WarningIcon /> : undefined}
+                    />
+                  ),
+                },
+                {
+                  field: 'actions',
+                  headerName: 'Actions',
+                  width: 180,
+                  sortable: false,
+                  filterable: false,
+                  disableColumnMenu: true,
+                  align: 'right',
+                  headerAlign: 'right',
+                  renderCell: (params: GridRenderCellParams) => (
+                    <Box>
+                      <Tooltip title="View Details">
+                        <IconButton size="small" onClick={() => openBookingView(params.row)}>
+                          <ViewIcon />
+                        </IconButton>
+                      </Tooltip>
+                      {canEdit && !['Completed', 'Cancelled'].includes(params.row.booking_status) && (
+                        <>
+                          {params.row.conflict_status !== 'None' && params.row.conflict_status !== 'Resolved' && (
+                            <Tooltip title="Resolve Conflict">
+                              <IconButton size="small" color="warning" onClick={() => openResolveDialog(params.row.booking_id)}>
+                                <ResolveIcon />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          <Tooltip title="Edit">
+                            <IconButton size="small" onClick={() => openEditDialog(params.row)}>
+                              <EditIcon />
                             </IconButton>
                           </Tooltip>
-                          {canEdit && !['Completed', 'Cancelled'].includes(booking.booking_status) && (
-                            <>
-                              {booking.conflict_status !== 'None' && booking.conflict_status !== 'Resolved' && (
-                                <Tooltip title="Resolve Conflict">
-                                  <IconButton size="small" color="warning" onClick={() => openResolveDialog(booking.booking_id)}>
-                                    <ResolveIcon />
-                                  </IconButton>
-                                </Tooltip>
-                              )}
-                              <Tooltip title="Edit">
-                                <IconButton size="small" onClick={() => openEditDialog(booking)}>
-                                  <EditIcon />
-                                </IconButton>
-                              </Tooltip>
-                              {booking.booking_status === 'Requested' && (
-                                <Tooltip title="Approve">
-                                  <IconButton size="small" color="success" onClick={() => handleUpdateStatus(booking.booking_id, 'Approved')}>
-                                    <CheckCircleIcon />
-                                  </IconButton>
-                                </Tooltip>
-                              )}
-                              <Tooltip title="Cancel">
-                                <IconButton size="small" color="error" onClick={() => handleUpdateStatus(booking.booking_id, 'Cancelled')}>
-                                  <CancelIcon />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="Delete">
-                                <IconButton size="small" color="error" onClick={() => openDeleteDialog(booking)}>
-                                  <DeleteIcon />
-                                </IconButton>
-                              </Tooltip>
-                            </>
+                          {params.row.booking_status === 'Requested' && (
+                            <Tooltip title="Approve">
+                              <IconButton size="small" color="success" onClick={() => handleUpdateStatus(params.row.booking_id, 'Approved')}>
+                                <CheckCircleIcon />
+                              </IconButton>
+                            </Tooltip>
                           )}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Card>
+                          <Tooltip title="Cancel">
+                            <IconButton size="small" color="error" onClick={() => handleUpdateStatus(params.row.booking_id, 'Cancelled')}>
+                              <CancelIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </>
+                      )}
+                    </Box>
+                  ),
+                },
+              ]}
+              getRowId={(row) => row.booking_id}
+              pageSize={10}
+              pageSizeOptions={[10, 25, 50]}
+              noRowsMessage={`No bookings found. ${(searchQuery || filterStatus || filterTestPhase || filterEnvironment) ? 'Try adjusting your filters.' : ''}`}
+              height={500}
+              density="standard"
+            />
+          </Paper>
         </>
       )}
 

@@ -44,7 +44,11 @@ const bulkUploadController = {
         
         app_instances: 'application_name,instance_name,deployment_model,version,deployment_status\nApp-1,Instance-1,Microservices,1.0.0,Aligned',
         
-        infra_components: 'instance_name,name,component_type,hostname,ip_address,os_version,status,owner_team\nInstance-1,Server-1,VM,server1.local,192.168.1.10,Ubuntu 22.04,Active,Infrastructure Team'
+        infra_components: 'instance_name,name,component_type,hostname,ip_address,os_version,status,owner_team\nInstance-1,Server-1,VM,server1.local,192.168.1.10,Ubuntu 22.04,Active,Infrastructure Team',
+        
+        interface_endpoints: 'interface_name,instance_name,endpoint,test_mode,enabled,source_component_name,target_component_name\nInterface-1,Instance-1,https://api.example.com/v1,Live,true,Component-1,Component-2',
+        
+        component_instances: 'application_name,component_name,instance_name,version,deployment_status\nApp-1,Component-1,Instance-1,1.0.0,Deployed'
       };
 
       if (!templates[type]) {
@@ -791,6 +795,264 @@ const bulkUploadController = {
     } catch (error) {
       await client.query('ROLLBACK');
       console.error('Bulk upload infra components error:', error);
+      res.status(500).json({ error: error.message || 'Failed to process bulk upload' });
+    } finally {
+      client.release();
+    }
+  },
+
+  // Bulk upload interface endpoints
+  uploadInterfaceEndpoints: async (req, res) => {
+    const client = await db.getClient();
+    try {
+      const { csvContent } = req.body;
+      
+      if (!csvContent) {
+        return res.status(400).json({ error: 'CSV content is required' });
+      }
+
+      const records = parseCSV(csvContent);
+      
+      if (records.length === 0) {
+        return res.status(400).json({ error: 'No valid records found in CSV' });
+      }
+
+      const results = { success: [], errors: [] };
+      
+      await client.query('BEGIN');
+
+      for (let i = 0; i < records.length; i++) {
+        const row = records[i];
+        const rowNum = i + 2;
+        
+        try {
+          const interfaceName = sanitizeString(row.interface_name);
+          const instanceName = sanitizeString(row.instance_name);
+          
+          if (!interfaceName || !instanceName) {
+            results.errors.push({ row: rowNum, error: 'interface_name and instance_name are required' });
+            continue;
+          }
+
+          // Look up interface by name
+          const interfaceResult = await client.query(
+            'SELECT interface_id FROM interfaces WHERE name = $1',
+            [interfaceName]
+          );
+
+          if (interfaceResult.rows.length === 0) {
+            results.errors.push({ row: rowNum, error: `Interface not found: ${interfaceName}` });
+            continue;
+          }
+
+          // Look up instance by name
+          const instanceResult = await client.query(
+            'SELECT env_instance_id FROM environment_instances WHERE name = $1',
+            [instanceName]
+          );
+
+          if (instanceResult.rows.length === 0) {
+            results.errors.push({ row: rowNum, error: `Instance not found: ${instanceName}` });
+            continue;
+          }
+
+          const interfaceId = interfaceResult.rows[0].interface_id;
+          const envInstanceId = instanceResult.rows[0].env_instance_id;
+
+          // Look up source component instance if provided
+          let sourceComponentInstanceId = null;
+          if (row.source_component_name) {
+            const srcResult = await client.query(
+              `SELECT ci.component_instance_id 
+               FROM component_instances ci
+               JOIN app_components ac ON ci.component_id = ac.component_id
+               WHERE ac.name = $1 AND ci.env_instance_id = $2`,
+              [sanitizeString(row.source_component_name), envInstanceId]
+            );
+            if (srcResult.rows.length > 0) {
+              sourceComponentInstanceId = srcResult.rows[0].component_instance_id;
+            }
+          }
+
+          // Look up target component instance if provided
+          let targetComponentInstanceId = null;
+          if (row.target_component_name) {
+            const tgtResult = await client.query(
+              `SELECT ci.component_instance_id 
+               FROM component_instances ci
+               JOIN app_components ac ON ci.component_id = ac.component_id
+               WHERE ac.name = $1 AND ci.env_instance_id = $2`,
+              [sanitizeString(row.target_component_name), envInstanceId]
+            );
+            if (tgtResult.rows.length > 0) {
+              targetComponentInstanceId = tgtResult.rows[0].component_instance_id;
+            }
+          }
+
+          // Validate test_mode
+          const validTestModes = ['Live', 'Virtualised', 'Stubbed', 'Disabled'];
+          const testMode = row.test_mode || 'Live';
+          if (!validTestModes.includes(testMode)) {
+            results.errors.push({ row: rowNum, error: `Invalid test_mode: ${row.test_mode}. Must be one of: ${validTestModes.join(', ')}` });
+            continue;
+          }
+
+          const result = await client.query(
+            `INSERT INTO interface_endpoints (interface_id, env_instance_id, endpoint, test_mode, enabled, source_component_instance_id, target_component_instance_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             RETURNING interface_endpoint_id`,
+            [
+              interfaceId,
+              envInstanceId,
+              sanitizeString(row.endpoint, 500),
+              testMode,
+              row.enabled !== 'false' && row.enabled !== '0',
+              sourceComponentInstanceId,
+              targetComponentInstanceId
+            ]
+          );
+
+          results.success.push({ row: rowNum, id: result.rows[0].interface_endpoint_id, name: `${interfaceName} -> ${instanceName}` });
+        } catch (err) {
+          results.errors.push({ row: rowNum, error: err.message });
+        }
+      }
+
+      await client.query('COMMIT');
+
+      // Log activity
+      const systemEntityId = '00000000-0000-0000-0000-000000000000';
+      await db.query(
+        `INSERT INTO activities (user_id, action, entity_type, entity_id, entity_name, details)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [req.user.user_id, 'BULK_UPLOAD', 'InterfaceEndpoint', systemEntityId, 'Bulk Upload', 
+         JSON.stringify({ success: results.success.length, errors: results.errors.length })]
+      );
+
+      res.json({
+        message: `Processed ${records.length} records`,
+        results
+      });
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error('Bulk upload interface endpoints error:', error);
+      res.status(500).json({ error: error.message || 'Failed to process bulk upload' });
+    } finally {
+      client.release();
+    }
+  },
+
+  // Bulk upload component instances
+  uploadComponentInstances: async (req, res) => {
+    const client = await db.getClient();
+    try {
+      const { csvContent } = req.body;
+      
+      if (!csvContent) {
+        return res.status(400).json({ error: 'CSV content is required' });
+      }
+
+      const records = parseCSV(csvContent);
+      
+      if (records.length === 0) {
+        return res.status(400).json({ error: 'No valid records found in CSV' });
+      }
+
+      const results = { success: [], errors: [] };
+      
+      await client.query('BEGIN');
+
+      for (let i = 0; i < records.length; i++) {
+        const row = records[i];
+        const rowNum = i + 2;
+        
+        try {
+          const appName = sanitizeString(row.application_name);
+          const componentName = sanitizeString(row.component_name);
+          const instanceName = sanitizeString(row.instance_name);
+          
+          if (!appName || !componentName || !instanceName) {
+            results.errors.push({ row: rowNum, error: 'application_name, component_name, and instance_name are required' });
+            continue;
+          }
+
+          // Look up component by name and application
+          const componentResult = await client.query(
+            `SELECT ac.component_id 
+             FROM app_components ac
+             JOIN applications a ON ac.application_id = a.application_id
+             WHERE ac.name = $1 AND a.name = $2`,
+            [componentName, appName]
+          );
+
+          if (componentResult.rows.length === 0) {
+            results.errors.push({ row: rowNum, error: `Component not found: ${componentName} in application ${appName}` });
+            continue;
+          }
+
+          // Look up instance by name
+          const instanceResult = await client.query(
+            'SELECT env_instance_id FROM environment_instances WHERE name = $1',
+            [instanceName]
+          );
+
+          if (instanceResult.rows.length === 0) {
+            results.errors.push({ row: rowNum, error: `Instance not found: ${instanceName}` });
+            continue;
+          }
+
+          const componentId = componentResult.rows[0].component_id;
+          const envInstanceId = instanceResult.rows[0].env_instance_id;
+
+          // Validate deployment_status
+          const validStatuses = ['Deployed', 'PartiallyDeployed', 'RollbackPending', 'Failed'];
+          const deploymentStatus = row.deployment_status || 'Deployed';
+          if (!validStatuses.includes(deploymentStatus)) {
+            results.errors.push({ row: rowNum, error: `Invalid deployment_status: ${row.deployment_status}. Must be one of: ${validStatuses.join(', ')}` });
+            continue;
+          }
+
+          const result = await client.query(
+            `INSERT INTO component_instances (component_id, env_instance_id, version, deployment_status, last_deployed_date)
+             VALUES ($1, $2, $3, $4, NOW())
+             ON CONFLICT (component_id, env_instance_id) DO UPDATE SET
+               version = EXCLUDED.version,
+               deployment_status = EXCLUDED.deployment_status,
+               last_deployed_date = NOW(),
+               updated_at = NOW()
+             RETURNING component_instance_id`,
+            [
+              componentId,
+              envInstanceId,
+              sanitizeString(row.version, 50),
+              deploymentStatus
+            ]
+          );
+
+          results.success.push({ row: rowNum, id: result.rows[0].component_instance_id, name: `${componentName} -> ${instanceName}` });
+        } catch (err) {
+          results.errors.push({ row: rowNum, error: err.message });
+        }
+      }
+
+      await client.query('COMMIT');
+
+      // Log activity
+      const systemEntityId = '00000000-0000-0000-0000-000000000000';
+      await db.query(
+        `INSERT INTO activities (user_id, action, entity_type, entity_id, entity_name, details)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [req.user.user_id, 'BULK_UPLOAD', 'ComponentInstance', systemEntityId, 'Bulk Upload', 
+         JSON.stringify({ success: results.success.length, errors: results.errors.length })]
+      );
+
+      res.json({
+        message: `Processed ${records.length} records`,
+        results
+      });
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error('Bulk upload component instances error:', error);
       res.status(500).json({ error: error.message || 'Failed to process bulk upload' });
     } finally {
       client.release();

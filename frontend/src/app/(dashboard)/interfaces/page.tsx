@@ -37,6 +37,7 @@ import {
   Card,
   CardContent,
 } from '@mui/material';
+import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -47,6 +48,7 @@ import {
   Link as LinkIcon,
 } from '@mui/icons-material';
 import { interfacesAPI, environmentsAPI, componentInstancesAPI, applicationsAPI } from '@/lib/api';
+import DataGridWrapper from '@/components/DataGridWrapper';
 
 interface Application {
   application_id: string;
@@ -398,12 +400,33 @@ export default function InterfacesPage() {
     return colors[mode] || 'default';
   };
 
+  // Get current interface for endpoint validation
+  const currentInterface = currentInterfaceId 
+    ? interfaces.find((i: Interface) => i.interface_id === currentInterfaceId)
+    : null;
+
   // Filter component instances by selected environment
   const filteredComponentInstances = endpointFormData.env_instance_id
     ? componentInstances.filter((ci: ComponentInstance) => 
         ci.env_instance_name === environments.find((e: Environment) => e.env_instance_id === endpointFormData.env_instance_id)?.name
       )
     : componentInstances;
+
+  // Further filter source components to match interface's source application
+  const sourceComponentInstances = currentInterface?.source_application_id
+    ? filteredComponentInstances.filter((ci: ComponentInstance) => {
+        const sourceApp = applications.find((a: Application) => a.application_id === currentInterface.source_application_id);
+        return sourceApp && ci.application_name === sourceApp.name;
+      })
+    : filteredComponentInstances;
+
+  // Further filter target components to match interface's target application
+  const targetComponentInstances = currentInterface?.target_application_id
+    ? filteredComponentInstances.filter((ci: ComponentInstance) => {
+        const targetApp = applications.find((a: Application) => a.application_id === currentInterface.target_application_id);
+        return targetApp && ci.application_name === targetApp.name;
+      })
+    : filteredComponentInstances;
 
   // Stats
   const stats = {
@@ -736,6 +759,11 @@ export default function InterfacesPage() {
         <DialogTitle>{editingEndpoint ? 'Edit Endpoint' : 'Add Endpoint'}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+            {currentInterface && (currentInterface.source_application_name || currentInterface.target_application_name) && (
+              <Alert severity="info" sx={{ py: 0.5 }}>
+                Interface: {currentInterface.source_application_name || 'Any'} → {currentInterface.target_application_name || 'Any'}
+              </Alert>
+            )}
             <FormControl fullWidth required>
               <InputLabel>Environment Instance</InputLabel>
               <Select
@@ -758,12 +786,17 @@ export default function InterfacesPage() {
                 onChange={(e) => setEndpointFormData({ ...endpointFormData, source_component_instance_id: e.target.value })}
               >
                 <MenuItem value="">None</MenuItem>
-                {filteredComponentInstances.map((ci: ComponentInstance) => (
+                {sourceComponentInstances.map((ci: ComponentInstance) => (
                   <MenuItem key={ci.component_instance_id} value={ci.component_instance_id}>
                     {ci.application_name} / {ci.component_name}
                   </MenuItem>
                 ))}
               </Select>
+              {currentInterface?.source_application_name && sourceComponentInstances.length === 0 && endpointFormData.env_instance_id && (
+                <Typography variant="caption" color="warning.main" sx={{ mt: 0.5 }}>
+                  No components from {currentInterface.source_application_name} deployed to this instance
+                </Typography>
+              )}
             </FormControl>
             <FormControl fullWidth>
               <InputLabel>Target Component</InputLabel>
@@ -773,12 +806,17 @@ export default function InterfacesPage() {
                 onChange={(e) => setEndpointFormData({ ...endpointFormData, target_component_instance_id: e.target.value })}
               >
                 <MenuItem value="">None</MenuItem>
-                {filteredComponentInstances.map((ci: ComponentInstance) => (
+                {targetComponentInstances.map((ci: ComponentInstance) => (
                   <MenuItem key={ci.component_instance_id} value={ci.component_instance_id}>
                     {ci.application_name} / {ci.component_name}
                   </MenuItem>
                 ))}
               </Select>
+              {currentInterface?.target_application_name && targetComponentInstances.length === 0 && endpointFormData.env_instance_id && (
+                <Typography variant="caption" color="warning.main" sx={{ mt: 0.5 }}>
+                  No components from {currentInterface.target_application_name} deployed to this instance
+                </Typography>
+              )}
             </FormControl>
             <TextField
               label="Endpoint URL"

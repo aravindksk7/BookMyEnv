@@ -856,6 +856,7 @@ BookMyEnv/
 
 | Version | Date | Key Changes |
 |---------|------|-------------|
+| 3.0.0 | Dec 2025 | Interface Endpoints and Component Instances bulk upload |
 | 2.1.0 | Dec 2025 | Application deployments management, deploy/undeploy UI |
 | 2.0.0 | Dec 2025 | Conflict detection & resolution, bulk data upload |
 | 1.0.0 | Nov 2025 | Initial release |
