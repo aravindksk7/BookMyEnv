@@ -111,6 +111,11 @@ export const applicationsAPI = {
   getRelatedConfigs: (id: string) => api.get(`/applications/${id}/related-configs`),
   getRelatedInterfaces: (id: string) => api.get(`/applications/${id}/related-interfaces`),
   getRelatedTestData: (id: string) => api.get(`/applications/${id}/related-testdata`),
+  // Application instances (deployments)
+  getInstances: (appId: string) => api.get(`/applications/${appId}/instances`),
+  createInstance: (appId: string, data: any) => api.post(`/applications/${appId}/instances`, data),
+  updateInstance: (appId: string, instanceId: string, data: any) => api.put(`/applications/${appId}/instances/${instanceId}`, data),
+  deleteInstance: (appId: string, instanceId: string) => api.delete(`/applications/${appId}/instances/${instanceId}`),
   // Components
   getComponents: (appId: string) => api.get(`/applications/${appId}/components`),
   createComponent: (appId: string, data: any) => api.post(`/applications/${appId}/components`, data),

@@ -73,7 +73,9 @@ const topologyController = {
         SELECT ie.*,
                i.name as interface_name,
                ei.name as instance_name,
-               e.name as environment_name
+               e.name as environment_name,
+               ie.endpoint as endpoint_url,
+               ie.test_mode as status
         FROM interface_endpoints ie
         JOIN interfaces i ON ie.interface_id = i.interface_id
         JOIN environment_instances ei ON ie.env_instance_id = ei.env_instance_id

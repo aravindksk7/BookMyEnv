@@ -800,6 +800,10 @@ BookMyEnv/
         │       ├── groups/page.tsx
         │       ├── monitoring/page.tsx
         │       ├── integrations/page.tsx
+        │       ├── topology/page.tsx
+        │       ├── testdata/page.tsx
+        │       ├── interfaces/page.tsx
+        │       ├── configs/page.tsx
         │       └── settings/page.tsx
         │
         ├── contexts/
@@ -809,6 +813,52 @@ BookMyEnv/
             ├── api.ts          # Axios API client
             └── socket.ts       # WebSocket client
 ```
+
+---
+
+## Feature Summary
+
+### Core Features
+
+| Feature | Description |
+|---------|-------------|
+| **Environment Management** | Create environments with multiple instances, track operational status |
+| **Application Deployments** | Deploy/undeploy apps to instances, track versions and models |
+| **Booking System** | Reserve environments, detect conflicts, calendar view |
+| **Conflict Resolution** | View and resolve booking conflicts with multiple resolution types |
+| **Release Management** | Plan releases with app/env associations, track status |
+| **Bulk Data Upload** | Import environments, instances, apps, interfaces, components via CSV |
+| **Topology View** | Visual representation of environment-app relationships |
+| **Real-time Dashboard** | Live stats, activity feed, availability metrics |
+
+### Security Features
+
+| Feature | Description |
+|---------|-------------|
+| **JWT Authentication** | Secure token-based auth with configurable expiry |
+| **Role-Based Access** | 5 roles: Admin, EnvironmentManager, ProjectLead, Tester, Viewer |
+| **HTTPS/TLS** | TLS 1.2/1.3 via Nginx reverse proxy |
+| **Rate Limiting** | Configurable request limits (currently disabled for dev) |
+| **Security Headers** | CSP, HSTS, X-Frame-Options, X-Content-Type-Options |
+| **Password Security** | bcrypt with 12 rounds, policy enforcement |
+
+### Integration Features
+
+| Integration | Capabilities |
+|-------------|--------------|
+| **Jira** | Link issues, sync status, auto-create for conflicts |
+| **GitLab** | Link pipelines/MRs, trigger deployments, track status |
+| **ServiceNow** | Change tickets, CMDB sync, approval workflows |
+
+---
+
+## Version History
+
+| Version | Date | Key Changes |
+|---------|------|-------------|
+| 2.1.0 | Dec 2025 | Application deployments management, deploy/undeploy UI |
+| 2.0.0 | Dec 2025 | Conflict detection & resolution, bulk data upload |
+| 1.0.0 | Nov 2025 | Initial release |
 
 ---
 

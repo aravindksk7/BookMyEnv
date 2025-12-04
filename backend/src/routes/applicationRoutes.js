@@ -19,6 +19,12 @@ router.get('/:id/related-configs', applicationController.getRelatedConfigs);
 router.get('/:id/related-interfaces', applicationController.getRelatedInterfaces);
 router.get('/:id/related-testdata', applicationController.getRelatedTestData);
 
+// Application instances (deployments to environment instances)
+router.get('/:id/instances', applicationController.getAppInstances);
+router.post('/:id/instances', requireRole('Admin', 'EnvironmentManager'), applicationController.createAppInstance);
+router.put('/:id/instances/:appEnvInstanceId', requireRole('Admin', 'EnvironmentManager'), applicationController.updateAppInstance);
+router.delete('/:id/instances/:appEnvInstanceId', requireRole('Admin'), applicationController.deleteAppInstance);
+
 // Application components
 router.get('/:id/components', applicationController.getComponents);
 router.post('/:id/components', requireRole('Admin', 'ProjectLead'), applicationController.createComponent);

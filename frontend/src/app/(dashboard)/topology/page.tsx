@@ -72,10 +72,12 @@ interface Instance {
 interface Application {
   application_id: string;
   name: string;
-  short_code: string;
-  tier: string;
-  status: string;
-  owning_group_name?: string;
+  business_domain?: string;
+  description?: string;
+  criticality?: string;
+  data_sensitivity?: string;
+  owner_team?: string;
+  test_owner?: string;
   instance_count: number;
   interface_count: number;
 }
@@ -104,6 +106,20 @@ interface AppInstanceMapping {
   environment_name: string;
   version?: string;
   deployment_status?: string;
+  deployment_model?: string;
+}
+
+interface InterfaceEndpoint {
+  interface_endpoint_id: string;
+  interface_id: string;
+  env_instance_id: string;
+  interface_name: string;
+  instance_name: string;
+  environment_name: string;
+  endpoint_url?: string;
+  status?: string;
+  enabled?: boolean;
+  test_mode?: string;
 }
 
 interface TopologyData {
@@ -112,7 +128,7 @@ interface TopologyData {
   applications: Application[];
   interfaces: Interface[];
   appInstanceMappings: AppInstanceMapping[];
-  interfaceEndpoints: any[];
+  interfaceEndpoints: InterfaceEndpoint[];
   summary: {
     totalEnvironments: number;
     totalInstances: number;
@@ -173,8 +189,8 @@ export default function TopologyPage() {
     
     const filteredApps = data.applications.filter(a => 
       a.name.toLowerCase().includes(query) || 
-      a.short_code?.toLowerCase().includes(query) ||
-      a.tier?.toLowerCase().includes(query)
+      a.business_domain?.toLowerCase().includes(query) ||
+      a.criticality?.toLowerCase().includes(query)
     );
     
     const filteredInterfaces = data.interfaces.filter(i => 
@@ -357,7 +373,9 @@ export default function TopologyPage() {
                             <InstanceIcon color="success" fontSize="small" />
                             <Typography fontWeight={500}>{instance.name}</Typography>
                             <Chip label={instance.operational_status} size="small" color={getStatusColor(instance.operational_status)} />
-                            <Chip label={instance.booking_status} size="small" variant="outlined" />
+                            {instance.booking_status !== instance.operational_status && (
+                              <Chip label={`Booking: ${instance.booking_status}`} size="small" variant="outlined" />
+                            )}
                             <Box sx={{ ml: 'auto', display: 'flex', gap: 2 }}>
                               <Tooltip title="Applications">
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -413,10 +431,11 @@ export default function TopologyPage() {
                     <AppsIcon color="info" />
                     <Box>
                       <Typography fontWeight={600}>{app.name}</Typography>
-                      <Typography variant="caption" color="text.secondary">{app.short_code}</Typography>
+                      {app.business_domain && (
+                        <Typography variant="caption" color="text.secondary">{app.business_domain}</Typography>
+                      )}
                     </Box>
-                    <Chip label={app.tier} size="small" variant="outlined" />
-                    <Chip label={app.status} size="small" color={getStatusColor(app.status)} />
+                    {app.criticality && <Chip label={app.criticality} size="small" variant="outlined" />}
                     <Box sx={{ ml: 'auto', display: 'flex', gap: 2 }}>
                       <Tooltip title="Deployed Instances">
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -444,16 +463,31 @@ export default function TopologyPage() {
                       {data?.appInstanceMappings.filter(m => m.application_id === app.application_id).length === 0 ? (
                         <Typography variant="body2" color="text.secondary">No deployments</Typography>
                       ) : (
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                           {data?.appInstanceMappings
                             .filter(m => m.application_id === app.application_id)
                             .map((m) => (
-                              <Chip
-                                key={m.app_env_instance_id}
-                                label={`${m.environment_name} / ${m.instance_name}`}
-                                size="small"
-                                variant="outlined"
-                              />
+                              <Box key={m.app_env_instance_id} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Chip
+                                  label={`${m.environment_name} / ${m.instance_name}`}
+                                  size="small"
+                                  variant="outlined"
+                                />
+                                {m.version && (
+                                  <Chip
+                                    label={`v${m.version}`}
+                                    size="small"
+                                    color="primary"
+                                  />
+                                )}
+                                {m.deployment_status && (
+                                  <Chip
+                                    label={m.deployment_status}
+                                    size="small"
+                                    color={getStatusColor(m.deployment_status)}
+                                  />
+                                )}
+                              </Box>
                             ))}
                         </Box>
                       )}
@@ -570,6 +604,58 @@ export default function TopologyPage() {
               </TableBody>
             </Table>
           </TableContainer>
+          
+          {/* Interface Endpoints Section */}
+          {data?.interfaceEndpoints && data.interfaceEndpoints.length > 0 && (
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 2 }}>
+                <InstanceIcon color="success" /> Interface Endpoints ({data.interfaceEndpoints.length})
+              </Typography>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Interface</TableCell>
+                      <TableCell>Environment</TableCell>
+                      <TableCell>Instance</TableCell>
+                      <TableCell>Endpoint URL</TableCell>
+                      <TableCell>Status</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {data.interfaceEndpoints.map((endpoint) => (
+                      <TableRow key={endpoint.interface_endpoint_id} hover>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight={500}>{endpoint.interface_name}</Typography>
+                        </TableCell>
+                        <TableCell>{endpoint.environment_name}</TableCell>
+                        <TableCell>
+                          <Chip 
+                            icon={<InstanceIcon />} 
+                            label={endpoint.instance_name} 
+                            size="small" 
+                            variant="outlined"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                            {endpoint.endpoint_url || '-'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={endpoint.status || 'Unknown'} 
+                            size="small" 
+                            color={getStatusColor(endpoint.status || 'Unknown')}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          )}
         </TabPanel>
 
         {/* Flat List View */}
@@ -626,9 +712,9 @@ export default function TopologyPage() {
                     <ListItem key={app.application_id}>
                       <ListItemText
                         primary={app.name}
-                        secondary={`${app.short_code} • ${app.tier} • ${app.instance_count} instances`}
+                        secondary={`${app.business_domain || 'N/A'} • ${app.criticality || 'N/A'} • ${app.instance_count} instances`}
                       />
-                      <Chip label={app.status} size="small" color={getStatusColor(app.status)} />
+                      {app.criticality && <Chip label={app.criticality} size="small" color={getStatusColor(app.criticality)} />}
                     </ListItem>
                   ))}
                 </List>

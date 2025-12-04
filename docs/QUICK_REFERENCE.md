@@ -57,6 +57,30 @@
 3. Fill: Name, Status, Capacity
 4. Create
 
+### Deploy Application to Instance
+1. Applications → View Details
+2. Deployments tab → Deploy to Environment
+3. Select Instance, Version, Model
+4. Deploy
+
+### Undeploy Application
+1. Applications → View Details
+2. Deployments tab
+3. Click Undeploy icon on row
+4. Confirm
+
+### Resolve Booking Conflict
+1. Bookings → Conflicts tab
+2. Click Resolve icon (gavel)
+3. Select resolution type
+4. Add notes → Apply
+
+### Bulk Upload Data
+1. Settings → Data Management
+2. Go to Bulk Upload
+3. Select entity tab
+4. Download template → Fill → Upload
+
 ### Create a Release
 1. Releases → + New Release
 2. Fill: Name, Version, Dates
@@ -87,11 +111,19 @@
 
 ### Release Status
 | Status | Meaning |
-|--------|---------|
+|--------|--------|
 | Planned | Scheduled |
 | InProgress | Deploying |
 | Completed | Done |
 | RolledBack | Reverted |
+
+### Deployment Status
+| Status | Meaning |
+|--------|--------|
+| Aligned | All components match expected versions |
+| Mixed | Some components at different versions |
+| OutOfSync | Deployment differs from plan |
+| Broken | Deployment has issues |
 
 ---
 
@@ -132,15 +164,22 @@
 ## 📞 API Endpoints
 
 ```
-POST /api/auth/login        # Login
-GET  /api/environments      # List environments
-GET  /api/bookings          # List bookings
-POST /api/bookings          # Create booking
-GET  /api/releases          # List releases
-GET  /api/applications      # List applications
-GET  /api/groups            # List groups
-GET  /api/dashboard/stats   # Get statistics
-GET  /health                # Health check
+POST /api/auth/login              # Login
+GET  /api/environments            # List environments
+GET  /api/environments/:id/apps   # Get apps in environment
+GET  /api/bookings                # List bookings
+POST /api/bookings                # Create booking
+GET  /api/bookings/conflicts      # Get all conflicts
+POST /api/bookings/:id/conflicts/resolve  # Resolve conflict
+GET  /api/releases                # List releases
+GET  /api/applications            # List applications
+GET  /api/applications/:id/instances      # Get app deployments
+POST /api/applications/:id/instances      # Deploy app to instance
+DEL  /api/applications/:id/instances/:iid # Undeploy app
+POST /api/bulk-upload/:entity     # Bulk upload data
+GET  /api/groups                  # List groups
+GET  /api/dashboard/stats         # Get statistics
+GET  /health                      # Health check
 ```
 
 ---
@@ -195,7 +234,14 @@ docker-compose up -d
 5. **Update Status** - Keep booking status current
 6. **Release On Time** - Free resources when done
 7. **Change Passwords** - Update demo passwords in production
+8. **Track Deployments** - Keep app deployments up to date
+9. **Resolve Conflicts** - Address booking conflicts promptly
+10. **Use Bulk Upload** - Import large datasets efficiently
 
 ---
 
 **Need Help?** Check the full [User Guide](USER_GUIDE.md) or [Security Guide](SECURITY.md).
+
+---
+
+**BookMyEnv v2.1.0** | December 2025

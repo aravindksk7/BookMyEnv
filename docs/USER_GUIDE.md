@@ -10,15 +10,18 @@ A comprehensive guide to using the BookMyEnv environment booking and management 
 2. [Dashboard Overview](#dashboard-overview)
 3. [Environments Management](#environments-management)
 4. [Bookings Management](#bookings-management)
-5. [Releases Management](#releases-management)
-6. [Applications Management](#applications-management)
-7. [Groups Management](#groups-management)
-8. [Monitoring](#monitoring)
-9. [Integrations](#integrations)
-10. [Settings & Administration](#settings--administration)
-11. [User Roles & Permissions](#user-roles--permissions)
-12. [Best Practices](#best-practices)
-13. [Troubleshooting](#troubleshooting)
+5. [Conflict Detection & Resolution](#conflict-detection--resolution)
+6. [Releases Management](#releases-management)
+7. [Applications Management](#applications-management)
+8. [Application Deployments](#application-deployments)
+9. [Groups Management](#groups-management)
+10. [Bulk Data Upload](#bulk-data-upload)
+11. [Monitoring](#monitoring)
+12. [Integrations](#integrations)
+13. [Settings & Administration](#settings--administration)
+14. [User Roles & Permissions](#user-roles--permissions)
+15. [Best Practices](#best-practices)
+16. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -236,6 +239,59 @@ The calendar provides a visual timeline:
 
 ---
 
+## Conflict Detection & Resolution
+
+### How Conflicts Are Detected
+
+The system automatically detects conflicts when:
+- Multiple bookings request the same environment instance
+- Booking time periods overlap
+- Resource availability changes during a booking period
+
+### Conflict Status Types
+
+| Status | Meaning |
+|--------|--------|
+| **None** | No conflicts detected |
+| **PotentialConflict** | Overlapping booking detected, needs review |
+| **ConflictConfirmed** | Conflict verified and pending resolution |
+| **Resolved** | Conflict has been addressed |
+
+### Viewing Conflicts
+
+1. Go to **Bookings** page
+2. Click the **Conflicts** tab to see all bookings with unresolved conflicts
+3. Or click **View Details** on any booking with a conflict indicator (⚠️)
+
+### Resolving Conflicts
+
+1. Find a booking with conflicts and click the **Resolve** button (gavel icon)
+2. Review the conflict details:
+   - Current booking summary
+   - Overlapping bookings count
+   - Affected resources
+3. Select a resolution method:
+
+| Resolution Type | Description |
+|-----------------|-------------|
+| **Accept Overlap** | Both bookings share the resource (coordinate usage) |
+| **Mark as Resolved** | Manually mark resolved without changes |
+| **Remove Resource** | Remove the conflicting resource from this booking |
+| **Adjust Timing** | Modify booking start/end times to avoid overlap |
+| **Reject Booking** | Cancel this booking due to the conflict |
+
+4. Add resolution notes explaining your decision
+5. Click **Apply Resolution**
+
+### Conflict Prevention
+
+- Use the **Calendar View** to check availability before booking
+- Review conflict warnings when creating a new booking
+- Consider booking during off-peak times
+- Communicate with other teams about shared resources
+
+---
+
 ## Releases Management
 
 ### Viewing Releases
@@ -320,6 +376,86 @@ Applications have components (services, modules):
 
 ---
 
+## Application Deployments
+
+### Overview
+
+Application Deployments track the relationship between applications and environment instances. This helps teams understand:
+- Where each application is deployed
+- What version is running in each environment
+- The deployment model and status
+
+### Viewing Deployments (Application View)
+
+1. Click **Applications** in the sidebar
+2. Select an application and click **View Details**
+3. Go to the **Deployments** tab
+4. View all environment instances where the application is deployed
+
+### Deploying an Application
+
+1. Open the application's detail view
+2. Go to **Deployments** tab
+3. Click **Deploy to Environment**
+4. Fill in the deployment form:
+   - **Environment Instance** (required): Select the target instance
+   - **Version**: Enter the version being deployed (e.g., "2.5.0")
+   - **Deployment Model**: Select the architecture type
+   - **Deployment Status**: Select the current status
+5. Click **Deploy**
+
+### Deployment Models
+
+| Model | Description | Use Case |
+|-------|-------------|----------|
+| **Monolith** | Single deployable unit | Traditional applications |
+| **Microservices** | Distributed services | Cloud-native apps |
+| **SaaS** | Software as a Service | Third-party hosted |
+| **COTS** | Commercial Off-The-Shelf | Vendor products |
+
+### Deployment Statuses
+
+| Status | Description | Action Needed |
+|--------|-------------|---------------|
+| **Aligned** | All components match expected versions | None |
+| **Mixed** | Some components at different versions | Review |
+| **OutOfSync** | Deployment differs from plan | Investigate |
+| **Broken** | Deployment has issues | Immediate action |
+
+### Editing a Deployment
+
+1. In the Deployments tab, find the deployment row
+2. Click the **Edit** icon
+3. Update version, model, or status as needed
+4. Click **Update**
+
+### Undeploying an Application
+
+1. In the Deployments tab, find the deployment row
+2. Click the **Undeploy** icon
+3. Confirm the action in the dialog
+4. The deployment record is removed
+
+### Managing Deployments from Environments
+
+You can also manage deployments from the Environment side:
+
+1. Go to **Environments** page
+2. Click **View Details** on an environment
+3. Go to the **Applications** tab
+4. View all applications deployed to this environment
+5. Click **Link Application** to add a new deployment
+6. Edit or unlink existing deployments
+
+### Deployment Best Practices
+
+1. **Keep versions updated** - Update the version field when deploying new releases
+2. **Monitor status** - Check for OutOfSync or Broken deployments regularly
+3. **Document models** - Use consistent deployment models across environments
+4. **Review before booking** - Check deployments when planning test bookings
+
+---
+
 ## Groups Management
 
 ### Viewing Groups
@@ -343,6 +479,67 @@ Applications have components (services, modules):
 3. Click **+ Add Member**
 4. Select users to add
 5. Click **Add**
+
+---
+
+## Bulk Data Upload
+
+### Accessing Bulk Upload
+
+1. Navigate to **Settings** (gear icon in sidebar)
+2. Click the **Data Management** tab
+3. Click **Go to Bulk Upload**
+
+### Supported Entity Types
+
+| Entity | Required Fields | Optional Fields |
+|--------|-----------------|----------------|
+| **Environments** | name | description, environment_category, lifecycle_stage, owner_team |
+| **Instances** | environment_name, instance_name | instance_url, status, version |
+| **Applications** | name, short_code | description, business_domain, criticality, owner_group |
+| **Interfaces** | name, direction | description, source_app, target_app, pattern, frequency |
+| **App Components** | application_name, component_name | component_type, version |
+| **App Deployments** | application_name, instance_name | deployment_status, version, deployment_model |
+| **Infrastructure** | instance_name, infra_name | infra_type, hostname, ip_address, port |
+
+### Upload Process
+
+1. Select the entity type tab (Environments, Instances, Applications, etc.)
+2. Click **Download Template** to get a sample CSV file
+3. Fill in your data following the template format
+4. Click **Upload CSV** and select your file
+5. Review the results:
+   - ✅ Success count
+   - ❌ Error details with line numbers
+
+### Recommended Upload Order
+
+For best results, upload data in this sequence:
+
+1. **Environments** - Base environment definitions
+2. **Instances** - Environment instances (requires environments)
+3. **Applications** - Application definitions
+4. **App Components** - Application components (requires applications)
+5. **Interfaces** - Interface definitions (requires applications)
+6. **App Deployments** - Links apps to instances (requires both)
+7. **Infrastructure** - Infrastructure components (requires instances)
+
+### CSV Format Guidelines
+
+- Use **UTF-8 encoding**
+- First row must contain **header names**
+- Use **commas** as delimiters
+- Wrap text containing commas in **double quotes**
+- Leave optional fields **empty** if not needed
+- Date format: **YYYY-MM-DD** or **ISO 8601**
+
+### Error Handling
+
+If upload fails:
+- Check the error message for the specific row number
+- Verify field names match exactly
+- Ensure referenced entities exist (e.g., environment before instance)
+- Check for duplicate names where unique is required
 
 ---
 
@@ -551,7 +748,9 @@ For programmatic access, see the API documentation:
 ## Version History
 
 | Version | Date | Changes |
-|---------|------|---------|
+|---------|------|--------|
+| 2.1.0 | Dec 2025 | Application Deployments management, bidirectional deploy/undeploy |
+| 2.0.0 | Dec 2025 | Conflict detection & resolution, Bulk data upload |
 | 1.0.0 | Nov 2025 | Initial release |
 
 ---

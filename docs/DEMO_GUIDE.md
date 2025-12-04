@@ -11,11 +11,13 @@
 1. [Getting Started](#1-getting-started)
 2. [Dashboard Overview](#2-dashboard-overview)
 3. [Environment Management](#3-environment-management)
-4. [Booking Management](#4-booking-management)
-5. [Conflict Detection & Resolution](#5-conflict-detection--resolution)
-6. [Bulk Data Upload](#6-bulk-data-upload)
-7. [Topology View](#7-topology-view)
-8. [Additional Features](#8-additional-features)
+4. [Application Management](#4-application-management)
+5. [Application Deployments](#5-application-deployments)
+6. [Booking Management](#6-booking-management)
+7. [Conflict Detection & Resolution](#7-conflict-detection--resolution)
+8. [Bulk Data Upload](#8-bulk-data-upload)
+9. [Topology View](#9-topology-view)
+10. [Additional Features](#10-additional-features)
 
 ---
 
@@ -116,7 +118,131 @@ Instance properties include:
 
 ---
 
-## 4. Booking Management
+## 4. Application Management
+
+### Navigating to Applications
+
+Click **Applications** in the sidebar (under Environments).
+
+### Applications List
+
+Displays all registered applications with:
+- **Name**: Application identifier
+- **Business Domain**: Domain category (Banking, Payments, Digital, etc.)
+- **Owner Team**: Team responsible for the application
+- **Criticality**: High, Medium, or Low
+- **Components**: Number of application components
+
+### Creating an Application
+
+1. Click **Add Application** button
+2. Fill in the required fields:
+   - **Name** (required): Unique application name
+   - **Description**: Purpose of the application
+   - **Business Domain**: Select or enter domain
+   - **Criticality**: High, Medium, or Low
+   - **Data Sensitivity**: PII, PCI, Confidential, or NonProdDummy
+   - **Owner Team**: Team responsible
+   - **Test Owner**: QA team or lead
+3. Click **Create**
+
+### Application Detail View
+
+Click **View Details** on any application to see multiple tabs:
+
+| Tab | Content |
+|-----|--------|
+| **Details** | Application metadata (owner, criticality, dates) |
+| **Deployments** | Where the application is deployed (environment instances) |
+| **Components** | Application components (APIs, UIs, Batch jobs) |
+| **Interfaces** | Connected interfaces (inbound/outbound) |
+| **Configs** | Configuration sets linked to the application |
+| **Test Data** | Test data sets associated with the application |
+
+### Managing Components
+
+1. Open application details → **Components** tab
+2. Click **Add Component**
+3. Fill in:
+   - **Name**: Component name
+   - **Type**: API, UI, Batch, MessageProcessor, etc.
+   - **Source Repo**: Git repository URL
+   - **Runtime Platform**: Kubernetes, VM, etc.
+4. Click **Create**
+
+---
+
+## 5. Application Deployments
+
+### Overview
+
+Application Deployments track which applications are deployed to which environment instances. This is a **many-to-many relationship** - one application can be deployed to multiple instances, and one instance can host multiple applications.
+
+### Viewing Deployments from Application
+
+1. Open any application's details
+2. Click the **Deployments** tab
+3. View all environment instances where the app is deployed:
+   - **Environment**: Environment name (SIT, UAT, etc.)
+   - **Instance**: Specific instance name
+   - **Version**: Deployed version
+   - **Model**: Deployment model (Monolith, Microservices, SaaS, COTS)
+   - **Status**: Aligned, Mixed, OutOfSync, or Broken
+
+### Deploying an Application to an Instance
+
+1. Open application details → **Deployments** tab
+2. Click **Deploy to Environment** button
+3. Fill in the deployment details:
+   - **Environment Instance** (required): Select from available instances
+   - **Version**: Application version (e.g., "2.5.0")
+   - **Deployment Model**: Monolith, Microservices, SaaS, or COTS
+   - **Deployment Status**: Aligned (default), Mixed, OutOfSync, Broken
+4. Click **Deploy**
+
+### Editing a Deployment
+
+1. Click the **Edit** icon on any deployment row
+2. Update version, model, or status
+3. Click **Update**
+
+### Undeploying an Application
+
+1. Click the **Undeploy** icon on the deployment row
+2. Confirm the undeploy action
+3. The application is removed from that instance
+
+### Viewing Deployments from Environment
+
+You can also manage deployments from the Environment side:
+
+1. Go to **Environments** page
+2. Click **View Details** on an environment
+3. Click the **Applications** tab
+4. See all applications deployed to this environment's instances
+5. Use **Link Application** to deploy new applications
+
+### Deployment Models
+
+| Model | Description |
+|-------|-------------|
+| **Monolith** | Traditional single-unit deployment |
+| **Microservices** | Distributed service-based deployment |
+| **SaaS** | Software as a Service |
+| **COTS** | Commercial Off-The-Shelf product |
+
+### Deployment Statuses
+
+| Status | Description |
+|--------|-------------|
+| **Aligned** | All components at expected versions |
+| **Mixed** | Some components at different versions |
+| **OutOfSync** | Deployment differs from expected state |
+| **Broken** | Deployment has issues |
+
+---
+
+## 6. Booking Management
 
 ### Accessing Bookings
 
@@ -184,7 +310,7 @@ Click **View Details** on any booking to see:
 
 ---
 
-## 5. Conflict Detection & Resolution
+## 7. Conflict Detection & Resolution
 
 ### How Conflicts Are Detected
 
@@ -234,7 +360,7 @@ The resolution dialog shows:
 
 ---
 
-## 6. Bulk Data Upload
+## 8. Bulk Data Upload
 
 ### Accessing Bulk Upload
 
@@ -283,7 +409,7 @@ For best results, upload data in this sequence:
 
 ---
 
-## 7. Topology View
+## 9. Topology View
 
 ### Overview
 
@@ -327,7 +453,7 @@ In Hierarchical View:
 
 ---
 
-## 8. Additional Features
+## 10. Additional Features
 
 ### Applications Management
 
@@ -435,9 +561,13 @@ For issues or questions:
 
 ## Version Information
 
-- **Application**: BookMyEnv v2.0.0
+- **Application**: BookMyEnv v2.1.0
 - **Release Date**: December 2025
-- **New Features**: 
+- **New Features in v2.1**: 
+  - **Application Deployments Management** - Track and manage app-to-environment deployments
+  - Deploy/Undeploy applications to environment instances
+  - Bidirectional deployment view (from Application or Environment)
+- **Features in v2.0**: 
   - Conflict View & Resolution
   - Bulk Data Upload (7 entity types)
   - Enhanced Booking Management

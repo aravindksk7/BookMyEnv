@@ -310,6 +310,151 @@ const applicationController = {
     }
   },
 
+  // Get application instances (deployments)
+  getAppInstances: async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const result = await db.query(
+        `SELECT aei.*, 
+                ei.name as instance_name, 
+                e.name as environment_name,
+                e.environment_category
+         FROM application_environment_instances aei
+         JOIN environment_instances ei ON aei.env_instance_id = ei.env_instance_id
+         JOIN environments e ON ei.environment_id = e.environment_id
+         WHERE aei.application_id = $1
+         ORDER BY e.name, ei.name`,
+        [id]
+      );
+
+      res.json({ instances: result.rows });
+    } catch (error) {
+      console.error('Get app instances error:', error);
+      res.status(500).json({ error: 'Failed to fetch application instances' });
+    }
+  },
+
+  // Create application instance (deploy to environment)
+  createAppInstance: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { env_instance_id, deployment_model, version, deployment_status } = req.body;
+
+      if (!env_instance_id) {
+        return res.status(400).json({ error: 'Environment instance ID is required' });
+      }
+
+      // Handle empty strings as null for fields with check constraints
+      const deploymentModelValue = deployment_model || null;
+      const deploymentStatusValue = deployment_status || 'Aligned';
+
+      const result = await db.query(
+        `INSERT INTO application_environment_instances (application_id, env_instance_id, deployment_model, version, deployment_status)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *`,
+        [id, env_instance_id, deploymentModelValue, version || null, deploymentStatusValue]
+      );
+
+      // Get the full record with environment info
+      const fullResult = await db.query(
+        `SELECT aei.*, 
+                ei.name as instance_name, 
+                e.name as environment_name,
+                e.environment_category
+         FROM application_environment_instances aei
+         JOIN environment_instances ei ON aei.env_instance_id = ei.env_instance_id
+         JOIN environments e ON ei.environment_id = e.environment_id
+         WHERE aei.app_env_instance_id = $1`,
+        [result.rows[0].app_env_instance_id]
+      );
+
+      // Log activity
+      await db.query(
+        `INSERT INTO activities (user_id, action, entity_type, entity_id, entity_name, details)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [req.user.user_id, 'DEPLOY', 'Application', id, fullResult.rows[0].instance_name, 
+         JSON.stringify({ env_instance_id, version })]
+      );
+
+      res.status(201).json(fullResult.rows[0]);
+    } catch (error) {
+      console.error('Create app instance error:', error);
+      if (error.code === '23505') {
+        return res.status(400).json({ error: 'Application is already deployed to this environment instance' });
+      }
+      res.status(500).json({ error: 'Failed to deploy application' });
+    }
+  },
+
+  // Update application instance
+  updateAppInstance: async (req, res) => {
+    try {
+      const { appEnvInstanceId } = req.params;
+      const { deployment_model, version, deployment_status } = req.body;
+
+      // Handle empty strings as null for fields with check constraints
+      const deploymentModelValue = deployment_model || null;
+      const deploymentStatusValue = deployment_status || null;
+
+      const result = await db.query(
+        `UPDATE application_environment_instances 
+         SET deployment_model = COALESCE($1, deployment_model),
+             version = COALESCE($2, version),
+             deployment_status = COALESCE($3, deployment_status),
+             updated_at = NOW()
+         WHERE app_env_instance_id = $4
+         RETURNING *`,
+        [deploymentModelValue, version, deploymentStatusValue, appEnvInstanceId]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Application instance not found' });
+      }
+
+      // Get the full record with environment info
+      const fullResult = await db.query(
+        `SELECT aei.*, 
+                ei.name as instance_name, 
+                e.name as environment_name,
+                e.environment_category
+         FROM application_environment_instances aei
+         JOIN environment_instances ei ON aei.env_instance_id = ei.env_instance_id
+         JOIN environments e ON ei.environment_id = e.environment_id
+         WHERE aei.app_env_instance_id = $1`,
+        [appEnvInstanceId]
+      );
+
+      res.json(fullResult.rows[0]);
+    } catch (error) {
+      console.error('Update app instance error:', error);
+      res.status(500).json({ error: 'Failed to update application instance' });
+    }
+  },
+
+  // Delete application instance (undeploy)
+  deleteAppInstance: async (req, res) => {
+    try {
+      const { appEnvInstanceId } = req.params;
+
+      const result = await db.query(
+        `DELETE FROM application_environment_instances 
+         WHERE app_env_instance_id = $1 
+         RETURNING *`,
+        [appEnvInstanceId]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Application instance not found' });
+      }
+
+      res.json({ message: 'Application undeployed successfully' });
+    } catch (error) {
+      console.error('Delete app instance error:', error);
+      res.status(500).json({ error: 'Failed to undeploy application' });
+    }
+  },
+
   // Get component instances
   getComponentInstances: async (req, res) => {
     try {

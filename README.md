@@ -1,6 +1,18 @@
 # BookMyEnv (BME) - Environment Booking System
 
-A comprehensive, enterprise-grade Environment Booking and Management System (BME) for managing environments, applications, components, configurations, users, groups, SSO identity, integrations with Jira/GitLab/ServiceNow, bookings, and releases.
+A comprehensive, enterprise-grade Environment Booking and Management System (BME) for managing environments, applications, deployments, bookings, releases, and more.
+
+## ✨ Key Features
+
+- **Environment Management** - Create and manage environments with multiple instances
+- **Application Deployments** - Track application deployments across environment instances
+- **Booking System** - Book environments with conflict detection and resolution
+- **Release Management** - Plan and track releases across environments
+- **Bulk Data Upload** - Import data in bulk via CSV (7 entity types)
+- **Real-time Monitoring** - Dashboard with live activity feed
+- **External Integrations** - Connect with Jira, GitLab, ServiceNow
+- **Role-based Access** - 5 user roles with granular permissions
+- **SSO Support** - Azure AD, Okta, and other SAML/OIDC providers
 
 ## 🚀 Quick Start
 
@@ -150,7 +162,19 @@ POST   /api/environments                    - Create environment
 GET    /api/environments/:id                - Get environment
 GET    /api/environments/:id/instances      - List instances
 POST   /api/environments/:id/instances      - Create instance
+GET    /api/environments/:id/applications   - List apps in environment
 GET    /api/environment-instances/:id/availability - Check availability
+```
+
+### Applications & Deployments
+```
+GET    /api/applications                    - List applications
+POST   /api/applications                    - Create application
+GET    /api/applications/:id                - Get application
+GET    /api/applications/:id/instances      - Get app deployments
+POST   /api/applications/:id/instances      - Deploy app to instance
+PUT    /api/applications/:id/instances/:iid - Update deployment
+DELETE /api/applications/:id/instances/:iid - Undeploy application
 ```
 
 ### Bookings
@@ -160,7 +184,20 @@ POST   /api/bookings                        - Create booking
 GET    /api/bookings/:id                    - Get booking
 PATCH  /api/bookings/:id/status             - Update status
 GET    /api/bookings/calendar               - Calendar view
-GET    /api/bookings/conflicts              - Detect conflicts
+GET    /api/bookings/all-conflicts          - List all conflicts
+GET    /api/bookings/:id/conflicts          - Get booking conflicts
+POST   /api/bookings/:id/conflicts/resolve  - Resolve conflict
+```
+
+### Bulk Upload
+```
+POST   /api/bulk-upload/environments        - Bulk upload environments
+POST   /api/bulk-upload/instances           - Bulk upload instances
+POST   /api/bulk-upload/applications        - Bulk upload applications
+POST   /api/bulk-upload/interfaces          - Bulk upload interfaces
+POST   /api/bulk-upload/components          - Bulk upload components
+POST   /api/bulk-upload/app-deployments     - Bulk upload deployments
+POST   /api/bulk-upload/infrastructure      - Bulk upload infra
 ```
 
 ### Releases
@@ -240,10 +277,12 @@ test-env-management/
 
 | Document | Description |
 |----------|-------------|
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture, data model, flows |
+| [DEMO_GUIDE.md](docs/DEMO_GUIDE.md) | Step-by-step demo walkthrough |
 | [USER_GUIDE.md](docs/USER_GUIDE.md) | Complete user documentation |
 | [QUICK_REFERENCE.md](docs/QUICK_REFERENCE.md) | Quick reference card |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture, data model, flows |
 | [SECURITY.md](docs/SECURITY.md) | Security features and configuration |
+| [DATA_SETUP_GUIDE.md](docs/DATA_SETUP_GUIDE.md) | Data import and setup guide |
 
 ## 🛠️ Development
 
@@ -268,3 +307,7 @@ See `.env.example` files in backend and frontend directories.
 ## 📝 License
 
 MIT License
+
+---
+
+**BookMyEnv v2.1.0** | December 2025

@@ -44,9 +44,10 @@ import {
   Settings as ConfigIcon,
   Storage as TestDataIcon,
   OpenInNew as OpenInNewIcon,
+  CloudUpload as DeployIcon,
 } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
-import { applicationsAPI } from '../../../lib/api';
+import { applicationsAPI, environmentsAPI } from '../../../lib/api';
 import { useAuth } from '../../../contexts/AuthContext';
 
 interface Application {
@@ -104,6 +105,28 @@ interface RelatedTestData {
   status: string;
 }
 
+interface AppInstance {
+  app_env_instance_id: string;
+  application_id: string;
+  env_instance_id: string;
+  instance_name: string;
+  environment_name: string;
+  environment_category: string;
+  deployment_model: string;
+  version: string;
+  deployment_status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface EnvironmentInstance {
+  env_instance_id: string;
+  name: string;
+  environment_name: string;
+  environment_category: string;
+  operational_status: string;
+}
+
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
@@ -123,11 +146,15 @@ const COMPONENT_TYPES = ['API', 'UI', 'Batch', 'RuleEngine', 'DBSchema', 'Messag
 const RUNTIME_PLATFORMS = ['Docker', 'Kubernetes', 'VM', 'Serverless', 'Bare Metal', 'Cloud Function'];
 const CRITICALITY_OPTIONS = ['High', 'Medium', 'Low'];
 const DATA_SENSITIVITY_OPTIONS = ['PII', 'PCI', 'Confidential', 'NonProdDummy'];
+const DEPLOYMENT_MODELS = ['Monolith', 'Microservices', 'SaaS', 'COTS'];
+const DEPLOYMENT_STATUSES = ['Aligned', 'Mixed', 'OutOfSync', 'Broken'];
 
 export default function ApplicationsPage() {
   const { user } = useAuth();
   const [applications, setApplications] = useState<Application[]>([]);
   const [components, setComponents] = useState<{ [key: string]: Component[] }>({});
+  const [appInstances, setAppInstances] = useState<AppInstance[]>([]);
+  const [availableInstances, setAvailableInstances] = useState<EnvironmentInstance[]>([]);
   const [relatedInterfaces, setRelatedInterfaces] = useState<RelatedInterface[]>([]);
   const [relatedConfigs, setRelatedConfigs] = useState<RelatedConfig[]>([]);
   const [relatedTestData, setRelatedTestData] = useState<RelatedTestData[]>([]);
@@ -143,10 +170,14 @@ export default function ApplicationsPage() {
   const [componentDialogOpen, setComponentDialogOpen] = useState(false);
   const [editComponentDialogOpen, setEditComponentDialogOpen] = useState(false);
   const [deleteComponentDialogOpen, setDeleteComponentDialogOpen] = useState(false);
+  const [deployDialogOpen, setDeployDialogOpen] = useState(false);
+  const [editDeployDialogOpen, setEditDeployDialogOpen] = useState(false);
+  const [undeployDialogOpen, setUndeployDialogOpen] = useState(false);
 
   // Selected items
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [selectedComponent, setSelectedComponent] = useState<Component | null>(null);
+  const [selectedAppInstance, setSelectedAppInstance] = useState<AppInstance | null>(null);
 
   // View dialog tab
   const [viewTab, setViewTab] = useState(0);
@@ -171,7 +202,15 @@ export default function ApplicationsPage() {
     owner_team: '',
   });
 
+  const [deployForm, setDeployForm] = useState({
+    env_instance_id: '',
+    deployment_model: '',
+    version: '',
+    deployment_status: 'Aligned',
+  });
+
   const canEdit = user?.role === 'Admin' || user?.role === 'ProjectLead';
+  const canDeploy = user?.role === 'Admin' || user?.role === 'EnvironmentManager';
   const router = useRouter();
 
   useEffect(() => {
@@ -202,6 +241,28 @@ export default function ApplicationsPage() {
       setComponents((prev: { [key: string]: Component[] }) => ({ ...prev, [appId]: compList }));
     } catch (err: any) {
       console.error('Failed to fetch components:', err);
+    }
+  };
+
+  const fetchAppInstances = async (appId: string) => {
+    try {
+      const response = await applicationsAPI.getInstances(appId);
+      const responseData = response.data;
+      const instanceList = Array.isArray(responseData) ? responseData : responseData.instances || [];
+      setAppInstances(instanceList);
+    } catch (err: any) {
+      console.error('Failed to fetch app instances:', err);
+    }
+  };
+
+  const fetchAvailableInstances = async () => {
+    try {
+      const response = await environmentsAPI.getAllInstances();
+      const responseData = response.data;
+      const instanceList = Array.isArray(responseData) ? responseData : responseData.instances || [];
+      setAvailableInstances(instanceList);
+    } catch (err: any) {
+      console.error('Failed to fetch available instances:', err);
     }
   };
 
@@ -284,6 +345,46 @@ export default function ApplicationsPage() {
     }
   };
 
+  // Deployment CRUD handlers
+  const handleDeploy = async () => {
+    if (!selectedApp) return;
+    try {
+      await applicationsAPI.createInstance(selectedApp.application_id, deployForm);
+      setSuccess('Application deployed successfully');
+      setDeployDialogOpen(false);
+      resetDeployForm();
+      fetchAppInstances(selectedApp.application_id);
+    } catch (err: any) {
+      setError(err.response?.data?.error || err.message || 'Failed to deploy application');
+    }
+  };
+
+  const handleUpdateDeploy = async () => {
+    if (!selectedApp || !selectedAppInstance) return;
+    try {
+      await applicationsAPI.updateInstance(selectedApp.application_id, selectedAppInstance.app_env_instance_id, deployForm);
+      setSuccess('Deployment updated successfully');
+      setEditDeployDialogOpen(false);
+      resetDeployForm();
+      fetchAppInstances(selectedApp.application_id);
+    } catch (err: any) {
+      setError(err.response?.data?.error || err.message || 'Failed to update deployment');
+    }
+  };
+
+  const handleUndeploy = async () => {
+    if (!selectedApp || !selectedAppInstance) return;
+    try {
+      await applicationsAPI.deleteInstance(selectedApp.application_id, selectedAppInstance.app_env_instance_id);
+      setSuccess('Application undeployed successfully');
+      setUndeployDialogOpen(false);
+      setSelectedAppInstance(null);
+      fetchAppInstances(selectedApp.application_id);
+    } catch (err: any) {
+      setError(err.response?.data?.error || err.message || 'Failed to undeploy application');
+    }
+  };
+
   // Form helpers
   const resetAppForm = () => {
     setAppForm({
@@ -305,6 +406,15 @@ export default function ApplicationsPage() {
       build_pipeline_id: '',
       runtime_platform: 'Docker',
       owner_team: '',
+    });
+  };
+
+  const resetDeployForm = () => {
+    setDeployForm({
+      env_instance_id: '',
+      deployment_model: '',
+      version: '',
+      deployment_status: 'Aligned',
     });
   };
 
@@ -339,6 +449,7 @@ export default function ApplicationsPage() {
     setRelatedInterfaces([]);
     setRelatedConfigs([]);
     setRelatedTestData([]);
+    setAppInstances([]);
     setViewDialogOpen(true);
     
     // Fetch components
@@ -349,6 +460,16 @@ export default function ApplicationsPage() {
       setComponents((prev: { [key: string]: Component[] }) => ({ ...prev, [app.application_id]: compList }));
     } catch (err) {
       console.error('Failed to fetch components:', err);
+    }
+    
+    // Fetch app instances (deployments)
+    try {
+      const response = await applicationsAPI.getInstances(app.application_id);
+      const responseData = response.data;
+      const instanceList = Array.isArray(responseData) ? responseData : responseData.instances || [];
+      setAppInstances(instanceList);
+    } catch (err) {
+      console.error('Failed to fetch app instances:', err);
     }
     
     // Fetch related entities in parallel
@@ -387,6 +508,28 @@ export default function ApplicationsPage() {
   const openDeleteComponentDialog = (component: Component) => {
     setSelectedComponent(component);
     setDeleteComponentDialogOpen(true);
+  };
+
+  const openDeployDialog = async () => {
+    resetDeployForm();
+    await fetchAvailableInstances();
+    setDeployDialogOpen(true);
+  };
+
+  const openEditDeployDialog = (instance: AppInstance) => {
+    setSelectedAppInstance(instance);
+    setDeployForm({
+      env_instance_id: instance.env_instance_id,
+      deployment_model: instance.deployment_model || '',
+      version: instance.version || '',
+      deployment_status: instance.deployment_status || 'Aligned',
+    });
+    setEditDeployDialogOpen(true);
+  };
+
+  const openUndeployDialog = (instance: AppInstance) => {
+    setSelectedAppInstance(instance);
+    setUndeployDialogOpen(true);
   };
 
   const getCriticalityColor = (criticality: string): 'error' | 'warning' | 'success' | 'default' => {
@@ -688,6 +831,7 @@ export default function ApplicationsPage() {
         <DialogContent>
           <Tabs value={viewTab} onChange={(_: React.SyntheticEvent, newValue: number) => setViewTab(newValue)}>
             <Tab label="Details" />
+            <Tab label={`Deployments (${appInstances.length})`} icon={<DeployIcon />} iconPosition="start" />
             <Tab label={`Components (${selectedApp ? (components[selectedApp.application_id]?.length || 0) : 0})`} icon={<ComponentIcon />} iconPosition="start" />
             <Tab label={`Interfaces (${relatedInterfaces.length})`} icon={<InterfaceIcon />} iconPosition="start" />
             <Tab label={`Configs (${relatedConfigs.length})`} icon={<ConfigIcon />} iconPosition="start" />
@@ -732,6 +876,72 @@ export default function ApplicationsPage() {
           </TabPanel>
 
           <TabPanel value={viewTab} index={1}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+              <Typography variant="subtitle1">Environment Deployments</Typography>
+              {canDeploy && (
+                <Button size="small" startIcon={<AddIcon />} onClick={openDeployDialog}>
+                  Deploy to Environment
+                </Button>
+              )}
+            </Box>
+            {appInstances.length > 0 ? (
+              <TableContainer component={Paper} variant="outlined">
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Environment</TableCell>
+                      <TableCell>Instance</TableCell>
+                      <TableCell>Version</TableCell>
+                      <TableCell>Model</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell align="right">Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {appInstances.map((instance) => (
+                      <TableRow key={instance.app_env_instance_id} hover>
+                        <TableCell>
+                          <Chip label={instance.environment_name} size="small" variant="outlined" />
+                        </TableCell>
+                        <TableCell>{instance.instance_name}</TableCell>
+                        <TableCell>{instance.version || '-'}</TableCell>
+                        <TableCell>{instance.deployment_model || '-'}</TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={instance.deployment_status} 
+                            size="small" 
+                            color={instance.deployment_status === 'Aligned' ? 'success' : instance.deployment_status === 'Broken' ? 'error' : 'warning'} 
+                          />
+                        </TableCell>
+                        <TableCell align="right">
+                          {canDeploy && (
+                            <>
+                              <Tooltip title="Edit Deployment">
+                                <IconButton size="small" onClick={() => openEditDeployDialog(instance)}>
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Undeploy">
+                                <IconButton size="small" onClick={() => openUndeployDialog(instance)} color="error">
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <Typography color="text.secondary" align="center" sx={{ py: 4 }}>
+                Not deployed to any environments. {canDeploy && 'Click "Deploy to Environment" to add a deployment.'}
+              </Typography>
+            )}
+          </TabPanel>
+
+          <TabPanel value={viewTab} index={2}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
               <Typography variant="subtitle1">Components</Typography>
               {canEdit && (
@@ -788,7 +998,7 @@ export default function ApplicationsPage() {
             )}
           </TabPanel>
 
-          <TabPanel value={viewTab} index={2}>
+          <TabPanel value={viewTab} index={3}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
               <Typography variant="subtitle1">Related Interfaces</Typography>
               <Button
@@ -835,7 +1045,7 @@ export default function ApplicationsPage() {
             )}
           </TabPanel>
 
-          <TabPanel value={viewTab} index={3}>
+          <TabPanel value={viewTab} index={4}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
               <Typography variant="subtitle1">Related Configurations</Typography>
               <Button
@@ -886,7 +1096,7 @@ export default function ApplicationsPage() {
             )}
           </TabPanel>
 
-          <TabPanel value={viewTab} index={4}>
+          <TabPanel value={viewTab} index={5}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
               <Typography variant="subtitle1">Related Test Data Sets</Typography>
               <Button
@@ -1086,6 +1296,134 @@ export default function ApplicationsPage() {
           <Button onClick={() => setDeleteComponentDialogOpen(false)}>Cancel</Button>
           <Button onClick={handleDeleteComponent} color="error" variant="contained">
             Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Deploy to Environment Dialog */}
+      <Dialog open={deployDialogOpen} onClose={() => setDeployDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Deploy {selectedApp?.name} to Environment</DialogTitle>
+        <DialogContent>
+          <FormControl fullWidth margin="dense" required>
+            <InputLabel>Environment Instance</InputLabel>
+            <Select
+              value={deployForm.env_instance_id}
+              label="Environment Instance"
+              onChange={(e) => setDeployForm({ ...deployForm, env_instance_id: e.target.value })}
+            >
+              {availableInstances
+                .filter(inst => !appInstances.some(ai => ai.env_instance_id === inst.env_instance_id))
+                .map((inst) => (
+                  <MenuItem key={inst.env_instance_id} value={inst.env_instance_id}>
+                    {inst.environment_name} - {inst.name}
+                  </MenuItem>
+                ))}
+            </Select>
+          </FormControl>
+          <TextField
+            margin="dense"
+            label="Version"
+            fullWidth
+            placeholder="e.g., 2.5.0"
+            value={deployForm.version}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDeployForm({ ...deployForm, version: e.target.value })}
+          />
+          <FormControl fullWidth margin="dense">
+            <InputLabel>Deployment Model</InputLabel>
+            <Select
+              value={deployForm.deployment_model}
+              label="Deployment Model"
+              onChange={(e) => setDeployForm({ ...deployForm, deployment_model: e.target.value })}
+            >
+              <MenuItem value="">Not specified</MenuItem>
+              {DEPLOYMENT_MODELS.map((model) => (
+                <MenuItem key={model} value={model}>{model}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="dense">
+            <InputLabel>Deployment Status</InputLabel>
+            <Select
+              value={deployForm.deployment_status}
+              label="Deployment Status"
+              onChange={(e) => setDeployForm({ ...deployForm, deployment_status: e.target.value })}
+            >
+              {DEPLOYMENT_STATUSES.map((status) => (
+                <MenuItem key={status} value={status}>{status}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeployDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleDeploy} variant="contained" disabled={!deployForm.env_instance_id}>
+            Deploy
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Deployment Dialog */}
+      <Dialog open={editDeployDialogOpen} onClose={() => setEditDeployDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Edit Deployment</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Editing deployment to: <strong>{selectedAppInstance?.environment_name} - {selectedAppInstance?.instance_name}</strong>
+          </Typography>
+          <TextField
+            margin="dense"
+            label="Version"
+            fullWidth
+            placeholder="e.g., 2.5.0"
+            value={deployForm.version}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDeployForm({ ...deployForm, version: e.target.value })}
+          />
+          <FormControl fullWidth margin="dense">
+            <InputLabel>Deployment Model</InputLabel>
+            <Select
+              value={deployForm.deployment_model}
+              label="Deployment Model"
+              onChange={(e) => setDeployForm({ ...deployForm, deployment_model: e.target.value })}
+            >
+              <MenuItem value="">Not specified</MenuItem>
+              {DEPLOYMENT_MODELS.map((model) => (
+                <MenuItem key={model} value={model}>{model}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="dense">
+            <InputLabel>Deployment Status</InputLabel>
+            <Select
+              value={deployForm.deployment_status}
+              label="Deployment Status"
+              onChange={(e) => setDeployForm({ ...deployForm, deployment_status: e.target.value })}
+            >
+              {DEPLOYMENT_STATUSES.map((status) => (
+                <MenuItem key={status} value={status}>{status}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditDeployDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleUpdateDeploy} variant="contained">
+            Update
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Undeploy Dialog */}
+      <Dialog open={undeployDialogOpen} onClose={() => setUndeployDialogOpen(false)}>
+        <DialogTitle>Undeploy Application</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to undeploy <strong>{selectedApp?.name}</strong> from{' '}
+            <strong>{selectedAppInstance?.environment_name} - {selectedAppInstance?.instance_name}</strong>?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setUndeployDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleUndeploy} color="error" variant="contained">
+            Undeploy
           </Button>
         </DialogActions>
       </Dialog>
