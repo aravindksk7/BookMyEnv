@@ -283,6 +283,46 @@ test-env-management/
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture, data model, flows |
 | [SECURITY.md](docs/SECURITY.md) | Security features and configuration |
 | [DATA_SETUP_GUIDE.md](docs/DATA_SETUP_GUIDE.md) | Data import and setup guide |
+| [ENTERPRISE_APPROVAL.md](docs/ENTERPRISE_APPROVAL.md) | Enterprise architecture & security approval |
+| [terraform/README.md](terraform/README.md) | AWS Terraform deployment guide |
+
+## ☁️ AWS Cloud Deployment
+
+BookMyEnv can be deployed to AWS using Terraform. The infrastructure includes:
+
+- **VPC** with public/private subnets across 2 AZs
+- **ECS Fargate** for serverless container hosting
+- **RDS PostgreSQL** for managed database
+- **S3 + CloudFront** for frontend static hosting with CDN
+- **ALB** for backend load balancing
+- **Secrets Manager** for secure credential storage
+
+### Quick Deploy
+
+```bash
+cd terraform
+
+# 1. Configure variables
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars with your settings
+
+# 2. Initialize and apply
+terraform init
+terraform plan
+terraform apply
+
+# 3. Deploy application code
+./deploy-aws.ps1   # Windows
+./deploy-aws.sh    # Linux/Mac
+```
+
+### Estimated Monthly Cost: ~$76
+- ECS Fargate (0.5 vCPU, 1GB): ~$30
+- RDS PostgreSQL (db.t3.micro): ~$15
+- ALB: ~$20
+- CloudFront + S3: ~$11
+
+See [terraform/README.md](terraform/README.md) for complete AWS deployment documentation.
 
 ## 🛠️ Development
 
@@ -310,4 +350,4 @@ MIT License
 
 ---
 
-**BookMyEnv v2.1.0** | December 2025
+**BookMyEnv v3.1.0** | December 2025

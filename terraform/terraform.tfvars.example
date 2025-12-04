@@ -1,0 +1,83 @@
+# =============================================================================
+# BookMyEnv - Example Terraform Variables
+# =============================================================================
+# Copy this file to terraform.tfvars and fill in your values
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# General Configuration
+# -----------------------------------------------------------------------------
+
+project_name = "bookmyenv"
+environment  = "production"   # dev, staging, or production
+aws_region   = "us-east-1"
+
+# -----------------------------------------------------------------------------
+# Networking
+# -----------------------------------------------------------------------------
+
+vpc_cidr             = "10.0.0.0/16"
+availability_zones   = ["us-east-1a", "us-east-1b"]
+public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24"]
+private_subnet_cidrs = ["10.0.10.0/24", "10.0.20.0/24"]
+
+# -----------------------------------------------------------------------------
+# Database Configuration
+# -----------------------------------------------------------------------------
+
+db_instance_class        = "db.t3.micro"   # db.t3.small, db.t3.medium for production
+db_allocated_storage     = 20              # GB
+db_name                  = "bookmyenv_db"
+db_username              = "bookmyenv_user"
+db_password              = "YourSecurePassword123!"  # CHANGE THIS!
+db_multi_az              = false           # Set to true for production
+db_deletion_protection   = true
+db_backup_retention_period = 7             # Days
+
+# -----------------------------------------------------------------------------
+# ECS Configuration
+# -----------------------------------------------------------------------------
+
+ecs_cpu           = 512   # 256, 512, 1024, 2048, 4096
+ecs_memory        = 1024  # Must be compatible with CPU
+ecs_desired_count = 2     # Number of tasks
+ecs_min_count     = 1     # For auto scaling
+ecs_max_count     = 4     # For auto scaling
+
+# -----------------------------------------------------------------------------
+# Application Configuration
+# -----------------------------------------------------------------------------
+
+# IMPORTANT: Generate a strong random secret for production
+# You can use: openssl rand -base64 48
+jwt_secret              = "change-this-to-a-very-long-random-secret-key-at-least-32-chars"
+jwt_expires_in          = "24h"
+rate_limit_window_ms    = 900000    # 15 minutes
+rate_limit_max_requests = 100
+
+# -----------------------------------------------------------------------------
+# Domain and SSL (Optional)
+# -----------------------------------------------------------------------------
+
+# Uncomment and configure if you have a custom domain
+# domain_name        = "bookmyenv.example.com"
+# certificate_arn    = "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
+# create_dns_records = true
+# route53_zone_id    = "Z1234567890ABC"
+
+# -----------------------------------------------------------------------------
+# Logging and Monitoring
+# -----------------------------------------------------------------------------
+
+log_retention_days        = 30
+enable_container_insights = true
+
+# -----------------------------------------------------------------------------
+# Additional Tags
+# -----------------------------------------------------------------------------
+
+tags = {
+  Owner       = "your-team"
+  CostCenter  = "123456"
+  Department  = "Engineering"
+}

@@ -248,6 +248,24 @@ docker-compose up -d
 
 ---
 
+## ☁️ AWS Deployment
+
+```bash
+# Deploy to AWS using Terraform
+cd terraform
+terraform init
+terraform plan
+terraform apply
+
+# Deploy application code
+.\deploy-aws.ps1   # Windows
+./deploy-aws.sh    # Linux/Mac
+```
+
+See [terraform/README.md](../terraform/README.md) for complete AWS deployment guide.
+
+---
+
 ## 🔧 Environment Variables
 
 | Variable | Description | Default |
@@ -279,4 +297,4 @@ docker-compose up -d
 
 ---
 
-**BookMyEnv v3.0.0** | December 2025
+**BookMyEnv v3.1.0** | December 2025

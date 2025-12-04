@@ -773,9 +773,21 @@ Click **Settings** in the sidebar or click your avatar → **Settings**
 ## API Access
 
 For programmatic access, see the API documentation:
-- Base URL: `http://localhost:5000/api`
+- Base URL: `http://localhost:5000/api` (local) or `https://your-domain.com/api` (AWS)
 - Authentication: JWT Bearer token
 - Full API docs: `/api/docs`
+
+---
+
+## Cloud Deployment
+
+BookMyEnv can be deployed to AWS using the provided Terraform configuration. See [terraform/README.md](../terraform/README.md) for:
+
+- Infrastructure as Code setup
+- ECS Fargate container deployment
+- RDS PostgreSQL managed database
+- CloudFront CDN with SSL
+- CI/CD pipeline with GitHub Actions
 
 ---
 
@@ -783,6 +795,7 @@ For programmatic access, see the API documentation:
 
 | Version | Date | Changes |
 |---------|------|--------|
+| 3.1.0 | Dec 2025 | AWS Terraform deployment, GitHub Actions CI/CD |
 | 3.0.0 | Dec 2025 | Interface Endpoints and Component Instances bulk upload, enhanced documentation |
 | 2.1.0 | Dec 2025 | Application Deployments management, bidirectional deploy/undeploy |
 | 2.0.0 | Dec 2025 | Conflict detection & resolution, Bulk data upload |

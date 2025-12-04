@@ -170,3 +170,21 @@ If you discover a security vulnerability, please report it responsibly:
 - [OWASP Security Guidelines](https://owasp.org/www-project-web-security-testing-guide/)
 - [Node.js Security Best Practices](https://nodejs.org/en/docs/guides/security/)
 - [Docker Security](https://docs.docker.com/engine/security/)
+- [AWS Security Best Practices](https://aws.amazon.com/architecture/security-identity-compliance/)
+
+## AWS Cloud Security
+
+When deployed to AWS, BookMyEnv benefits from additional security features:
+
+| Feature | Description |
+|---------|-------------|
+| **VPC Isolation** | Private subnets for database and backend |
+| **Security Groups** | Least-privilege network access |
+| **RDS Encryption** | Data encrypted at rest and in transit |
+| **Secrets Manager** | Secure credential storage |
+| **CloudFront SSL** | TLS 1.2/1.3 with managed certificates |
+| **VPC Flow Logs** | Network traffic monitoring |
+| **CloudWatch** | Centralized logging and alerting |
+| **IAM Roles** | Fine-grained access control |
+
+See [terraform/README.md](../terraform/README.md) for AWS deployment details.

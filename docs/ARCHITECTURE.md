@@ -852,10 +852,158 @@ BookMyEnv/
 
 ---
 
+## AWS Cloud Deployment Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                         AWS CLOUD ARCHITECTURE                                   │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+                                    ┌─────────────┐
+                                    │   Users     │
+                                    │  (Browser)  │
+                                    └──────┬──────┘
+                                           │
+                                           │ HTTPS
+                                           ▼
+                                    ┌─────────────┐
+                                    │  Route 53   │
+                                    │    (DNS)    │
+                                    └──────┬──────┘
+                                           │
+                                           ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              CLOUDFRONT (CDN)                                    │
+│  ┌───────────────────────────────────────────────────────────────────────────┐  │
+│  │  • SSL/TLS Termination (TLS 1.2/1.3)                                     │  │
+│  │  • Global Edge Caching                                                    │  │
+│  │  • Request Routing (/ → S3, /api → ALB)                                  │  │
+│  │  • DDoS Protection (AWS Shield)                                          │  │
+│  └───────────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                        │                               │
+                        │                               │
+              ┌─────────▼─────────┐           ┌─────────▼─────────┐
+              │   S3 BUCKET       │           │   ALB             │
+              │   (Frontend)      │           │   (Load Balancer) │
+              │                   │           │                   │
+              │ • Static Assets   │           │ • Health Checks   │
+              │ • Next.js Export  │           │ • Target Groups   │
+              │ • Versioning      │           │ • SSL Offload     │
+              └───────────────────┘           └─────────┬─────────┘
+                                                        │
+                                              ┌─────────▼─────────┐
+┌─────────────────────────────────────────────┤      VPC          ├──────────────┐
+│                                             └───────────────────┘              │
+│  ┌─────────────────────────────────────────────────────────────────────────┐  │
+│  │                         PUBLIC SUBNETS (2 AZs)                           │  │
+│  │  ┌─────────────────────┐           ┌─────────────────────┐              │  │
+│  │  │    NAT Gateway      │           │    NAT Gateway      │              │  │
+│  │  │    (AZ-1)           │           │    (AZ-2)           │              │  │
+│  │  └─────────────────────┘           └─────────────────────┘              │  │
+│  └─────────────────────────────────────────────────────────────────────────┘  │
+│                                      │                                         │
+│  ┌───────────────────────────────────▼─────────────────────────────────────┐  │
+│  │                         PRIVATE SUBNETS (2 AZs)                          │  │
+│  │                                                                          │  │
+│  │  ┌─────────────────────────────────────────────────────────────────┐   │  │
+│  │  │                      ECS FARGATE CLUSTER                         │   │  │
+│  │  │  ┌─────────────────┐           ┌─────────────────┐              │   │  │
+│  │  │  │  Backend Task   │           │  Backend Task   │              │   │  │
+│  │  │  │  (Container 1)  │           │  (Container 2)  │              │   │  │
+│  │  │  │                 │           │                 │              │   │  │
+│  │  │  │ • Express.js    │           │ • Express.js    │              │   │  │
+│  │  │  │ • Node.js 22    │           │ • Node.js 22    │              │   │  │
+│  │  │  │ • Auto-scaling  │           │ • Auto-scaling  │              │   │  │
+│  │  │  └─────────────────┘           └─────────────────┘              │   │  │
+│  │  └─────────────────────────────────────────────────────────────────┘   │  │
+│  │                                      │                                  │  │
+│  │  ┌───────────────────────────────────▼─────────────────────────────┐   │  │
+│  │  │                      RDS POSTGRESQL                              │   │  │
+│  │  │  ┌─────────────────────────────────────────────────────────┐   │   │  │
+│  │  │  │ • PostgreSQL 15                                          │   │   │  │
+│  │  │  │ • Multi-AZ (optional)                                    │   │   │  │
+│  │  │  │ • Encrypted Storage                                      │   │   │  │
+│  │  │  │ • Automated Backups                                      │   │   │  │
+│  │  │  │ • Performance Insights                                   │   │   │  │
+│  │  │  └─────────────────────────────────────────────────────────┘   │   │  │
+│  │  └─────────────────────────────────────────────────────────────────┘   │  │
+│  └─────────────────────────────────────────────────────────────────────────┘  │
+└────────────────────────────────────────────────────────────────────────────────┘
+
+                    ┌─────────────────────────────────────────┐
+                    │           SUPPORTING SERVICES            │
+                    │                                          │
+                    │  ┌──────────────┐  ┌──────────────┐    │
+                    │  │    ECR       │  │   Secrets    │    │
+                    │  │  (Images)    │  │   Manager    │    │
+                    │  └──────────────┘  └──────────────┘    │
+                    │                                          │
+                    │  ┌──────────────┐  ┌──────────────┐    │
+                    │  │  CloudWatch  │  │    ACM       │    │
+                    │  │   (Logs)     │  │   (SSL)      │    │
+                    │  └──────────────┘  └──────────────┘    │
+                    └─────────────────────────────────────────┘
+```
+
+### AWS Services Used
+
+| Service | Purpose |
+|---------|---------|
+| **VPC** | Network isolation with public/private subnets across 2 AZs |
+| **ECS Fargate** | Serverless container hosting for backend API |
+| **RDS PostgreSQL** | Managed database with encryption and backups |
+| **S3** | Static website hosting for Next.js frontend |
+| **CloudFront** | Global CDN with SSL/TLS termination |
+| **ALB** | Application Load Balancer for backend traffic |
+| **ECR** | Docker container registry |
+| **Secrets Manager** | Secure credential storage |
+| **CloudWatch** | Logging, monitoring, and alerting |
+| **Route 53** | DNS management (optional) |
+| **ACM** | SSL/TLS certificates |
+
+### Infrastructure as Code (Terraform)
+
+The complete AWS infrastructure is defined in Terraform modules:
+
+```
+terraform/
+├── main.tf                 # Main configuration
+├── variables.tf            # Input variables
+├── outputs.tf              # Output values
+├── terraform.tfvars.example
+│
+└── modules/
+    ├── vpc/               # VPC, subnets, NAT gateways
+    ├── rds/               # PostgreSQL database
+    ├── ecs/               # ECS Fargate cluster
+    ├── alb/               # Application Load Balancer
+    ├── s3/                # S3 bucket for frontend
+    ├── cloudfront/        # CloudFront distribution
+    └── secrets/           # Secrets Manager
+```
+
+### Estimated Monthly Cost
+
+| Service | Configuration | Cost |
+|---------|---------------|------|
+| ECS Fargate | 0.5 vCPU, 1GB RAM, 2 tasks | ~$30 |
+| RDS PostgreSQL | db.t3.micro, 20GB | ~$15 |
+| ALB | Application Load Balancer | ~$20 |
+| CloudFront | 100GB transfer | ~$10 |
+| S3 | 1GB storage | ~$0.05 |
+| Secrets Manager | 2 secrets | ~$1 |
+| **Total** | | **~$76/month** |
+
+See [terraform/README.md](../terraform/README.md) for complete deployment instructions.
+
+---
+
 ## Version History
 
 | Version | Date | Key Changes |
 |---------|------|-------------|
+| 3.1.0 | Dec 2025 | AWS Terraform deployment, CI/CD pipeline |
 | 3.0.0 | Dec 2025 | Interface Endpoints and Component Instances bulk upload |
 | 2.1.0 | Dec 2025 | Application deployments management, deploy/undeploy UI |
 | 2.0.0 | Dec 2025 | Conflict detection & resolution, bulk data upload |
