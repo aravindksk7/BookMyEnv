@@ -90,7 +90,7 @@ See [docs/SECURITY.md](docs/SECURITY.md) for complete security documentation.
 | Layer | Technology |
 |-------|------------|
 | Reverse Proxy | Nginx (SSL termination, security headers) |
-| Frontend | Next.js 14, React 18, Tailwind CSS, MUI |
+| Frontend | Next.js 15, React 19, Tailwind CSS, MUI 6 |
 | Backend | Node.js 22, Express.js, express-validator |
 | Database | PostgreSQL 15 |
 | Real-time | Socket.io |
@@ -344,10 +344,34 @@ npm run dev
 
 See `.env.example` files in backend and frontend directories.
 
+## 📋 Changelog
+
+### v3.2.0 (January 2025)
+**Major Frontend Upgrade**
+- **Next.js**: 14.2 → 15.1 with Turbopack support
+- **React**: 18.2 → 19.0 with new features
+- **MUI Material**: 5.15 → 6.3 with Pigment CSS
+- **MUI X-DataGrid**: 6.19 → 8.20
+- **MUI X-Date-Pickers**: 6.18 → 8.0
+- **TypeScript**: 5.3 → 5.7
+- **ESLint**: 8.56 → 9.17 (new flat config format)
+
+**Infrastructure Updates**
+- Node.js base images updated to 22-alpine
+- All npm vulnerabilities fixed
+- Docker images optimized
+
+**Bug Fixes**
+- Fixed PASSWORD_REGEX pattern for proper digit matching
+
+### v3.1.0 (December 2024)
+- Initial AWS Terraform infrastructure
+- Full feature set with all integrations
+
 ## 📝 License
 
 MIT License
 
 ---
 
-**BookMyEnv v3.1.0** | December 2025
+**BookMyEnv v3.2.0** | January 2025

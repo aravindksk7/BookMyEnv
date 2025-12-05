@@ -6,8 +6,11 @@ import { authAPI } from '@/lib/api';
 interface User {
   user_id: string;
   email: string;
+  username?: string;
   display_name: string;
   role: string;
+  auth_mode?: string;
+  time_zone?: string;
 }
 
 interface AuthContextType {

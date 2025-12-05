@@ -65,7 +65,7 @@ BookMyEnv is a comprehensive Test Environment Management platform designed to st
 │  ┌─────────────────────────────────────────────────────────────────────────┐  │
 │  │                     PRESENTATION TIER (DMZ)                              │  │
 │  │  • Nginx Reverse Proxy (TLS termination, WAF-ready)                     │  │
-│  │  • Next.js Frontend (React 18, TypeScript)                              │  │
+│  │  • Next.js Frontend (React 19, TypeScript)                              │  │
 │  └─────────────────────────────────────────────────────────────────────────┘  │
 │                                    │                                           │
 │  ┌─────────────────────────────────────────────────────────────────────────┐  │
@@ -95,11 +95,11 @@ BookMyEnv is a comprehensive Test Environment Management platform designed to st
 ### 1.2 Technology Stack
 
 | Tier | Technology | Version | Purpose | License |
-|------|-----------|---------|---------|---------|
-| **Frontend** | Next.js | 14.x | Server-side rendering framework | MIT |
-| | React | 18.x | UI component library | MIT |
-| | TypeScript | 5.x | Type-safe JavaScript | Apache 2.0 |
-| | Material UI | 5.16 | Component library | MIT |
+|------|-----------|---------|---------|---------||
+| **Frontend** | Next.js | 15.x | Server-side rendering framework | MIT |
+| | React | 19.x | UI component library | MIT |
+| | TypeScript | 5.7 | Type-safe JavaScript | Apache 2.0 |
+| | Material UI | 6.3 | Component library | MIT |
 | | Tailwind CSS | 3.x | Utility CSS framework | MIT |
 | **Backend** | Node.js | 22 LTS | JavaScript runtime | MIT |
 | | Express.js | 4.21 | Web application framework | MIT |
@@ -579,11 +579,11 @@ All significant actions are logged to the `activity_log` table:
 
 | Package | Version | Purpose | License | Vulnerability Status |
 |---------|---------|---------|---------|---------------------|
-| next | 14.x | React framework | MIT | ✅ Clean |
-| react | 18.x | UI library | MIT | ✅ Clean |
-| @mui/material | 5.16.x | Component library | MIT | ✅ Clean |
+| next | 15.x | React framework | MIT | ✅ Clean |
+| react | 19.x | UI library | MIT | ✅ Clean |
+| @mui/material | 6.3.x | Component library | MIT | ✅ Clean |
 | axios | 1.7.x | HTTP client | MIT | ✅ Clean |
-| typescript | 5.x | Type checking | Apache 2.0 | ✅ Clean |
+| typescript | 5.7.x | Type checking | Apache 2.0 | ✅ Clean |
 
 ### 8.3 Infrastructure Dependencies
 

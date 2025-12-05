@@ -25,7 +25,17 @@ interface Booking {
   end_datetime: string;
   booking_status: string;
   conflict_status: string;
+  conflict_notes?: string;
   requested_by_name: string;
+  approved_by_name?: string;
+  owning_group_name?: string;
+  resource_count?: number;
+  created_at?: string;
+  resources?: Array<{
+    environment_id: string;
+    instance_name: string;
+    environment_name: string;
+  }>;
 }
 
 interface BookingCalendarProps {

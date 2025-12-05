@@ -854,7 +854,7 @@ export default function ReleasesPage() {
               </List>
             ) : (
               <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
-                No Jira issues linked. Click "Link Jira Issue" to add one.
+                No Jira issues linked. Click &quot;Link Jira Issue&quot; to add one.
               </Typography>
             )}
           </Box>
@@ -933,7 +933,7 @@ export default function ReleasesPage() {
         <DialogTitle>Delete Release</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete release "{selectedRelease?.name}"?
+            Are you sure you want to delete release &quot;{selectedRelease?.name}&quot;?
             This action cannot be undone.
           </Typography>
         </DialogContent>

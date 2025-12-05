@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Box, LinearProgress, Typography } from '@mui/material';
+import { Box, Chip, LinearProgress, Typography } from '@mui/material';
 import {
   DataGrid,
   GridColDef,
@@ -222,7 +222,6 @@ export function createChipColumn(
     renderCell: (params) => {
       const value = params.value;
       if (!value) return '-';
-      const Chip = require('@mui/material').Chip;
       return <Chip label={value} size="small" color={colorMap[value] || 'default'} />;
     },
   };

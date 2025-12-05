@@ -1432,7 +1432,7 @@ export default function BookingsPage() {
           </Box>
           <BookingCalendar
             bookings={filteredBookings}
-            onEventClick={(booking) => openBookingView(booking)}
+            onEventClick={(booking) => openBookingView(booking as Booking)}
             onDateClick={handleCalendarDateClick}
             canEdit={canEdit}
           />
@@ -1888,7 +1888,7 @@ export default function BookingsPage() {
         <DialogTitle>Delete Booking</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete the booking "{selectedBooking?.title || selectedBooking?.test_phase}"?
+            Are you sure you want to delete the booking &quot;{selectedBooking?.title || selectedBooking?.test_phase}&quot;?
             This action cannot be undone.
           </Typography>
         </DialogContent>

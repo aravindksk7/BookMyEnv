@@ -368,7 +368,7 @@ export default function EnvironmentsPage() {
       name: instance.name,
       operational_status: instance.operational_status || 'Available',
       availability_window: instance.availability_window || '24x7',
-      capacity: instance.capacity || 10,
+      capacity: Number(instance.capacity) || 10,
       primary_location: instance.primary_location || '',
       bookable: instance.bookable !== false,
     });
@@ -1120,7 +1120,7 @@ export default function EnvironmentsPage() {
           <TabPanel value={tabValue} index={1}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="caption" color="text.secondary">
-                Applications linked to this environment's instances
+                Applications linked to this environment&apos;s instances
               </Typography>
               {instances.length > 0 && (
                 <Box sx={{ display: 'flex', gap: 1 }}>
@@ -1221,7 +1221,7 @@ export default function EnvironmentsPage() {
           <TabPanel value={tabValue} index={2}>
             <Typography variant="subtitle1" sx={{ mb: 2 }}>Related Interfaces</Typography>
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
-              Interfaces with endpoints deployed on this environment's instances
+              Interfaces with endpoints deployed on this environment&apos;s instances
             </Typography>
             {relatedInterfaces.length > 0 ? (
               <TableContainer component={Paper} variant="outlined">
@@ -1257,7 +1257,7 @@ export default function EnvironmentsPage() {
                 <InterfaceIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
                 <Typography color="text.secondary">No interfaces found</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Go to Interfaces page to create interface endpoints for this environment's instances
+                  Go to Interfaces page to create interface endpoints for this environment&apos;s instances
                 </Typography>
               </Paper>
             )}
@@ -1266,7 +1266,7 @@ export default function EnvironmentsPage() {
           <TabPanel value={tabValue} index={3}>
             <Typography variant="subtitle1" sx={{ mb: 2 }}>Related Configurations</Typography>
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
-              Configuration sets scoped to this environment's instances
+              Configuration sets scoped to this environment&apos;s instances
             </Typography>
             {relatedConfigs.length > 0 ? (
               <TableContainer component={Paper} variant="outlined">
@@ -1304,7 +1304,7 @@ export default function EnvironmentsPage() {
                 <ConfigIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
                 <Typography color="text.secondary">No configurations found</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Go to Configs page to create configuration sets scoped to this environment's instances
+                  Go to Configs page to create configuration sets scoped to this environment&apos;s instances
                 </Typography>
               </Paper>
             )}

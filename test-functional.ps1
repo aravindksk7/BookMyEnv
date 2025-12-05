@@ -128,31 +128,35 @@ try {
     $body = @{
         name = $envName
         description = "Automated test environment"
-        env_type = "Testing"
-        status = "Available"
+        environment_category = "TEST"
+        lifecycle_stage = "Active"
+        owner_team = "QA Team"
+        support_group = "DevOps"
+        data_sensitivity = "Internal"
+        usage_policies = "Standard testing only"
     } | ConvertTo-Json
     $r = Invoke-RestMethod -Uri "$baseUrl/api/environments" -Method POST -Body $body -ContentType "application/json" -Headers $adminHeaders
-    if ($r.environment -and $r.environment.env_id) {
-        $script:newEnvId = $r.environment.env_id
+    if ($r.environment_id) {
+        $script:newEnvId = $r.environment_id
         Log-Pass "9. Create Environment - $envName"
     } else {
-        Log-Pass "9. Create Environment - Created"
+        Log-Fail "9. Create Environment - No ID returned"
     }
 } catch { Log-Fail "9. Create Environment - $($_.Exception.Message)" }
 
 # Get Environment by ID
-if ($newEnvId) {
+if ($script:newEnvId) {
     try {
-        $r = Invoke-RestMethod -Uri "$baseUrl/api/environments/$newEnvId" -Method GET -Headers $adminHeaders
-        Log-Pass "10. Get Environment by ID - Name: $($r.environment.name)"
+        $r = Invoke-RestMethod -Uri "$baseUrl/api/environments/$($script:newEnvId)" -Method GET -Headers $adminHeaders
+        Log-Pass "10. Get Environment by ID - Name: $($r.name)"
     } catch { Log-Fail "10. Get Environment by ID" }
 }
 
 # Update Environment
-if ($newEnvId) {
+if ($script:newEnvId) {
     try {
         $body = '{"description":"Updated description for test"}'
-        $r = Invoke-RestMethod -Uri "$baseUrl/api/environments/$newEnvId" -Method PUT -Body $body -ContentType "application/json" -Headers $adminHeaders
+        $r = Invoke-RestMethod -Uri "$baseUrl/api/environments/$($script:newEnvId)" -Method PUT -Body $body -ContentType "application/json" -Headers $adminHeaders
         Log-Pass "11. Update Environment"
     } catch { Log-Fail "11. Update Environment" }
 }
@@ -177,16 +181,18 @@ try {
 # Create Application
 $newAppId = $null
 try {
+    $appName = "TestApp-$(Get-Random -Maximum 9999)"
     $body = @{
-        name = "TestApp-$(Get-Random -Maximum 9999)"
-        code = "APP$(Get-Random -Maximum 999)"
+        name = $appName
+        business_domain = "Core Banking"
         description = "Test application"
-        app_type = "Web"
         criticality = "Medium"
+        data_sensitivity = "Internal"
+        owner_team = "App Team A"
     } | ConvertTo-Json
     $r = Invoke-RestMethod -Uri "$baseUrl/api/applications" -Method POST -Body $body -ContentType "application/json" -Headers $adminHeaders
-    $script:newAppId = $r.application.app_id
-    Log-Pass "14. Create Application - $($r.application.name)"
+    $script:newAppId = $r.application_id
+    Log-Pass "14. Create Application - $($r.name)"
 } catch { Log-Fail "14. Create Application - $($_.Exception.Message)" }
 
 # ==== SECTION 5: Bookings ====
@@ -198,37 +204,47 @@ try {
     Log-Pass "15. List Bookings - Count: $($r.bookings.Count)"
 } catch { Log-Fail "15. List Bookings" }
 
-# Get available environments
-$availableEnvId = $null
-try {
-    $r = Invoke-RestMethod -Uri "$baseUrl/api/environments" -Method GET -Headers $adminHeaders
-    $availableEnv = $r.environments | Where-Object { $_.status -eq "Available" } | Select-Object -First 1
-    if ($availableEnv) { $script:availableEnvId = $availableEnv.env_id }
-} catch { }
-
 # Create Booking
 $newBookingId = $null
-if ($availableEnvId) {
+if ($script:newEnvId) {
     try {
-        $startDate = (Get-Date).AddDays(1).ToString("yyyy-MM-dd")
-        $endDate = (Get-Date).AddDays(2).ToString("yyyy-MM-dd")
+        # Create Instance first
+        $instBody = @{
+            name = "Inst-$(Get-Random)"
+            operational_status = "Available"
+            capacity = "Small"
+        } | ConvertTo-Json
+        $inst = Invoke-RestMethod -Uri "$baseUrl/api/environments/$($script:newEnvId)/instances" -Method POST -Body $instBody -ContentType "application/json" -Headers $adminHeaders
+        $instId = $inst.env_instance_id
+
+        $startDate = (Get-Date).AddDays(1).ToString("yyyy-MM-ddTHH:mm:ssZ")
+        $endDate = (Get-Date).AddDays(2).ToString("yyyy-MM-ddTHH:mm:ssZ")
         $body = @{
-            environment_id = $availableEnvId
-            start_date = $startDate
-            end_date = $endDate
-            purpose = "Automated functional testing"
+            title = "Test Booking"
+            description = "Functional test booking"
+            booking_type = "SingleEnv"
+            test_phase = "SIT"
+            start_datetime = $startDate
+            end_datetime = $endDate
+            resources = @(
+                @{
+                    resource_type = "EnvironmentInstance"
+                    resource_ref_id = $instId
+                    logical_role = "Primary"
+                }
+            )
         } | ConvertTo-Json
         $r = Invoke-RestMethod -Uri "$baseUrl/api/bookings" -Method POST -Body $body -ContentType "application/json" -Headers $testerHeaders
-        $script:newBookingId = $r.booking.booking_id
-        Log-Pass "16. Create Booking (Tester) - ID: $($r.booking.booking_id.Substring(0,8))..."
+        $script:newBookingId = $r.booking_id
+        Log-Pass "16. Create Booking (Tester) - ID: $($r.booking_id)"
     } catch { Log-Fail "16. Create Booking - $($_.Exception.Message)" }
 }
 
 # Get Booking by ID
-if ($newBookingId) {
+if ($script:newBookingId) {
     try {
-        $r = Invoke-RestMethod -Uri "$baseUrl/api/bookings/$newBookingId" -Method GET -Headers $testerHeaders
-        Log-Pass "17. Get Booking by ID - Status: $($r.booking.status)"
+        $r = Invoke-RestMethod -Uri "$baseUrl/api/bookings/$($script:newBookingId)" -Method GET -Headers $testerHeaders
+        Log-Pass "17. Get Booking by ID - Status: $($r.booking_status)"
     } catch { Log-Fail "17. Get Booking by ID" }
 }
 
@@ -244,18 +260,20 @@ try {
 # Create Release
 $newReleaseId = $null
 try {
-    $releaseDate = (Get-Date).AddDays(7).ToString("yyyy-MM-ddTHH:mm:ss")
+    $releaseDate = (Get-Date).AddDays(7).ToString("yyyy-MM-dd")
+    $endDate = (Get-Date).AddDays(30).ToString("yyyy-MM-dd")
     $releaseName = "Release-v$(Get-Random -Maximum 99).0"
     $body = @{
         name = $releaseName
-        version = "$(Get-Random -Maximum 9).$(Get-Random -Maximum 9).0"
+        version = "1.0.0"
         description = "Automated test release"
-        planned_date = $releaseDate
-        release_type = "Major"
+        start_date = $releaseDate
+        end_date = $endDate
+        status = "Planned"
     } | ConvertTo-Json
     $r = Invoke-RestMethod -Uri "$baseUrl/api/releases" -Method POST -Body $body -ContentType "application/json" -Headers $mgrHeaders
-    if ($r.release -and $r.release.release_id) {
-        $script:newReleaseId = $r.release.release_id
+    if ($r.release_id) {
+        $script:newReleaseId = $r.release_id
     }
     Log-Pass "19. Create Release - $releaseName"
 } catch { Log-Fail "19. Create Release - $($_.Exception.Message)" }
@@ -277,14 +295,15 @@ try {
 
 # Create User (Admin only)
 try {
-    $testEmail = "testuser$(Get-Random -Maximum 9999)@test.com"
+    $testUser = "testuser$(Get-Random -Maximum 9999)"
+    $testEmail = "$testUser@test.com"
     $body = @{
+        username = $testUser
+        display_name = "Test User"
         email = $testEmail
         password = "Test@12345"
-        first_name = "Test"
-        last_name = "User"
         role = "Tester"
-        is_active = $true
+        default_group_id = "44444444-4444-4444-4444-444444444444" # Using known group ID from init.sql
     } | ConvertTo-Json
     $r = Invoke-RestMethod -Uri "$baseUrl/api/users" -Method POST -Body $body -ContentType "application/json" -Headers $adminHeaders
     Log-Pass "22. Create User - $testEmail"

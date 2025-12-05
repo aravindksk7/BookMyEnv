@@ -592,7 +592,7 @@ export default function GroupsPage() {
         <DialogTitle>Delete Group</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete the group "{selectedGroup?.name}"?
+            Are you sure you want to delete the group &quot;{selectedGroup?.name}&quot;?
             This will remove all member associations.
           </Typography>
         </DialogContent>
