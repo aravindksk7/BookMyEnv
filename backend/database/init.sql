@@ -218,7 +218,7 @@ CREATE TABLE applications (
     business_domain VARCHAR(100),
     description TEXT,
     criticality VARCHAR(10) CHECK (criticality IN ('High', 'Medium', 'Low')),
-    data_sensitivity VARCHAR(20) CHECK (data_sensitivity IN ('PII', 'PCI', 'Confidential', 'NonProdDummy')),
+    data_sensitivity VARCHAR(20) CHECK (data_sensitivity IN ('PII', 'PCI', 'Confidential', 'NonProdDummy','')),
     owner_team VARCHAR(100),
     test_owner VARCHAR(100),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
