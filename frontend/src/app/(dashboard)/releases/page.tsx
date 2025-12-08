@@ -102,6 +102,7 @@ export default function ReleasesPage() {
   const { user } = useAuth();
   const [releases, setReleases] = useState<Release[]>([]);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

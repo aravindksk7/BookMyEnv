@@ -228,6 +228,7 @@ export default function BookingsPage() {
 
   // Conflict management state
   const [conflictDetails, setConflictDetails] = useState<ConflictDetails | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_conflictingBookings, setConflictingBookings] = useState<Booking[]>([]);
   const [loadingConflicts, setLoadingConflicts] = useState(false);
   const [resolveDialogOpen, setResolveDialogOpen] = useState(false);
@@ -308,6 +309,7 @@ export default function BookingsPage() {
               environment_name: env.name,
             });
           });
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (_e) {
           // Ignore errors for individual environments
         }
@@ -325,6 +327,7 @@ export default function BookingsPage() {
     try {
       const response = await bookingsAPI.getById(bookingId);
       setDetailedBooking(response.data);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_err: any) {
       setError('Failed to fetch booking details');
     }

@@ -37,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const response = await authAPI.getCurrentUser();
         setUser(response.data);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (_error) {
         localStorage.removeItem('token');
       }
