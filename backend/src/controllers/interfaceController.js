@@ -173,6 +173,27 @@ const interfaceController = {
     }
   },
 
+  // Get all endpoints across all interfaces
+  getAllEndpoints: async (req, res) => {
+    try {
+      const result = await db.query(
+        `SELECT ie.*, 
+                i.name as interface_name,
+                ei.name as env_instance_name,
+                e.name as environment_name
+         FROM interface_endpoints ie
+         JOIN interfaces i ON ie.interface_id = i.interface_id
+         LEFT JOIN environment_instances ei ON ie.env_instance_id = ei.env_instance_id
+         LEFT JOIN environments e ON ei.environment_id = e.environment_id
+         ORDER BY i.name, e.name, ei.name`
+      );
+      res.json({ endpoints: result.rows });
+    } catch (error) {
+      console.error('Get all endpoints error:', error);
+      res.status(500).json({ error: 'Failed to fetch endpoints' });
+    }
+  },
+
   // Get endpoints for an interface
   getEndpoints: async (req, res) => {
     try {

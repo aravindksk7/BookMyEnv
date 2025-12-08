@@ -52,10 +52,19 @@ export default function IntegrationsPage() {
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     tool_type: 'Jira',
+    base_url: '',
+    api_token: '',
+    project_key: '',
+  });
+  const [editFormData, setEditFormData] = useState({
+    name: '',
     base_url: '',
     api_token: '',
     project_key: '',
@@ -102,6 +111,54 @@ export default function IntegrationsPage() {
       fetchIntegrations();
     } catch (error) {
       console.error('Failed to sync:', error);
+    }
+  };
+
+  const handleEditClick = (integration: Integration) => {
+    setSelectedIntegration(integration);
+    setEditFormData({
+      name: integration.name,
+      base_url: integration.base_url,
+      api_token: '',
+      project_key: integration.project_key || '',
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdateIntegration = async () => {
+    if (!selectedIntegration) return;
+    try {
+      const updateData = { ...editFormData };
+      if (!updateData.api_token) {
+        delete (updateData as any).api_token;
+      }
+      await integrationsAPI.update(selectedIntegration.integration_id, updateData);
+      setEditDialogOpen(false);
+      setSelectedIntegration(null);
+      fetchIntegrations();
+      setTestResult({ success: true, message: 'Integration updated successfully' });
+    } catch (error) {
+      console.error('Failed to update integration:', error);
+      setTestResult({ success: false, message: 'Failed to update integration' });
+    }
+  };
+
+  const handleDeleteClick = (integration: Integration) => {
+    setSelectedIntegration(integration);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteIntegration = async () => {
+    if (!selectedIntegration) return;
+    try {
+      await integrationsAPI.delete(selectedIntegration.integration_id);
+      setDeleteDialogOpen(false);
+      setSelectedIntegration(null);
+      fetchIntegrations();
+      setTestResult({ success: true, message: 'Integration deleted successfully' });
+    } catch (error) {
+      console.error('Failed to delete integration:', error);
+      setTestResult({ success: false, message: 'Failed to delete integration' });
     }
   };
 
@@ -198,10 +255,10 @@ export default function IntegrationsPage() {
                       <IconButton size="small" onClick={() => handleSync(integration.integration_id)}>
                         <SyncIcon />
                       </IconButton>
-                      <IconButton size="small">
+                      <IconButton size="small" onClick={() => handleEditClick(integration)}>
                         <EditIcon />
                       </IconButton>
-                      <IconButton size="small" color="error">
+                      <IconButton size="small" color="error" onClick={() => handleDeleteClick(integration)}>
                         <DeleteIcon />
                       </IconButton>
                     </TableCell>
@@ -269,6 +326,69 @@ export default function IntegrationsPage() {
           <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
           <Button variant="contained" onClick={handleCreateIntegration}>
             Add
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Edit Integration</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Name"
+            fullWidth
+            margin="normal"
+            value={editFormData.name}
+            onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+            required
+          />
+          <TextField
+            label="Base URL"
+            fullWidth
+            margin="normal"
+            value={editFormData.base_url}
+            onChange={(e) => setEditFormData({ ...editFormData, base_url: e.target.value })}
+            required
+          />
+          <TextField
+            label="Project Key"
+            fullWidth
+            margin="normal"
+            value={editFormData.project_key}
+            onChange={(e) => setEditFormData({ ...editFormData, project_key: e.target.value })}
+          />
+          <TextField
+            label="API Token"
+            fullWidth
+            margin="normal"
+            type="password"
+            value={editFormData.api_token}
+            onChange={(e) => setEditFormData({ ...editFormData, api_token: e.target.value })}
+            placeholder="Leave empty to keep existing token"
+            helperText="Leave empty to keep the existing API token"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+          <Button variant="contained" onClick={handleUpdateIntegration}>
+            Update
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Delete Integration</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete the integration &quot;{selectedIntegration?.name}&quot;? 
+            This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={handleDeleteIntegration}>
+            Delete
           </Button>
         </DialogActions>
       </Dialog>

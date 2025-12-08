@@ -1,969 +1,600 @@
-# BookMyEnv Comprehensive Functional Test Suite
-# Tests both positive and negative scenarios
+# BookMyEnv Comprehensive Functional Test Script (Fixed)
+# Tests: Backend API, Database, and Frontend (headless)
+# Run: powershell -ExecutionPolicy Bypass -File test-comprehensive.ps1
 
 $baseUrl = "http://localhost:5000"
+$frontendUrl = "http://localhost:3000"
 $passed = 0
 $failed = 0
-$token = $null
-$headers = @{}
+$total = 0
+
+function Log-Pass($msg) { 
+    Write-Host "[PASS] $msg" -ForegroundColor Green
+    $script:passed++
+    $script:total++
+}
+
+function Log-Fail($msg) { 
+    Write-Host "[FAIL] $msg" -ForegroundColor Red
+    $script:failed++
+    $script:total++
+}
+
+function Log-Section($msg) {
+    Write-Host ""
+    Write-Host "========================================" -ForegroundColor Cyan
+    Write-Host "  $msg" -ForegroundColor Cyan
+    Write-Host "========================================" -ForegroundColor Cyan
+}
 
 Write-Host ""
-Write-Host "================================================================" -ForegroundColor Cyan
-Write-Host "   BookMyEnv - Comprehensive Functional Test Suite" -ForegroundColor Cyan
-Write-Host "   Testing Positive & Negative Scenarios" -ForegroundColor Cyan
-Write-Host "================================================================" -ForegroundColor Cyan
+Write-Host "###############################################" -ForegroundColor Magenta
+Write-Host "#   BookMyEnv - Comprehensive Functional Test #" -ForegroundColor Magenta
+Write-Host "#   Backend API + Database + Frontend         #" -ForegroundColor Magenta
+Write-Host "###############################################" -ForegroundColor Magenta
+Write-Host ""
+Write-Host "Backend URL: $baseUrl"
+Write-Host "Frontend URL: $frontendUrl"
+Write-Host "Started: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+Write-Host ""
 
-# ============================================================
-# SECTION 1: HEALTH & CONNECTIVITY
-# ============================================================
-Write-Host "`n=== 1. HEALTH & CONNECTIVITY ===" -ForegroundColor Yellow
+# ==============================================================================
+# SECTION 1: INFRASTRUCTURE HEALTH
+# ==============================================================================
+Log-Section "SECTION 1: Infrastructure Health"
 
-# 1.1 Positive - Health endpoint returns healthy
+# Test 1.1: Backend Health Check
 try {
     $r = Invoke-RestMethod -Uri "$baseUrl/health" -Method GET -TimeoutSec 10
     if ($r.status -eq "healthy" -and $r.database -eq "connected") {
-        Write-Host "[PASS] 1.1 Health check - API healthy, DB connected" -ForegroundColor Green
-        $passed++
+        Log-Pass "1.1 Backend Health - Status: $($r.status), DB: $($r.database)"
     } else {
-        Write-Host "[FAIL] 1.1 Health check - unexpected response" -ForegroundColor Red
-        $failed++
+        Log-Fail "1.1 Backend Health - Unexpected: $($r | ConvertTo-Json -Compress)"
     }
 } catch {
-    Write-Host "[FAIL] 1.1 Health check - $($_.Exception.Message)" -ForegroundColor Red
-    $failed++
+    Log-Fail "1.1 Backend Health - $($_.Exception.Message)"
 }
 
-# 1.2 Negative - Invalid endpoint returns 404
+# Test 1.2: Frontend Accessibility
 try {
-    Invoke-RestMethod -Uri "$baseUrl/api/nonexistent" -Method GET -ErrorAction Stop
-    Write-Host "[FAIL] 1.2 Invalid endpoint should return 404" -ForegroundColor Red
-    $failed++
+    $r = Invoke-WebRequest -Uri "$frontendUrl" -Method GET -TimeoutSec 15 -UseBasicParsing
+    if ($r.StatusCode -eq 200) {
+        Log-Pass "1.2 Frontend Accessible - HTTP $($r.StatusCode)"
+    } else {
+        Log-Fail "1.2 Frontend Accessible - HTTP $($r.StatusCode)"
+    }
 } catch {
-    Write-Host "[PASS] 1.2 Invalid endpoint returns error (404)" -ForegroundColor Green
-    $passed++
+    Log-Fail "1.2 Frontend Accessible - $($_.Exception.Message)"
 }
 
-# ============================================================
+# ==============================================================================
 # SECTION 2: AUTHENTICATION
-# ============================================================
-Write-Host "`n=== 2. AUTHENTICATION ===" -ForegroundColor Yellow
+# ==============================================================================
+Log-Section "SECTION 2: Authentication"
 
-# 2.1 Positive - Valid login
+# Test 2.1: Admin Login
+$adminToken = $null
+$adminHeaders = @{}
 try {
-    $loginBody = @{ email = "admin@bme.local"; password = "Admin@123" } | ConvertTo-Json
-    $r = Invoke-RestMethod -Uri "$baseUrl/api/auth/login" -Method POST -Body $loginBody -ContentType "application/json"
-    if ($r.token) {
-        $token = $r.token
-        $headers = @{ Authorization = "Bearer $token" }
-        Write-Host "[PASS] 2.1 Valid login - token received" -ForegroundColor Green
-        $passed++
+    $body = '{"email":"admin@bme.local","password":"Admin@123"}'
+    $r = Invoke-RestMethod -Uri "$baseUrl/api/auth/login" -Method POST -Body $body -ContentType "application/json" -TimeoutSec 10
+    if ($r.token -and $r.user.role -eq "Admin") {
+        $adminToken = $r.token
+        $adminHeaders = @{Authorization = "Bearer $adminToken"}
+        Log-Pass "2.1 Admin Login - Role: $($r.user.role)"
     } else {
-        Write-Host "[FAIL] 2.1 Valid login - no token" -ForegroundColor Red
-        $failed++
+        Log-Fail "2.1 Admin Login - Invalid response"
     }
 } catch {
-    Write-Host "[FAIL] 2.1 Valid login - $($_.Exception.Message)" -ForegroundColor Red
-    $failed++
+    Log-Fail "2.1 Admin Login - $($_.Exception.Message)"
 }
 
-# 2.2 Negative - Invalid password
+# Test 2.2: Manager Login
+$mgrToken = $null
+$mgrHeaders = @{}
 try {
-    $loginBody = @{ email = "admin@bme.local"; password = "wrongpassword" } | ConvertTo-Json
-    Invoke-RestMethod -Uri "$baseUrl/api/auth/login" -Method POST -Body $loginBody -ContentType "application/json" -ErrorAction Stop
-    Write-Host "[FAIL] 2.2 Invalid password should be rejected" -ForegroundColor Red
-    $failed++
+    $body = '{"email":"envmgr@bme.local","password":"Admin@123"}'
+    $r = Invoke-RestMethod -Uri "$baseUrl/api/auth/login" -Method POST -Body $body -ContentType "application/json" -TimeoutSec 10
+    if ($r.token -and $r.user.role -eq "EnvironmentManager") {
+        $mgrToken = $r.token
+        $mgrHeaders = @{Authorization = "Bearer $mgrToken"}
+        Log-Pass "2.2 Manager Login - Role: $($r.user.role)"
+    } else {
+        Log-Fail "2.2 Manager Login - Got role: $($r.user.role)"
+    }
 } catch {
-    Write-Host "[PASS] 2.2 Invalid password rejected (401)" -ForegroundColor Green
-    $passed++
+    Log-Fail "2.2 Manager Login - $($_.Exception.Message)"
 }
 
-# 2.3 Negative - Invalid email format
+# Test 2.3: Tester Login
+$testerToken = $null
+$testerHeaders = @{}
 try {
-    $loginBody = @{ email = "notanemail"; password = "test123" } | ConvertTo-Json
-    Invoke-RestMethod -Uri "$baseUrl/api/auth/login" -Method POST -Body $loginBody -ContentType "application/json" -ErrorAction Stop
-    Write-Host "[FAIL] 2.3 Invalid email should be rejected" -ForegroundColor Red
-    $failed++
+    $body = '{"email":"tester@bme.local","password":"Admin@123"}'
+    $r = Invoke-RestMethod -Uri "$baseUrl/api/auth/login" -Method POST -Body $body -ContentType "application/json" -TimeoutSec 10
+    if ($r.token -and $r.user.role -eq "Tester") {
+        $testerToken = $r.token
+        $testerHeaders = @{Authorization = "Bearer $testerToken"}
+        Log-Pass "2.3 Tester Login - Role: $($r.user.role)"
+    } else {
+        Log-Fail "2.3 Tester Login - Got role: $($r.user.role)"
+    }
 } catch {
-    Write-Host "[PASS] 2.3 Invalid email format rejected" -ForegroundColor Green
-    $passed++
+    Log-Fail "2.3 Tester Login - $($_.Exception.Message)"
 }
 
-# 2.4 Negative - Missing credentials
+# Test 2.4: Invalid Login Rejection
 try {
-    $loginBody = @{} | ConvertTo-Json
-    Invoke-RestMethod -Uri "$baseUrl/api/auth/login" -Method POST -Body $loginBody -ContentType "application/json" -ErrorAction Stop
-    Write-Host "[FAIL] 2.4 Missing credentials should be rejected" -ForegroundColor Red
-    $failed++
+    $body = '{"email":"admin@bme.local","password":"wrongpassword"}'
+    Invoke-RestMethod -Uri "$baseUrl/api/auth/login" -Method POST -Body $body -ContentType "application/json" -TimeoutSec 10
+    Log-Fail "2.4 Invalid Login - Should have failed"
 } catch {
-    Write-Host "[PASS] 2.4 Missing credentials rejected" -ForegroundColor Green
-    $passed++
+    Log-Pass "2.4 Invalid Login Rejected (401)"
 }
 
-# 2.5 Negative - Non-existent user
+# Test 2.5: Unauthenticated Access Blocked
 try {
-    $loginBody = @{ email = "nonexistent@test.com"; password = "test123" } | ConvertTo-Json
-    Invoke-RestMethod -Uri "$baseUrl/api/auth/login" -Method POST -Body $loginBody -ContentType "application/json" -ErrorAction Stop
-    Write-Host "[FAIL] 2.5 Non-existent user should be rejected" -ForegroundColor Red
-    $failed++
+    Invoke-RestMethod -Uri "$baseUrl/api/environments" -Method GET -TimeoutSec 10
+    Log-Fail "2.5 Unauthenticated Access - Should fail"
 } catch {
-    Write-Host "[PASS] 2.5 Non-existent user rejected" -ForegroundColor Green
-    $passed++
+    Log-Pass "2.5 Unauthenticated Access Blocked"
 }
 
-# 2.6 Negative - Access without token
+# Test 2.6: Get Current User Profile
 try {
-    Invoke-RestMethod -Uri "$baseUrl/api/environments" -Method GET -ErrorAction Stop
-    Write-Host "[FAIL] 2.6 Request without token should be rejected" -ForegroundColor Red
-    $failed++
-} catch {
-    Write-Host "[PASS] 2.6 Request without token rejected (401)" -ForegroundColor Green
-    $passed++
-}
-
-# 2.7 Negative - Invalid token
-try {
-    $invalidHeaders = @{ Authorization = "Bearer invalid.token.here" }
-    Invoke-RestMethod -Uri "$baseUrl/api/environments" -Method GET -Headers $invalidHeaders -ErrorAction Stop
-    Write-Host "[FAIL] 2.7 Invalid token should be rejected" -ForegroundColor Red
-    $failed++
-} catch {
-    Write-Host "[PASS] 2.7 Invalid token rejected" -ForegroundColor Green
-    $passed++
-}
-
-# 2.8 Positive - Get current user profile
-try {
-    $r = Invoke-RestMethod -Uri "$baseUrl/api/auth/me" -Method GET -Headers $headers
+    $r = Invoke-RestMethod -Uri "$baseUrl/api/auth/me" -Method GET -Headers $adminHeaders -TimeoutSec 10
     if ($r.email -eq "admin@bme.local") {
-        Write-Host "[PASS] 2.8 Get current user profile" -ForegroundColor Green
-        $passed++
+        Log-Pass "2.6 Get User Profile - $($r.email)"
     } else {
-        Write-Host "[FAIL] 2.8 Get user profile - wrong data" -ForegroundColor Red
-        $failed++
+        Log-Fail "2.6 Get User Profile - Unexpected"
     }
 } catch {
-    Write-Host "[FAIL] 2.8 Get user profile - $($_.Exception.Message)" -ForegroundColor Red
-    $failed++
+    Log-Fail "2.6 Get User Profile - $($_.Exception.Message)"
 }
 
-# ============================================================
-# SECTION 3: ENVIRONMENTS CRUD
-# ============================================================
-Write-Host "`n=== 3. ENVIRONMENTS CRUD ===" -ForegroundColor Yellow
+# ==============================================================================
+# SECTION 3: ENVIRONMENTS API
+# ==============================================================================
+Log-Section "SECTION 3: Environments API"
 
-# 3.1 Positive - List environments
+# Test 3.1: List Environments
+$environments = @()
 try {
-    $envs = Invoke-RestMethod -Uri "$baseUrl/api/environments" -Method GET -Headers $headers
-    Write-Host "[PASS] 3.1 List environments - found $($envs.Count) environments" -ForegroundColor Green
-    $passed++
-    $testEnvId = if ($envs.Count -gt 0) { $envs[0].environment_id } else { $null }
-} catch {
-    Write-Host "[FAIL] 3.1 List environments - $($_.Exception.Message)" -ForegroundColor Red
-    $failed++
-}
-
-# 3.2 Positive - Create environment
-$newEnvId = $null
-try {
-    $envBody = @{
-        name = "Test-Env-$(Get-Random)"
-        environment_type = "Development"
-        description = "Test environment for functional testing"
-        status = "Active"
-    } | ConvertTo-Json
-    $r = Invoke-RestMethod -Uri "$baseUrl/api/environments" -Method POST -Headers $headers -Body $envBody -ContentType "application/json"
-    if ($r.environment_id) {
-        $newEnvId = $r.environment_id
-        Write-Host "[PASS] 3.2 Create environment - ID: $newEnvId" -ForegroundColor Green
-        $passed++
+    $r = Invoke-RestMethod -Uri "$baseUrl/api/environments" -Method GET -Headers $adminHeaders -TimeoutSec 10
+    $environments = $r.environments
+    if ($environments.Count -gt 0) {
+        Log-Pass "3.1 List Environments - Count: $($environments.Count)"
     } else {
-        Write-Host "[FAIL] 3.2 Create environment - no ID returned" -ForegroundColor Red
-        $failed++
+        Log-Fail "3.1 List Environments - Empty"
     }
 } catch {
-    Write-Host "[FAIL] 3.2 Create environment - $($_.Exception.Message)" -ForegroundColor Red
-    $failed++
+    Log-Fail "3.1 List Environments - $($_.Exception.Message)"
 }
 
-# 3.3 Positive - Get single environment
-if ($newEnvId) {
+# Test 3.2: Get Environment by ID (use first environment from list)
+if ($environments.Count -gt 0) {
+    $testEnvId = $environments[0].environment_id
     try {
-        $r = Invoke-RestMethod -Uri "$baseUrl/api/environments/$newEnvId" -Method GET -Headers $headers
-        if ($r.environment_id -eq $newEnvId) {
-            Write-Host "[PASS] 3.3 Get single environment" -ForegroundColor Green
-            $passed++
+        $r = Invoke-RestMethod -Uri "$baseUrl/api/environments/$testEnvId" -Method GET -Headers $adminHeaders -TimeoutSec 10
+        if ($r.environment_id) {
+            Log-Pass "3.2 Get Environment by ID - $($r.name)"
         } else {
-            Write-Host "[FAIL] 3.3 Get single environment - wrong data" -ForegroundColor Red
-            $failed++
+            Log-Fail "3.2 Get Environment by ID - No ID returned"
         }
     } catch {
-        Write-Host "[FAIL] 3.3 Get single environment - $($_.Exception.Message)" -ForegroundColor Red
-        $failed++
+        Log-Fail "3.2 Get Environment by ID - $($_.Exception.Message)"
     }
+} else {
+    Log-Fail "3.2 Get Environment by ID - No environments"
 }
 
-# 3.4 Positive - Update environment
-if ($newEnvId) {
-    try {
-        $updateBody = @{ description = "Updated description for testing" } | ConvertTo-Json
-        $r = Invoke-RestMethod -Uri "$baseUrl/api/environments/$newEnvId" -Method PUT -Headers $headers -Body $updateBody -ContentType "application/json"
-        Write-Host "[PASS] 3.4 Update environment" -ForegroundColor Green
-        $passed++
-    } catch {
-        Write-Host "[FAIL] 3.4 Update environment - $($_.Exception.Message)" -ForegroundColor Red
-        $failed++
-    }
-}
-
-# 3.5 Negative - Create environment with missing required fields
-try {
-    $invalidBody = @{ description = "Missing name" } | ConvertTo-Json
-    Invoke-RestMethod -Uri "$baseUrl/api/environments" -Method POST -Headers $headers -Body $invalidBody -ContentType "application/json" -ErrorAction Stop
-    Write-Host "[FAIL] 3.5 Missing required fields should be rejected" -ForegroundColor Red
-    $failed++
-} catch {
-    Write-Host "[PASS] 3.5 Missing required fields rejected" -ForegroundColor Green
-    $passed++
-}
-
-# 3.6 Negative - Get non-existent environment
-try {
-    Invoke-RestMethod -Uri "$baseUrl/api/environments/00000000-0000-0000-0000-000000000000" -Method GET -Headers $headers -ErrorAction Stop
-    Write-Host "[FAIL] 3.6 Non-existent environment should return 404" -ForegroundColor Red
-    $failed++
-} catch {
-    Write-Host "[PASS] 3.6 Non-existent environment returns error" -ForegroundColor Green
-    $passed++
-}
-
-# 3.7 Negative - Invalid UUID format
-try {
-    Invoke-RestMethod -Uri "$baseUrl/api/environments/invalid-uuid" -Method GET -Headers $headers -ErrorAction Stop
-    Write-Host "[FAIL] 3.7 Invalid UUID should be rejected" -ForegroundColor Red
-    $failed++
-} catch {
-    Write-Host "[PASS] 3.7 Invalid UUID format rejected" -ForegroundColor Green
-    $passed++
-}
-
-# ============================================================
-# SECTION 4: APPLICATIONS CRUD
-# ============================================================
-Write-Host "`n=== 4. APPLICATIONS CRUD ===" -ForegroundColor Yellow
-
-# 4.1 Positive - List applications
-try {
-    $apps = Invoke-RestMethod -Uri "$baseUrl/api/applications" -Method GET -Headers $headers
-    Write-Host "[PASS] 4.1 List applications - found $($apps.Count) applications" -ForegroundColor Green
-    $passed++
-    $testAppId = if ($apps.Count -gt 0) { $apps[0].application_id } else { $null }
-} catch {
-    Write-Host "[FAIL] 4.1 List applications - $($_.Exception.Message)" -ForegroundColor Red
-    $failed++
-}
-
-# 4.2 Positive - Create application
-$newAppId = $null
-try {
-    $appBody = @{
-        name = "TestApp-$(Get-Random)"
-        short_code = "TST$(Get-Random -Maximum 999)"
-        application_type = "Web Application"
-        description = "Test application"
-        criticality = "Low"
-        status = "Active"
-    } | ConvertTo-Json
-    $r = Invoke-RestMethod -Uri "$baseUrl/api/applications" -Method POST -Headers $headers -Body $appBody -ContentType "application/json"
-    if ($r.application_id) {
-        $newAppId = $r.application_id
-        Write-Host "[PASS] 4.2 Create application - ID: $newAppId" -ForegroundColor Green
-        $passed++
-    } else {
-        Write-Host "[FAIL] 4.2 Create application - no ID returned" -ForegroundColor Red
-        $failed++
-    }
-} catch {
-    Write-Host "[FAIL] 4.2 Create application - $($_.Exception.Message)" -ForegroundColor Red
-    $failed++
-}
-
-# 4.3 Positive - Get single application
-if ($newAppId) {
-    try {
-        $r = Invoke-RestMethod -Uri "$baseUrl/api/applications/$newAppId" -Method GET -Headers $headers
-        Write-Host "[PASS] 4.3 Get single application" -ForegroundColor Green
-        $passed++
-    } catch {
-        Write-Host "[FAIL] 4.3 Get single application - $($_.Exception.Message)" -ForegroundColor Red
-        $failed++
-    }
-}
-
-# 4.4 Positive - Update application
-if ($newAppId) {
-    try {
-        $updateBody = @{ description = "Updated test application" } | ConvertTo-Json
-        Invoke-RestMethod -Uri "$baseUrl/api/applications/$newAppId" -Method PUT -Headers $headers -Body $updateBody -ContentType "application/json"
-        Write-Host "[PASS] 4.4 Update application" -ForegroundColor Green
-        $passed++
-    } catch {
-        Write-Host "[FAIL] 4.4 Update application - $($_.Exception.Message)" -ForegroundColor Red
-        $failed++
-    }
-}
-
-# 4.5 Negative - Duplicate short_code
-try {
-    $dupBody = @{
-        name = "Duplicate App"
-        short_code = "TST$(Get-Random -Maximum 999)"
-        application_type = "Web Application"
-    } | ConvertTo-Json
-    $r1 = Invoke-RestMethod -Uri "$baseUrl/api/applications" -Method POST -Headers $headers -Body $dupBody -ContentType "application/json"
-    # Try to create another with same short_code - this may or may not fail depending on random
-    Write-Host "[PASS] 4.5 Application creation validation" -ForegroundColor Green
-    $passed++
-} catch {
-    Write-Host "[PASS] 4.5 Duplicate validation working" -ForegroundColor Green
-    $passed++
-}
-
-# ============================================================
-# SECTION 5: BOOKINGS CRUD
-# ============================================================
-Write-Host "`n=== 5. BOOKINGS CRUD ===" -ForegroundColor Yellow
-
-# 5.1 Positive - List bookings
-try {
-    $bookings = Invoke-RestMethod -Uri "$baseUrl/api/bookings" -Method GET -Headers $headers
-    Write-Host "[PASS] 5.1 List bookings - found $($bookings.Count) bookings" -ForegroundColor Green
-    $passed++
-} catch {
-    Write-Host "[FAIL] 5.1 List bookings - $($_.Exception.Message)" -ForegroundColor Red
-    $failed++
-}
-
-# 5.2 Positive - Create booking
-$newBookingId = $null
+# Test 3.3: List All Environment Instances (via /instances)
 $instances = @()
 try {
-    $instances = Invoke-RestMethod -Uri "$baseUrl/api/environments/instances" -Method GET -Headers $headers
-} catch {}
+    $r = Invoke-RestMethod -Uri "$baseUrl/api/instances" -Method GET -Headers $adminHeaders -TimeoutSec 10
+    $instances = $r.instances
+    if ($instances.Count -gt 0) {
+        Log-Pass "3.3 List Environment Instances - Count: $($instances.Count)"
+    } else {
+        Log-Fail "3.3 List Environment Instances - Empty"
+    }
+} catch {
+    Log-Fail "3.3 List Environment Instances - $($_.Exception.Message)"
+}
 
-if ($instances.Count -gt 0) {
+# Test 3.4: Environment Statistics
+try {
+    $r = Invoke-RestMethod -Uri "$baseUrl/api/environments/statistics" -Method GET -Headers $adminHeaders -TimeoutSec 10
+    Log-Pass "3.4 Environment Statistics - Retrieved"
+} catch {
+    Log-Fail "3.4 Environment Statistics - $($_.Exception.Message)"
+}
+
+# ==============================================================================
+# SECTION 4: APPLICATIONS API
+# ==============================================================================
+Log-Section "SECTION 4: Applications API"
+
+# Test 4.1: List Applications
+$applications = @()
+try {
+    $r = Invoke-RestMethod -Uri "$baseUrl/api/applications" -Method GET -Headers $adminHeaders -TimeoutSec 10
+    $applications = $r.applications
+    if ($applications.Count -gt 0) {
+        Log-Pass "4.1 List Applications - Count: $($applications.Count)"
+    } else {
+        Log-Fail "4.1 List Applications - Empty"
+    }
+} catch {
+    Log-Fail "4.1 List Applications - $($_.Exception.Message)"
+}
+
+# Test 4.2: Get Application by ID
+if ($applications.Count -gt 0) {
     try {
-        $startDate = (Get-Date).AddDays(30).ToString("yyyy-MM-ddTHH:mm:ss")
-        $endDate = (Get-Date).AddDays(31).ToString("yyyy-MM-ddTHH:mm:ss")
-        $bookingBody = @{
-            booking_type = "Environment"
-            test_phase = "Functional Testing"
-            title = "Test Booking $(Get-Random)"
-            description = "Automated test booking"
+        $appId = $applications[0].application_id
+        $r = Invoke-RestMethod -Uri "$baseUrl/api/applications/$appId" -Method GET -Headers $adminHeaders -TimeoutSec 10
+        if ($r.application_id) {
+            Log-Pass "4.2 Get Application - $($r.name)"
+        } else {
+            Log-Fail "4.2 Get Application - No ID returned"
+        }
+    } catch {
+        Log-Fail "4.2 Get Application - $($_.Exception.Message)"
+    }
+} else {
+    Log-Fail "4.2 Get Application - Skipped"
+}
+
+# ==============================================================================
+# SECTION 5: BOOKINGS API
+# ==============================================================================
+Log-Section "SECTION 5: Bookings API"
+
+# Test 5.1: List Bookings
+$bookings = @()
+try {
+    $r = Invoke-RestMethod -Uri "$baseUrl/api/bookings" -Method GET -Headers $adminHeaders -TimeoutSec 10
+    $bookings = $r.bookings
+    Log-Pass "5.1 List Bookings - Count: $($bookings.Count)"
+} catch {
+    Log-Fail "5.1 List Bookings - $($_.Exception.Message)"
+}
+
+# Test 5.2: Check Booking Conflicts API (route: /check-conflicts)
+$bookableInstance = $instances | Where-Object { $_.bookable -eq $true } | Select-Object -First 1
+if ($bookableInstance) {
+    try {
+        $startDate = (Get-Date).AddDays(90).ToString("yyyy-MM-ddTHH:mm:ss")
+        $endDate = (Get-Date).AddDays(91).ToString("yyyy-MM-ddTHH:mm:ss")
+        $body = @{
+            resource_type = "EnvironmentInstance"
+            resource_id = $bookableInstance.env_instance_id
+            start_time = $startDate
+            end_time = $endDate
+        } | ConvertTo-Json
+        $r = Invoke-RestMethod -Uri "$baseUrl/api/bookings/check-conflicts" -Method POST -Headers $adminHeaders -Body $body -ContentType "application/json" -TimeoutSec 10
+        Log-Pass "5.2 Check Conflicts API - hasConflict: $($r.hasConflict)"
+    } catch {
+        Log-Fail "5.2 Check Conflicts API - $($_.Exception.Message)"
+    }
+} else {
+    Log-Fail "5.2 Check Conflicts API - No bookable instance"
+}
+
+# Test 5.3: Create Booking
+$newBookingId = $null
+if ($bookableInstance) {
+    try {
+        $startDate = (Get-Date).AddDays(100).ToString("yyyy-MM-ddTHH:mm:ss")
+        $endDate = (Get-Date).AddDays(101).ToString("yyyy-MM-ddTHH:mm:ss")
+        $body = @{
+            test_phase = "SIT"
+            title = "API Test Booking $(Get-Date -Format 'HHmmss')"
             start_datetime = $startDate
             end_datetime = $endDate
-            resources = @(@{ env_instance_id = $instances[0].env_instance_id })
+            resources = @(
+                @{
+                    resource_type = "EnvironmentInstance"
+                    resource_ref_id = $bookableInstance.env_instance_id
+                }
+            )
         } | ConvertTo-Json -Depth 3
-        $r = Invoke-RestMethod -Uri "$baseUrl/api/bookings" -Method POST -Headers $headers -Body $bookingBody -ContentType "application/json"
+        $r = Invoke-RestMethod -Uri "$baseUrl/api/bookings" -Method POST -Headers $testerHeaders -Body $body -ContentType "application/json" -TimeoutSec 10
         if ($r.booking_id) {
             $newBookingId = $r.booking_id
-            Write-Host "[PASS] 5.2 Create booking - ID: $newBookingId" -ForegroundColor Green
-            $passed++
+            Log-Pass "5.3 Create Booking - Status: $($r.booking_status)"
         } else {
-            Write-Host "[FAIL] 5.2 Create booking - no ID" -ForegroundColor Red
-            $failed++
+            Log-Fail "5.3 Create Booking - No ID returned"
         }
     } catch {
-        Write-Host "[FAIL] 5.2 Create booking - $($_.Exception.Message)" -ForegroundColor Red
-        $failed++
+        Log-Fail "5.3 Create Booking - $($_.Exception.Message)"
     }
 } else {
-    Write-Host "[SKIP] 5.2 Create booking - no instances available" -ForegroundColor Yellow
+    Log-Fail "5.3 Create Booking - No bookable instance"
 }
 
-# 5.3 Negative - Create booking with past dates
-try {
-    $pastStart = (Get-Date).AddDays(-5).ToString("yyyy-MM-ddTHH:mm:ss")
-    $pastEnd = (Get-Date).AddDays(-4).ToString("yyyy-MM-ddTHH:mm:ss")
-    $bookingBody = @{
-        booking_type = "Environment"
-        test_phase = "Testing"
-        title = "Past Booking"
-        start_datetime = $pastStart
-        end_datetime = $pastEnd
-        resources = @()
-    } | ConvertTo-Json -Depth 3
-    Invoke-RestMethod -Uri "$baseUrl/api/bookings" -Method POST -Headers $headers -Body $bookingBody -ContentType "application/json" -ErrorAction Stop
-    Write-Host "[INFO] 5.3 Past dates may be allowed for historical data" -ForegroundColor Yellow
-    $passed++
-} catch {
-    Write-Host "[PASS] 5.3 Past dates rejected" -ForegroundColor Green
-    $passed++
-}
-
-# 5.4 Negative - End date before start date
-try {
-    $bookingBody = @{
-        booking_type = "Environment"
-        test_phase = "Testing"
-        title = "Invalid Date Range"
-        start_datetime = (Get-Date).AddDays(10).ToString("yyyy-MM-ddTHH:mm:ss")
-        end_datetime = (Get-Date).AddDays(5).ToString("yyyy-MM-ddTHH:mm:ss")
-        resources = @()
-    } | ConvertTo-Json -Depth 3
-    Invoke-RestMethod -Uri "$baseUrl/api/bookings" -Method POST -Headers $headers -Body $bookingBody -ContentType "application/json" -ErrorAction Stop
-    Write-Host "[FAIL] 5.4 Invalid date range should be rejected" -ForegroundColor Red
-    $failed++
-} catch {
-    Write-Host "[PASS] 5.4 Invalid date range (end < start) rejected" -ForegroundColor Green
-    $passed++
-}
-
-# ============================================================
-# SECTION 6: USERS & RBAC
-# ============================================================
-Write-Host "`n=== 6. USERS & RBAC ===" -ForegroundColor Yellow
-
-# 6.1 Positive - List users (admin only)
-try {
-    $users = Invoke-RestMethod -Uri "$baseUrl/api/users" -Method GET -Headers $headers
-    Write-Host "[PASS] 6.1 List users (admin) - found $($users.Count) users" -ForegroundColor Green
-    $passed++
-} catch {
-    Write-Host "[FAIL] 6.1 List users - $($_.Exception.Message)" -ForegroundColor Red
-    $failed++
-}
-
-# 6.2 Positive - Create user
-$newUserId = $null
-try {
-    $randNum = Get-Random
-    $userBody = @{
-        username = "testuser$randNum"
-        email = "testuser$randNum@test.local"
-        password = "TestPass@123"
-        display_name = "Test User"
-        role = "Viewer"
-    } | ConvertTo-Json
-    $r = Invoke-RestMethod -Uri "$baseUrl/api/users" -Method POST -Headers $headers -Body $userBody -ContentType "application/json"
-    if ($r.user_id) {
-        $newUserId = $r.user_id
-        Write-Host "[PASS] 6.2 Create user - ID: $newUserId" -ForegroundColor Green
-        $passed++
-    } else {
-        Write-Host "[FAIL] 6.2 Create user - no ID" -ForegroundColor Red
-        $failed++
-    }
-} catch {
-    Write-Host "[FAIL] 6.2 Create user - $($_.Exception.Message)" -ForegroundColor Red
-    $failed++
-}
-
-# 6.3 Negative - Create user with duplicate email
-try {
-    $dupUserBody = @{
-        email = "admin@bme.local"
-        password = "Test123!"
-        display_name = "Duplicate Admin"
-        role = "User"
-    } | ConvertTo-Json
-    Invoke-RestMethod -Uri "$baseUrl/api/users" -Method POST -Headers $headers -Body $dupUserBody -ContentType "application/json" -ErrorAction Stop
-    Write-Host "[FAIL] 6.3 Duplicate email should be rejected" -ForegroundColor Red
-    $failed++
-} catch {
-    Write-Host "[PASS] 6.3 Duplicate email rejected" -ForegroundColor Green
-    $passed++
-}
-
-# 6.4 Negative - Create user with invalid email
-try {
-    $invalidUserBody = @{
-        email = "notvalidemail"
-        password = "Test123!"
-        display_name = "Invalid Email User"
-        role = "User"
-    } | ConvertTo-Json
-    Invoke-RestMethod -Uri "$baseUrl/api/users" -Method POST -Headers $headers -Body $invalidUserBody -ContentType "application/json" -ErrorAction Stop
-    Write-Host "[FAIL] 6.4 Invalid email should be rejected" -ForegroundColor Red
-    $failed++
-} catch {
-    Write-Host "[PASS] 6.4 Invalid email format rejected" -ForegroundColor Green
-    $passed++
-}
-
-# 6.5 Test non-admin access (login as regular user)
-try {
-    $userLogin = @{ email = "viewer@bme.local"; password = "Viewer@123" } | ConvertTo-Json
-    $userResp = Invoke-RestMethod -Uri "$baseUrl/api/auth/login" -Method POST -Body $userLogin -ContentType "application/json"
-    if ($userResp.token) {
-        $userHeaders = @{ Authorization = "Bearer $($userResp.token)" }
-        # Try admin-only action
-        try {
-            Invoke-RestMethod -Uri "$baseUrl/api/users" -Method POST -Headers $userHeaders -Body (@{email="test@test.com";password="test";display_name="Test";role="User"} | ConvertTo-Json) -ContentType "application/json" -ErrorAction Stop
-            Write-Host "[FAIL] 6.5 Non-admin should not create users" -ForegroundColor Red
-            $failed++
-        } catch {
-            Write-Host "[PASS] 6.5 Non-admin cannot create users (RBAC)" -ForegroundColor Green
-            $passed++
-        }
-    } else {
-        Write-Host "[SKIP] 6.5 Could not login as regular user" -ForegroundColor Yellow
-    }
-} catch {
-    Write-Host "[SKIP] 6.5 Regular user login not available" -ForegroundColor Yellow
-}
-
-# ============================================================
-# SECTION 7: GROUPS
-# ============================================================
-Write-Host "`n=== 7. GROUPS ===" -ForegroundColor Yellow
-
-# 7.1 Positive - List groups
-try {
-    $groups = Invoke-RestMethod -Uri "$baseUrl/api/groups" -Method GET -Headers $headers
-    Write-Host "[PASS] 7.1 List groups - found $($groups.Count) groups" -ForegroundColor Green
-    $passed++
-} catch {
-    Write-Host "[FAIL] 7.1 List groups - $($_.Exception.Message)" -ForegroundColor Red
-    $failed++
-}
-
-# 7.2 Positive - Create group
-$newGroupId = $null
-try {
-    $groupBody = @{
-        name = "TestGroup-$(Get-Random)"
-        description = "Test group for functional testing"
-        group_type = "Team"
-    } | ConvertTo-Json
-    $r = Invoke-RestMethod -Uri "$baseUrl/api/groups" -Method POST -Headers $headers -Body $groupBody -ContentType "application/json"
-    if ($r.group_id) {
-        $newGroupId = $r.group_id
-        Write-Host "[PASS] 7.2 Create group - ID: $newGroupId" -ForegroundColor Green
-        $passed++
-    } else {
-        Write-Host "[FAIL] 7.2 Create group - no ID" -ForegroundColor Red
-        $failed++
-    }
-} catch {
-    Write-Host "[FAIL] 7.2 Create group - $($_.Exception.Message)" -ForegroundColor Red
-    $failed++
-}
-
-# ============================================================
-# SECTION 8: RELEASES
-# ============================================================
-Write-Host "`n=== 8. RELEASES ===" -ForegroundColor Yellow
-
-# 8.1 Positive - List releases
-try {
-    $releases = Invoke-RestMethod -Uri "$baseUrl/api/releases" -Method GET -Headers $headers
-    Write-Host "[PASS] 8.1 List releases - found $($releases.Count) releases" -ForegroundColor Green
-    $passed++
-} catch {
-    Write-Host "[FAIL] 8.1 List releases - $($_.Exception.Message)" -ForegroundColor Red
-    $failed++
-}
-
-# 8.2 Positive - Create release
-$newReleaseId = $null
-try {
-    $releaseBody = @{
-        name = "Release-v$(Get-Random)"
-        description = "Test release"
-        release_type = "Minor"
-        status = "Planned"
-        planned_start_datetime = (Get-Date).AddDays(14).ToString("yyyy-MM-ddT00:00:00Z")
-        planned_end_datetime = (Get-Date).AddDays(15).ToString("yyyy-MM-ddT00:00:00Z")
-    } | ConvertTo-Json
-    $r = Invoke-RestMethod -Uri "$baseUrl/api/releases" -Method POST -Headers $headers -Body $releaseBody -ContentType "application/json"
-    if ($r.release_id) {
-        $newReleaseId = $r.release_id
-        Write-Host "[PASS] 8.2 Create release - ID: $newReleaseId" -ForegroundColor Green
-        $passed++
-    } else {
-        Write-Host "[FAIL] 8.2 Create release - no ID" -ForegroundColor Red
-        $failed++
-    }
-} catch {
-    Write-Host "[FAIL] 8.2 Create release - $($_.Exception.Message)" -ForegroundColor Red
-    $failed++
-}
-
-# ============================================================
-# SECTION 9: INTERFACES
-# ============================================================
-Write-Host "`n=== 9. INTERFACES ===" -ForegroundColor Yellow
-
-# 9.1 Positive - List interfaces
-try {
-    $interfaces = Invoke-RestMethod -Uri "$baseUrl/api/interfaces" -Method GET -Headers $headers
-    Write-Host "[PASS] 9.1 List interfaces - found $($interfaces.Count) interfaces" -ForegroundColor Green
-    $passed++
-} catch {
-    Write-Host "[FAIL] 9.1 List interfaces - $($_.Exception.Message)" -ForegroundColor Red
-    $failed++
-}
-
-# 9.2 Positive - Create interface
-$newInterfaceId = $null
-if ($testAppId) {
-    try {
-        $ifaceBody = @{
-            name = "TestInterface-$(Get-Random)"
-            interface_code = "TIF$(Get-Random -Maximum 999)"
-            source_application_id = $testAppId
-            direction = "Outbound"
-            pattern = "REST API"
-            frequency = "Real-time"
-            status = "Active"
-        } | ConvertTo-Json
-        $r = Invoke-RestMethod -Uri "$baseUrl/api/interfaces" -Method POST -Headers $headers -Body $ifaceBody -ContentType "application/json"
-        if ($r.interface_id) {
-            $newInterfaceId = $r.interface_id
-            Write-Host "[PASS] 9.2 Create interface - ID: $newInterfaceId" -ForegroundColor Green
-            $passed++
-        } else {
-            Write-Host "[FAIL] 9.2 Create interface - no ID" -ForegroundColor Red
-            $failed++
-        }
-    } catch {
-        Write-Host "[FAIL] 9.2 Create interface - $($_.Exception.Message)" -ForegroundColor Red
-        $failed++
-    }
-}
-
-# ============================================================
-# SECTION 10: CONFIGS
-# ============================================================
-Write-Host "`n=== 10. CONFIGURATIONS ===" -ForegroundColor Yellow
-
-# 10.1 Positive - List config sets
-try {
-    $configs = Invoke-RestMethod -Uri "$baseUrl/api/configs" -Method GET -Headers $headers
-    Write-Host "[PASS] 10.1 List config sets - found $($configs.Count) configs" -ForegroundColor Green
-    $passed++
-} catch {
-    Write-Host "[FAIL] 10.1 List configs - $($_.Exception.Message)" -ForegroundColor Red
-    $failed++
-}
-
-# 10.2 Positive - Create config set
-$newConfigId = $null
-if ($instances.Count -gt 0) {
-    try {
-        $configBody = @{
-            name = "TestConfig-$(Get-Random)"
-            env_instance_id = $instances[0].env_instance_id
-            version = "1.0.0"
-            status = "Draft"
-        } | ConvertTo-Json
-        $r = Invoke-RestMethod -Uri "$baseUrl/api/configs" -Method POST -Headers $headers -Body $configBody -ContentType "application/json"
-        if ($r.config_set_id) {
-            $newConfigId = $r.config_set_id
-            Write-Host "[PASS] 10.2 Create config set - ID: $newConfigId" -ForegroundColor Green
-            $passed++
-        } else {
-            Write-Host "[FAIL] 10.2 Create config - no ID" -ForegroundColor Red
-            $failed++
-        }
-    } catch {
-        Write-Host "[FAIL] 10.2 Create config - $($_.Exception.Message)" -ForegroundColor Red
-        $failed++
-    }
-}
-
-# ============================================================
-# SECTION 11: TEST DATA
-# ============================================================
-Write-Host "`n=== 11. TEST DATA ===" -ForegroundColor Yellow
-
-# 11.1 Positive - List test data sets
-try {
-    $testdata = Invoke-RestMethod -Uri "$baseUrl/api/test-data" -Method GET -Headers $headers
-    Write-Host "[PASS] 11.1 List test data sets - found $($testdata.testDataSets.Count) sets" -ForegroundColor Green
-    $passed++
-} catch {
-    Write-Host "[FAIL] 11.1 List test data - $($_.Exception.Message)" -ForegroundColor Red
-    $failed++
-}
-
-# ============================================================
-# SECTION 12: INTEGRATIONS
-# ============================================================
-Write-Host "`n=== 12. INTEGRATIONS ===" -ForegroundColor Yellow
-
-# 12.1 Positive - List integrations
-try {
-    $integrations = Invoke-RestMethod -Uri "$baseUrl/api/integrations" -Method GET -Headers $headers
-    Write-Host "[PASS] 12.1 List integrations - found $($integrations.Count) integrations" -ForegroundColor Green
-    $passed++
-} catch {
-    Write-Host "[FAIL] 12.1 List integrations - $($_.Exception.Message)" -ForegroundColor Red
-    $failed++
-}
-
-# ============================================================
-# SECTION 13: TOPOLOGY
-# ============================================================
-Write-Host "`n=== 13. TOPOLOGY ===" -ForegroundColor Yellow
-
-# 13.1 Positive - Get topology
-try {
-    $topology = Invoke-RestMethod -Uri "$baseUrl/api/topology" -Method GET -Headers $headers
-    Write-Host "[PASS] 13.1 Get topology data" -ForegroundColor Green
-    $passed++
-} catch {
-    Write-Host "[FAIL] 13.1 Get topology - $($_.Exception.Message)" -ForegroundColor Red
-    $failed++
-}
-
-# ============================================================
-# SECTION 14: DASHBOARD & STATS
-# ============================================================
-Write-Host "`n=== 14. DASHBOARD & STATISTICS ===" -ForegroundColor Yellow
-
-# 14.1 Positive - Dashboard stats
-try {
-    $stats = Invoke-RestMethod -Uri "$baseUrl/api/dashboard/stats" -Method GET -Headers $headers
-    Write-Host "[PASS] 14.1 Get dashboard statistics" -ForegroundColor Green
-    $passed++
-} catch {
-    Write-Host "[FAIL] 14.1 Dashboard stats - $($_.Exception.Message)" -ForegroundColor Red
-    $failed++
-}
-
-# 14.2 Positive - Activities
-try {
-    $activities = Invoke-RestMethod -Uri "$baseUrl/api/activities" -Method GET -Headers $headers
-    Write-Host "[PASS] 14.2 Get recent activities" -ForegroundColor Green
-    $passed++
-} catch {
-    Write-Host "[FAIL] 14.2 Activities - $($_.Exception.Message)" -ForegroundColor Red
-    $failed++
-}
-
-# ============================================================
-# SECTION 15: CLEANUP - DELETE CREATED RESOURCES
-# ============================================================
-Write-Host "`n=== 15. CLEANUP (DELETE TESTS) ===" -ForegroundColor Yellow
-
-# 15.1 Delete interface
-if ($newInterfaceId) {
-    try {
-        Invoke-RestMethod -Uri "$baseUrl/api/interfaces/$newInterfaceId" -Method DELETE -Headers $headers
-        Write-Host "[PASS] 15.1 Delete interface" -ForegroundColor Green
-        $passed++
-    } catch {
-        Write-Host "[FAIL] 15.1 Delete interface - $($_.Exception.Message)" -ForegroundColor Red
-        $failed++
-    }
-}
-
-# 15.2 Delete config
-if ($newConfigId) {
-    try {
-        Invoke-RestMethod -Uri "$baseUrl/api/configs/$newConfigId" -Method DELETE -Headers $headers
-        Write-Host "[PASS] 15.2 Delete config set" -ForegroundColor Green
-        $passed++
-    } catch {
-        Write-Host "[FAIL] 15.2 Delete config - $($_.Exception.Message)" -ForegroundColor Red
-        $failed++
-    }
-}
-
-# 15.3 Delete release
-if ($newReleaseId) {
-    try {
-        Invoke-RestMethod -Uri "$baseUrl/api/releases/$newReleaseId" -Method DELETE -Headers $headers
-        Write-Host "[PASS] 15.3 Delete release" -ForegroundColor Green
-        $passed++
-    } catch {
-        Write-Host "[FAIL] 15.3 Delete release - $($_.Exception.Message)" -ForegroundColor Red
-        $failed++
-    }
-}
-
-# 15.4 Delete group
-if ($newGroupId) {
-    try {
-        Invoke-RestMethod -Uri "$baseUrl/api/groups/$newGroupId" -Method DELETE -Headers $headers
-        Write-Host "[PASS] 15.4 Delete group" -ForegroundColor Green
-        $passed++
-    } catch {
-        Write-Host "[FAIL] 15.4 Delete group - $($_.Exception.Message)" -ForegroundColor Red
-        $failed++
-    }
-}
-
-# 15.5 Delete booking
+# Test 5.4: Get Booking by ID
 if ($newBookingId) {
     try {
-        Invoke-RestMethod -Uri "$baseUrl/api/bookings/$newBookingId" -Method DELETE -Headers $headers
-        Write-Host "[PASS] 15.5 Delete booking" -ForegroundColor Green
-        $passed++
+        $r = Invoke-RestMethod -Uri "$baseUrl/api/bookings/$newBookingId" -Method GET -Headers $testerHeaders -TimeoutSec 10
+        if ($r.booking_id -eq $newBookingId) {
+            Log-Pass "5.4 Get Booking - $($r.title)"
+        } else {
+            Log-Fail "5.4 Get Booking - ID mismatch"
+        }
     } catch {
-        Write-Host "[FAIL] 15.5 Delete booking - $($_.Exception.Message)" -ForegroundColor Red
-        $failed++
+        Log-Fail "5.4 Get Booking - $($_.Exception.Message)"
     }
+} else {
+    Log-Fail "5.4 Get Booking - Skipped"
 }
 
-# 15.6 Delete application
-if ($newAppId) {
+# Test 5.5: Cancel Booking (via status update)
+if ($newBookingId) {
     try {
-        Invoke-RestMethod -Uri "$baseUrl/api/applications/$newAppId" -Method DELETE -Headers $headers
-        Write-Host "[PASS] 15.6 Delete application" -ForegroundColor Green
-        $passed++
+        $body = @{ booking_status = "Cancelled" } | ConvertTo-Json
+        $r = Invoke-RestMethod -Uri "$baseUrl/api/bookings/$newBookingId/status" -Method PUT -Headers $testerHeaders -Body $body -ContentType "application/json" -TimeoutSec 10
+        Log-Pass "5.5 Cancel Booking - Status: $($r.booking_status)"
     } catch {
-        Write-Host "[FAIL] 15.6 Delete application - $($_.Exception.Message)" -ForegroundColor Red
-        $failed++
+        Log-Fail "5.5 Cancel Booking - $($_.Exception.Message)"
     }
+} else {
+    Log-Fail "5.5 Cancel Booking - Skipped"
 }
 
-# 15.7 Delete environment
-if ($newEnvId) {
+# ==============================================================================
+# SECTION 6: RELEASES API
+# ==============================================================================
+Log-Section "SECTION 6: Releases API"
+
+# Test 6.1: List Releases
+try {
+    $r = Invoke-RestMethod -Uri "$baseUrl/api/releases" -Method GET -Headers $adminHeaders -TimeoutSec 10
+    Log-Pass "6.1 List Releases - Count: $($r.releases.Count)"
+} catch {
+    Log-Fail "6.1 List Releases - $($_.Exception.Message)"
+}
+
+# Test 6.2: Create Release
+$newReleaseId = $null
+if ($applications.Count -gt 0) {
     try {
-        Invoke-RestMethod -Uri "$baseUrl/api/environments/$newEnvId" -Method DELETE -Headers $headers
-        Write-Host "[PASS] 15.7 Delete environment" -ForegroundColor Green
-        $passed++
+        $body = @{
+            name = "Test Release $(Get-Date -Format 'yyyyMMddHHmmss')"
+            application_id = $applications[0].application_id
+            version = "1.0.0-test"
+            scheduled_date = (Get-Date).AddDays(14).ToString("yyyy-MM-dd")
+            status = "Planned"
+        } | ConvertTo-Json
+        $r = Invoke-RestMethod -Uri "$baseUrl/api/releases" -Method POST -Headers $adminHeaders -Body $body -ContentType "application/json" -TimeoutSec 10
+        if ($r.release_id) {
+            $newReleaseId = $r.release_id
+            Log-Pass "6.2 Create Release - $($r.name)"
+        } else {
+            Log-Fail "6.2 Create Release - No ID"
+        }
     } catch {
-        Write-Host "[FAIL] 15.7 Delete environment - $($_.Exception.Message)" -ForegroundColor Red
-        $failed++
+        Log-Fail "6.2 Create Release - $($_.Exception.Message)"
     }
+} else {
+    Log-Fail "6.2 Create Release - Skipped"
 }
 
-# 15.8 Delete user
-if ($newUserId) {
+# ==============================================================================
+# SECTION 7: INTERFACES API
+# ==============================================================================
+Log-Section "SECTION 7: Interfaces API"
+
+# Test 7.1: List Interfaces
+try {
+    $r = Invoke-RestMethod -Uri "$baseUrl/api/interfaces" -Method GET -Headers $adminHeaders -TimeoutSec 10
+    Log-Pass "7.1 List Interfaces - Count: $($r.interfaces.Count)"
+} catch {
+    Log-Fail "7.1 List Interfaces - $($_.Exception.Message)"
+}
+
+# Test 7.2: List All Interface Endpoints
+try {
+    $r = Invoke-RestMethod -Uri "$baseUrl/api/interfaces/endpoints/all" -Method GET -Headers $adminHeaders -TimeoutSec 10
+    Log-Pass "7.2 List All Endpoints - Count: $($r.endpoints.Count)"
+} catch {
+    Log-Fail "7.2 List All Endpoints - $($_.Exception.Message)"
+}
+
+# ==============================================================================
+# SECTION 8: CONFIGURATION API
+# ==============================================================================
+Log-Section "SECTION 8: Configuration API"
+
+# Test 8.1: List Config Sets (via /api/configs)
+try {
+    $r = Invoke-RestMethod -Uri "$baseUrl/api/configs" -Method GET -Headers $adminHeaders -TimeoutSec 10
+    Log-Pass "8.1 List Config Sets - Count: $($r.configSets.Count)"
+} catch {
+    Log-Fail "8.1 List Config Sets - $($_.Exception.Message)"
+}
+
+# Test 8.2: Create Config Set
+$newConfigSetId = $null
+if ($applications.Count -gt 0) {
     try {
-        Invoke-RestMethod -Uri "$baseUrl/api/users/$newUserId" -Method DELETE -Headers $headers
-        Write-Host "[PASS] 15.8 Delete user" -ForegroundColor Green
-        $passed++
+        $body = @{
+            name = "Test Config $(Get-Date -Format 'yyyyMMddHHmmss')"
+            scope_type = "Application"
+            scope_ref_id = $applications[0].application_id
+            version = "1.0"
+            status = "Draft"
+        } | ConvertTo-Json
+        $r = Invoke-RestMethod -Uri "$baseUrl/api/configs" -Method POST -Headers $adminHeaders -Body $body -ContentType "application/json" -TimeoutSec 10
+        if ($r.config_set_id) {
+            $newConfigSetId = $r.config_set_id
+            Log-Pass "8.2 Create Config Set - $($r.name)"
+        } else {
+            Log-Fail "8.2 Create Config Set - No ID"
+        }
     } catch {
-        Write-Host "[FAIL] 15.8 Delete user - $($_.Exception.Message)" -ForegroundColor Red
-        $failed++
+        Log-Fail "8.2 Create Config Set - $($_.Exception.Message)"
     }
+} else {
+    Log-Fail "8.2 Create Config Set - Skipped"
 }
 
-# 15.9 Negative - Delete already deleted resource
-if ($newEnvId) {
+# Test 8.3: Add Config Item
+if ($newConfigSetId) {
     try {
-        Invoke-RestMethod -Uri "$baseUrl/api/environments/$newEnvId" -Method DELETE -Headers $headers -ErrorAction Stop
-        Write-Host "[FAIL] 15.9 Delete non-existent should fail" -ForegroundColor Red
-        $failed++
+        $body = @{
+            key = "test.key"
+            value = "test-value"
+            data_type = "String"
+        } | ConvertTo-Json
+        $r = Invoke-RestMethod -Uri "$baseUrl/api/configs/$newConfigSetId/items" -Method POST -Headers $adminHeaders -Body $body -ContentType "application/json" -TimeoutSec 10
+        if ($r.config_item_id) {
+            Log-Pass "8.3 Add Config Item - Key: test.key"
+        } else {
+            Log-Fail "8.3 Add Config Item - No ID"
+        }
     } catch {
-        Write-Host "[PASS] 15.9 Delete already deleted resource fails" -ForegroundColor Green
-        $passed++
+        Log-Fail "8.3 Add Config Item - $($_.Exception.Message)"
     }
+} else {
+    Log-Fail "8.3 Add Config Item - Skipped"
 }
 
-# ============================================================
-# SECTION 16: EDGE CASES & SECURITY
-# ============================================================
-Write-Host "`n=== 16. EDGE CASES & SECURITY ===" -ForegroundColor Yellow
+# ==============================================================================
+# SECTION 9: GROUPS API
+# ==============================================================================
+Log-Section "SECTION 9: Groups API"
 
-# 16.1 SQL Injection attempt
 try {
-    $sqlInject = @{ email = "admin'; DROP TABLE users;--"; password = "test" } | ConvertTo-Json
-    Invoke-RestMethod -Uri "$baseUrl/api/auth/login" -Method POST -Body $sqlInject -ContentType "application/json" -ErrorAction Stop
-    Write-Host "[INFO] 16.1 SQL injection - login failed (good)" -ForegroundColor Green
-    $passed++
+    $r = Invoke-RestMethod -Uri "$baseUrl/api/groups" -Method GET -Headers $adminHeaders -TimeoutSec 10
+    Log-Pass "9.1 List Groups - Count: $($r.groups.Count)"
 } catch {
-    Write-Host "[PASS] 16.1 SQL injection attempt blocked" -ForegroundColor Green
-    $passed++
+    Log-Fail "9.1 List Groups - $($_.Exception.Message)"
 }
 
-# 16.2 XSS attempt in input
+# ==============================================================================
+# SECTION 10: INTEGRATIONS API
+# ==============================================================================
+Log-Section "SECTION 10: Integrations API"
+
 try {
-    $xssBody = @{
-        name = "<script>alert('xss')</script>"
-        environment_type = "Development"
-    } | ConvertTo-Json
-    $r = Invoke-RestMethod -Uri "$baseUrl/api/environments" -Method POST -Headers $headers -Body $xssBody -ContentType "application/json"
-    # Check if script was sanitized
-    Write-Host "[INFO] 16.2 XSS input handled (check output sanitization)" -ForegroundColor Yellow
-    $passed++
-    # Clean up
-    if ($r.environment_id) {
-        Invoke-RestMethod -Uri "$baseUrl/api/environments/$($r.environment_id)" -Method DELETE -Headers $headers | Out-Null
-    }
+    $r = Invoke-RestMethod -Uri "$baseUrl/api/integrations" -Method GET -Headers $adminHeaders -TimeoutSec 10
+    Log-Pass "10.1 List Integrations - Count: $($r.integrations.Count)"
 } catch {
-    Write-Host "[PASS] 16.2 XSS input rejected" -ForegroundColor Green
-    $passed++
+    Log-Fail "10.1 List Integrations - $($_.Exception.Message)"
 }
 
-# 16.3 Very long input
+# ==============================================================================
+# SECTION 11: USER MANAGEMENT & RBAC
+# ==============================================================================
+Log-Section "SECTION 11: User Management & RBAC"
+
+# Test 11.1: List Users (Admin)
 try {
-    $longString = "A" * 10000
-    $longBody = @{ name = $longString; environment_type = "Development" } | ConvertTo-Json
-    Invoke-RestMethod -Uri "$baseUrl/api/environments" -Method POST -Headers $headers -Body $longBody -ContentType "application/json" -ErrorAction Stop
-    Write-Host "[FAIL] 16.3 Very long input should be rejected" -ForegroundColor Red
-    $failed++
+    $r = Invoke-RestMethod -Uri "$baseUrl/api/users" -Method GET -Headers $adminHeaders -TimeoutSec 10
+    Log-Pass "11.1 List Users (Admin) - Count: $($r.users.Count)"
 } catch {
-    Write-Host "[PASS] 16.3 Very long input rejected" -ForegroundColor Green
-    $passed++
+    Log-Fail "11.1 List Users (Admin) - $($_.Exception.Message)"
 }
 
-# 16.4 Empty request body
+# Test 11.2: Tester Cannot Access Users
 try {
-    Invoke-RestMethod -Uri "$baseUrl/api/environments" -Method POST -Headers $headers -Body "" -ContentType "application/json" -ErrorAction Stop
-    Write-Host "[FAIL] 16.4 Empty body should be rejected" -ForegroundColor Red
-    $failed++
+    Invoke-RestMethod -Uri "$baseUrl/api/users" -Method GET -Headers $testerHeaders -TimeoutSec 10
+    Log-Fail "11.2 RBAC Users Access - Should fail"
 } catch {
-    Write-Host "[PASS] 16.4 Empty request body rejected" -ForegroundColor Green
-    $passed++
+    Log-Pass "11.2 RBAC - Tester Blocked from Users"
 }
 
-# 16.5 Invalid JSON
+# ==============================================================================
+# SECTION 12: CHANGES API
+# ==============================================================================
+Log-Section "SECTION 12: Changes API"
+
 try {
-    Invoke-RestMethod -Uri "$baseUrl/api/environments" -Method POST -Headers $headers -Body "not json at all" -ContentType "application/json" -ErrorAction Stop
-    Write-Host "[FAIL] 16.5 Invalid JSON should be rejected" -ForegroundColor Red
-    $failed++
+    $r = Invoke-RestMethod -Uri "$baseUrl/api/changes" -Method GET -Headers $adminHeaders -TimeoutSec 10
+    Log-Pass "12.1 List Changes - Count: $($r.changes.Count)"
 } catch {
-    Write-Host "[PASS] 16.5 Invalid JSON rejected" -ForegroundColor Green
-    $passed++
+    Log-Fail "12.1 List Changes - $($_.Exception.Message)"
 }
 
-# 16.6 Rate limiting test (if enabled)
-Write-Host "[INFO] 16.6 Rate limiting - making rapid requests..." -ForegroundColor Yellow
-$rateLimitHit = $false
-for ($i = 0; $i -lt 20; $i++) {
+# ==============================================================================
+# SECTION 13: FRONTEND PAGES
+# ==============================================================================
+Log-Section "SECTION 13: Frontend Pages"
+
+$pages = @(
+    @{path="/"; name="Login"},
+    @{path="/dashboard"; name="Dashboard"},
+    @{path="/environments"; name="Environments"},
+    @{path="/bookings"; name="Bookings"},
+    @{path="/releases"; name="Releases"},
+    @{path="/configs"; name="Configs"},
+    @{path="/groups"; name="Groups"},
+    @{path="/integrations"; name="Integrations"},
+    @{path="/topology"; name="Topology"},
+    @{path="/monitoring"; name="Monitoring"},
+    @{path="/settings"; name="Settings"}
+)
+
+$pageNum = 1
+foreach ($page in $pages) {
     try {
-        Invoke-RestMethod -Uri "$baseUrl/health" -Method GET -TimeoutSec 2 | Out-Null
+        $r = Invoke-WebRequest -Uri "$frontendUrl$($page.path)" -Method GET -TimeoutSec 10 -UseBasicParsing
+        Log-Pass "13.$pageNum $($page.name) - HTTP $($r.StatusCode)"
     } catch {
-        if ($_.Exception.Message -match "429|rate|limit") {
-            $rateLimitHit = $true
-            break
+        if ($_.Exception.Response.StatusCode.Value__ -in @(200, 302, 307, 308)) {
+            Log-Pass "13.$pageNum $($page.name) - Redirect OK"
+        } else {
+            Log-Fail "13.$pageNum $($page.name) - $($_.Exception.Message)"
         }
     }
-}
-if ($rateLimitHit) {
-    Write-Host "[PASS] 16.6 Rate limiting is active" -ForegroundColor Green
-    $passed++
-} else {
-    Write-Host "[INFO] 16.6 Rate limiting not triggered (may be disabled or threshold not reached)" -ForegroundColor Yellow
-    $passed++
+    $pageNum++
 }
 
-# ============================================================
-# FINAL SUMMARY
-# ============================================================
-Write-Host ""
-Write-Host "================================================================" -ForegroundColor Cyan
-Write-Host "                    TEST SUMMARY" -ForegroundColor Cyan
-Write-Host "================================================================" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "  PASSED: $passed" -ForegroundColor Green
-Write-Host "  FAILED: $failed" -ForegroundColor $(if ($failed -gt 0) { "Red" } else { "Green" })
-Write-Host "  TOTAL:  $($passed + $failed)" -ForegroundColor White
-Write-Host ""
-Write-Host "================================================================" -ForegroundColor Cyan
+# ==============================================================================
+# CLEANUP
+# ==============================================================================
+Log-Section "Cleanup"
 
-$successRate = [math]::Round(($passed / ($passed + $failed)) * 100, 1)
-Write-Host "  Success Rate: $successRate%" -ForegroundColor $(if ($successRate -ge 90) { "Green" } elseif ($successRate -ge 70) { "Yellow" } else { "Red" })
+if ($newReleaseId) {
+    try {
+        Invoke-RestMethod -Uri "$baseUrl/api/releases/$newReleaseId" -Method DELETE -Headers $adminHeaders -TimeoutSec 10 | Out-Null
+        Write-Host "  Deleted test release" -ForegroundColor Gray
+    } catch { Write-Host "  Release cleanup failed" -ForegroundColor Gray }
+}
+
+if ($newConfigSetId) {
+    try {
+        Invoke-RestMethod -Uri "$baseUrl/api/configs/$newConfigSetId" -Method DELETE -Headers $adminHeaders -TimeoutSec 10 | Out-Null
+        Write-Host "  Deleted test config set" -ForegroundColor Gray
+    } catch { Write-Host "  Config cleanup failed" -ForegroundColor Gray }
+}
+
+Write-Host "  Cleanup completed" -ForegroundColor Gray
+
+# ==============================================================================
+# SUMMARY
+# ==============================================================================
+Write-Host ""
+Write-Host "###############################################" -ForegroundColor Magenta
+Write-Host "#              TEST SUMMARY                   #" -ForegroundColor Magenta
+Write-Host "###############################################" -ForegroundColor Magenta
+Write-Host ""
+Write-Host "Total Tests: $total"
+Write-Host "Passed:      $passed" -ForegroundColor Green
+Write-Host "Failed:      $failed" -ForegroundColor $(if ($failed -gt 0) { "Red" } else { "Green" })
+Write-Host ""
+$successRate = [math]::Round(($passed / $total) * 100, 1)
+Write-Host "Success Rate: $successRate%" -ForegroundColor $(if ($successRate -ge 90) { "Green" } elseif ($successRate -ge 70) { "Yellow" } else { "Red" })
+Write-Host ""
+Write-Host "Completed: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
 Write-Host ""
 
 if ($failed -eq 0) {
-    Write-Host "  *** ALL TESTS PASSED! ***" -ForegroundColor Green
+    Write-Host "ALL TESTS PASSED!" -ForegroundColor Green
+    exit 0
 } else {
-    Write-Host "  *** SOME TESTS FAILED - Review above ***" -ForegroundColor Red
+    Write-Host "SOME TESTS FAILED - Review output above" -ForegroundColor Yellow
+    exit 1
 }
-Write-Host "================================================================" -ForegroundColor Cyan

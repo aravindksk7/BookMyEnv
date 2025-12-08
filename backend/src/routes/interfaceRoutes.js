@@ -9,6 +9,7 @@ router.use(authenticate);
 
 // Interfaces
 router.get('/', interfaceController.getAll);
+router.get('/endpoints/all', interfaceController.getAllEndpoints);  // Must be before /:id
 router.get('/:id', interfaceController.getById);
 router.post('/', requireRole('Admin', 'ProjectLead'), interfaceController.create);
 router.put('/:id', requireRole('Admin', 'ProjectLead'), interfaceController.update);

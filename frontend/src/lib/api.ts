@@ -140,7 +140,8 @@ export const bookingsAPI = {
   removeResource: (id: string, resourceId: string) => api.delete(`/bookings/${id}/resources/${resourceId}`),
   getCalendar: (params: any) => api.get('/bookings/calendar', { params }),
   getMyBookings: () => api.get('/bookings/my'),
-  getConflicts: (params: any) => api.get('/bookings/conflicts', { params }),
+  checkConflicts: (data: { resources: any[]; start_datetime: string; end_datetime: string; exclude_booking_id?: string }) => 
+    api.post('/bookings/check-conflicts', data),
   getStatistics: () => api.get('/bookings/statistics'),
   // Related entities
   getRelatedApplications: (id: string) => api.get(`/bookings/${id}/applications`),
@@ -208,6 +209,7 @@ export const interfacesAPI = {
   update: (id: string, data: any) => api.put(`/interfaces/${id}`, data),
   delete: (id: string) => api.delete(`/interfaces/${id}`),
   // Endpoints
+  getAllEndpoints: () => api.get('/interfaces/endpoints/all'),
   getEndpoints: (interfaceId: string) => api.get(`/interfaces/${interfaceId}/endpoints`),
   createEndpoint: (interfaceId: string, data: any) => api.post(`/interfaces/${interfaceId}/endpoints`, data),
   updateEndpoint: (interfaceId: string, endpointId: string, data: any) => api.put(`/interfaces/${interfaceId}/endpoints/${endpointId}`, data),

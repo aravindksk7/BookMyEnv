@@ -10,6 +10,9 @@ router.use(authenticate);
 // Statistics (must be before :id routes)
 router.get('/statistics', environmentController.getStatistics);
 
+// All instances across all environments (must be before :id routes)
+router.get('/instances', environmentController.getAllInstances);
+
 // Environments
 router.get('/', environmentController.getAll);
 router.get('/:id', environmentController.getById);

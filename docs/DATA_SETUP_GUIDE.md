@@ -4,6 +4,17 @@ A comprehensive guide to setting up your test environment management system. Thi
 
 ---
 
+## Related Documentation
+
+| Document | Description |
+|----------|-------------|
+| [User Guide](USER_GUIDE.md) | End-user instructions for day-to-day usage |
+| [**Lifecycle Guide**](LIFECYCLE_GUIDE.md) | **Detailed lifecycle states, transitions, and best practices** |
+| [Architecture Guide](ARCHITECTURE.md) | Technical architecture and system design |
+| [Quick Reference](QUICK_REFERENCE.md) | Cheat sheet for common operations |
+
+---
+
 ## Table of Contents
 
 1. [Understanding the Data Model](#understanding-the-data-model)
@@ -17,9 +28,10 @@ A comprehensive guide to setting up your test environment management system. Thi
 9. [Component Instances](#component-instances)
 10. [Application Deployments](#application-deployments)
 11. [Entity Relationships](#entity-relationships)
-12. [Bulk Upload Guide](#bulk-upload-guide)
-13. [Sample Data Files](#sample-data-files)
-14. [Quick Reference](#quick-reference)
+12. [Entity Lifecycle Summary](#entity-lifecycle-summary)
+13. [Bulk Upload Guide](#bulk-upload-guide)
+14. [Sample Data Files](#sample-data-files)
+15. [Quick Reference](#quick-reference)
 
 ---
 
@@ -611,6 +623,75 @@ Customer Portal,portal-ui,UAT-1,2.9.0,Deployed
 | Instance + Application | App Deployment | 1:1 | One deployment per app per instance |
 | Instance + Component | Component Instance | 1:1 | One component instance per component per instance |
 | Instance + Interface | Interface Endpoint | 1:1 | One endpoint per interface per instance |
+
+---
+
+## Entity Lifecycle Summary
+
+Understanding entity lifecycles is crucial for effective test environment management. This section provides a summary; for complete details including state transition diagrams, see the **[Lifecycle Guide](LIFECYCLE_GUIDE.md)**.
+
+### Environment Lifecycle
+
+| Stage | Description | Can Book? | Can Modify? |
+|-------|-------------|-----------|-------------|
+| **Planned** | Being designed and set up | ❌ | ✅ |
+| **Active** | Fully operational | ✅ | ✅ |
+| **Retiring** | Being phased out | ⚠️ Existing only | Limited |
+| **Decommissioned** | Archived, read-only | ❌ | ❌ |
+
+**Transition Path:** `Planned → Active → Retiring → Decommissioned`
+
+### Environment Instance Lifecycle
+
+**Operational Status:**
+| Status | Can Book? | Description |
+|--------|-----------|-------------|
+| **Provisioning** | ❌ | Being set up |
+| **Available** | ✅ | Ready for use |
+| **Maintenance** | ❌ | Scheduled maintenance |
+| **Broken** | ❌ | Has critical issues |
+
+**Booking Status:**
+| Status | Can Book? | Description |
+|--------|-----------|-------------|
+| **Available** | ✅ | No active bookings |
+| **PartiallyBooked** | ✅ | Has capacity remaining |
+| **FullyBooked** | ❌ | At maximum capacity |
+
+### Application Deployment Lifecycle
+
+| Status | Description | Action Required |
+|--------|-------------|-----------------|
+| **Aligned** | All components at expected versions | None |
+| **Mixed** | Some components at different versions | Review |
+| **OutOfSync** | Configuration drift | Investigate |
+| **Broken** | Critical failures | Immediate action |
+
+### Component Instance Lifecycle
+
+| Status | Description | Alert Level |
+|--------|-------------|-------------|
+| **Deployed** | Successfully running | ✅ None |
+| **PartiallyDeployed** | Some replicas running | ⚠️ Warning |
+| **RollbackPending** | Rolling back | ⚠️ Info |
+| **Failed** | Deployment failed | ❌ Critical |
+
+### Interface Endpoint Test Modes
+
+| Mode | Description | Typical Environment |
+|------|-------------|---------------------|
+| **Live** | Real connection | UAT, PreProd, Performance |
+| **Virtualised** | Service virtualization | SIT, Integration |
+| **Stubbed** | Simple mock | Development |
+| **Disabled** | Turned off | Isolated testing |
+
+**Promotion Path:** `Stubbed → Virtualised → Live`
+
+> **📘 Complete Lifecycle Details**: See [LIFECYCLE_GUIDE.md](LIFECYCLE_GUIDE.md) for:
+> - Detailed state transition diagrams
+> - Lifecycle interaction rules
+> - Troubleshooting lifecycle issues
+> - Best practices per lifecycle stage
 
 ---
 

@@ -44,7 +44,7 @@ import {
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
 } from '@mui/icons-material';
-import { configsAPI, applicationsAPI, environmentsAPI } from '@/lib/api';
+import { configsAPI, applicationsAPI, environmentsAPI, componentInstancesAPI, interfacesAPI } from '@/lib/api';
 
 interface Application {
   application_id: string;
@@ -54,6 +54,22 @@ interface Application {
 interface Environment {
   env_instance_id: string;
   name: string;
+  environment_name?: string;
+}
+
+interface ComponentInstance {
+  component_instance_id: string;
+  component_name?: string;
+  application_name?: string;
+  env_instance_name?: string;
+  environment_name?: string;
+}
+
+interface InterfaceEndpoint {
+  interface_endpoint_id: string;
+  endpoint?: string;
+  interface_name?: string;
+  env_instance_name?: string;
   environment_name?: string;
 }
 
@@ -103,6 +119,8 @@ export default function ConfigsPage() {
   const [configSets, setConfigSets] = useState<ConfigSet[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [environments, setEnvironments] = useState<Environment[]>([]);
+  const [componentInstances, setComponentInstances] = useState<ComponentInstance[]>([]);
+  const [interfaceEndpoints, setInterfaceEndpoints] = useState<InterfaceEndpoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -145,14 +163,18 @@ export default function ConfigsPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [configsRes, appsRes, envsRes] = await Promise.all([
+      const [configsRes, appsRes, envsRes, compInstancesRes, endpointsRes] = await Promise.all([
         configsAPI.getAll(),
         applicationsAPI.getAll(),
         environmentsAPI.getAllInstances(),
+        componentInstancesAPI.getAll(),
+        interfacesAPI.getAllEndpoints(),
       ]);
       setConfigSets(configsRes.data.configSets || []);
       setApplications(appsRes.data.applications || []);
       setEnvironments(envsRes.data.instances || []);
+      setComponentInstances(compInstancesRes.data.componentInstances || []);
+      setInterfaceEndpoints(endpointsRes.data.endpoints || []);
       setError(null);
     } catch (err) {
       setError('Failed to fetch data');
@@ -353,7 +375,17 @@ export default function ConfigsPage() {
       case 'EnvironmentInstance':
         return environments.map((env: Environment) => ({ 
           id: env.env_instance_id, 
-          label: `${env.environment_name} / ${env.name}` 
+          label: `${env.environment_name || 'Unknown'} / ${env.name}` 
+        }));
+      case 'ComponentInstance':
+        return componentInstances.map((ci: ComponentInstance) => ({ 
+          id: ci.component_instance_id, 
+          label: `${ci.application_name || 'Unknown'} / ${ci.component_name || 'Unknown'} (${ci.env_instance_name || 'Unknown'})` 
+        }));
+      case 'InterfaceEndpoint':
+        return interfaceEndpoints.map((ep: InterfaceEndpoint) => ({ 
+          id: ep.interface_endpoint_id, 
+          label: `${ep.interface_name || 'Unknown'} / ${ep.env_instance_name || ep.environment_name || ep.endpoint || 'Endpoint'}` 
         }));
       default:
         return [];
@@ -588,26 +620,16 @@ export default function ConfigsPage() {
                 ))}
               </Select>
             </FormControl>
-            {(setFormData.scope_type === 'Application' || setFormData.scope_type === 'EnvironmentInstance') ? (
-              <Autocomplete
-                options={getScopeOptions()}
-                getOptionLabel={(option) => option.label}
-                value={getScopeOptions().find((o) => o.id === setFormData.scope_ref_id) || null}
-                onChange={(_, newValue) => setSetFormData({ ...setFormData, scope_ref_id: newValue?.id || '' })}
-                renderInput={(params) => (
-                  <TextField {...params} label={`Select ${setFormData.scope_type}`} required />
-                )}
-              />
-            ) : (
-              <TextField
-                label="Scope Reference ID"
-                value={setFormData.scope_ref_id}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSetFormData({ ...setFormData, scope_ref_id: e.target.value })}
-                fullWidth
-                required
-                helperText="UUID of the referenced entity"
-              />
-            )}
+            <Autocomplete
+              options={getScopeOptions()}
+              getOptionLabel={(option) => option.label}
+              value={getScopeOptions().find((o) => o.id === setFormData.scope_ref_id) || null}
+              onChange={(_, newValue) => setSetFormData({ ...setFormData, scope_ref_id: newValue?.id || '' })}
+              noOptionsText={`No ${setFormData.scope_type}s available`}
+              renderInput={(params) => (
+                <TextField {...params} label={`Select ${setFormData.scope_type}`} required />
+              )}
+            />
             <Grid container spacing={2}>
               <Grid item xs={6}>
                 <TextField

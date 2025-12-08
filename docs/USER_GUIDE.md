@@ -9,19 +9,24 @@ A comprehensive guide to using the BookMyEnv environment booking and management 
 1. [Getting Started](#getting-started)
 2. [Dashboard Overview](#dashboard-overview)
 3. [Environments Management](#environments-management)
-4. [Bookings Management](#bookings-management)
-5. [Conflict Detection & Resolution](#conflict-detection--resolution)
-6. [Releases Management](#releases-management)
-7. [Applications Management](#applications-management)
-8. [Application Deployments](#application-deployments)
-9. [Groups Management](#groups-management)
-10. [Bulk Data Upload](#bulk-data-upload)
-11. [Monitoring](#monitoring)
-12. [Integrations](#integrations)
-13. [Settings & Administration](#settings--administration)
-14. [User Roles & Permissions](#user-roles--permissions)
-15. [Best Practices](#best-practices)
-16. [Troubleshooting](#troubleshooting)
+4. [Environment Instance Lifecycle](#environment-instance-lifecycle)
+5. [Bookings Management](#bookings-management)
+6. [Conflict Detection & Resolution](#conflict-detection--resolution)
+7. [Releases Management](#releases-management)
+8. [Applications Management](#applications-management)
+9. [Application Deployments](#application-deployments)
+10. [Interfaces & Endpoints](#interfaces--endpoints)
+11. [Components & Instances](#components--instances)
+12. [Groups Management](#groups-management)
+13. [Bulk Data Upload](#bulk-data-upload)
+14. [Monitoring](#monitoring)
+15. [Integrations](#integrations)
+16. [Settings & Administration](#settings--administration)
+17. [User Roles & Permissions](#user-roles--permissions)
+18. [Best Practices](#best-practices)
+19. [Troubleshooting](#troubleshooting)
+
+> **📘 Related Documentation**: For detailed lifecycle diagrams and state transitions, see the [Lifecycle Guide](LIFECYCLE_GUIDE.md).
 
 ---
 
@@ -100,28 +105,95 @@ Live feed of recent actions in the system:
 
 ## Environments Management
 
+### Understanding Environment Lifecycle
+
+Environments progress through four lifecycle stages:
+
+| Stage | Description | Bookings Allowed |
+|-------|-------------|------------------|
+| **Planned** | Environment is being designed and set up | ❌ No |
+| **Active** | Fully operational and available | ✅ Yes |
+| **Retiring** | Being phased out, existing bookings only | ⚠️ Existing only |
+| **Decommissioned** | No longer in use, archived | ❌ No |
+
+> **📘 See Also**: [Environment Lifecycle Details](LIFECYCLE_GUIDE.md#environment-lifecycle) for complete state transition diagrams.
+
 ### Viewing Environments
 
 1. Click **Environments** in the sidebar
 2. View the list of all environments with:
    - Name
-   - Category (NonProd, PreProd, DR)
-   - Lifecycle Stage
+   - Category (NonProd, PreProd, DR, Training, Sandpit)
+   - Lifecycle Stage (with visual indicator)
    - Owner Team
    - Instance Count
+
+### Environment Categories
+
+| Category | Purpose | Typical Use |
+|----------|---------|-------------|
+| **NonProd** | Development and testing | DEV, SIT, Integration |
+| **PreProd** | Final pre-production testing | UAT, Staging |
+| **DR** | Disaster recovery | DR Failover, Business Continuity |
+| **Training** | User training | Training, Demos |
+| **Sandpit** | Experimentation | POCs, Innovation |
 
 ### Creating an Environment
 
 1. Click the **+ Add Environment** button
 2. Fill in the required fields:
    - **Name** - Unique environment name (e.g., "SIT Environment 1")
-   - **Category** - Select: NonProd, PreProd, or DR
+   - **Category** - Select: NonProd, PreProd, DR, Training, or Sandpit
    - **Description** - Brief description of the environment
-   - **Lifecycle Stage** - Active, Provisioning, Decommissioned
+   - **Lifecycle Stage** - Planned (initial), Active (ready for use)
    - **Owner Team** - Team responsible for the environment
    - **Support Group** - Support contact group
-   - **Data Sensitivity** - NonProdDummy, MaskedProd, ProdClone, LiveProd
+   - **Data Sensitivity** - NonProdDummy, PII, PCI, Confidential
+   - **Usage Policies** - Guidelines for environment usage
 3. Click **Create**
+
+### Transitioning Environment Lifecycle
+
+**To Activate an Environment (Planned → Active):**
+1. Ensure at least one instance is in Available status
+2. Verify all required applications are deployed
+3. Change Lifecycle Stage to "Active"
+
+**To Retire an Environment (Active → Retiring):**
+1. Notify all active users with minimum 2-week notice
+2. Ensure no critical bookings are affected
+3. Change Lifecycle Stage to "Retiring"
+4. Complete or cancel remaining bookings
+
+**To Decommission (Retiring → Decommissioned):**
+1. Ensure all bookings are completed or cancelled
+2. Archive any required data
+3. Change Lifecycle Stage to "Decommissioned"
+
+---
+
+## Environment Instance Lifecycle
+
+### Understanding Instance Status
+
+Instances have two status dimensions:
+
+**Operational Status** (physical state):
+| Status | Meaning | Can Book? |
+|--------|---------|-----------|
+| **Provisioning** | Being set up | ❌ No |
+| **Available** | Ready for use | ✅ Yes |
+| **Maintenance** | Scheduled maintenance | ❌ No |
+| **Broken** | Has critical issues | ❌ No |
+
+**Booking Status** (reservation state):
+| Status | Meaning | Can Book? |
+|--------|---------|-----------|
+| **Available** | No active bookings | ✅ Yes |
+| **PartiallyBooked** | Has bookings but capacity remains | ✅ Yes |
+| **FullyBooked** | At maximum capacity | ❌ No |
+
+> **📘 See Also**: [Instance Lifecycle Details](LIFECYCLE_GUIDE.md#environment-instance-lifecycle) for complete state transitions.
 
 ### Managing Environment Instances
 
@@ -134,18 +206,29 @@ Each environment can have multiple instances (actual deployments):
 3. Click **+ Add Instance**
 4. Fill in:
    - **Name** - Instance name (e.g., "SIT-Instance-A")
-   - **Operational Status** - Available, InUse, Maintenance, Offline
+   - **Operational Status** - Provisioning (initial), Available (ready)
    - **Availability Window** - 24x7, BusinessHours, Weekdays
-   - **Capacity** - Max concurrent users/tests
+   - **Capacity** - Max concurrent bookings allowed
    - **Primary Location** - Data center/region
    - **Bookable** - Whether it can be reserved
 5. Click **Create**
 
+#### Instance Status Transitions
+
+```
+Provisioning → Available → Maintenance → Available
+                    ↓           ↓
+                 Broken  ←───────┘
+                    ↓
+                Available (after repair)
+```
+
 #### Instance Actions
 
 - **Edit** - Modify instance properties
-- **Delete** - Remove instance (if not in use)
-- **View Details** - See full configuration
+- **Change Status** - Update operational status
+- **Delete** - Remove instance (if no active bookings)
+- **View Details** - See full configuration including deployed applications
 
 ### Linking Applications to Instances
 
@@ -153,9 +236,9 @@ Each environment can have multiple instances (actual deployments):
 2. Click **+ Link Application**
 3. Select the application to link
 4. Configure:
-   - **Deployment Model** - Standalone, Shared, Dedicated
+   - **Deployment Model** - Monolith, Microservices, SaaS, COTS
    - **Version** - Application version deployed
-   - **Deployment Status** - Deployed, Pending, Failed
+   - **Deployment Status** - Aligned, Mixed, OutOfSync, Broken
 5. Click **Link**
 
 ---
@@ -453,6 +536,124 @@ You can also manage deployments from the Environment side:
 2. **Monitor status** - Check for OutOfSync or Broken deployments regularly
 3. **Document models** - Use consistent deployment models across environments
 4. **Review before booking** - Check deployments when planning test bookings
+
+---
+
+## Interfaces & Endpoints
+
+### Understanding Interfaces
+
+Interfaces define communication contracts between applications or with external systems. Each interface can have multiple endpoints configured per environment instance.
+
+> **📘 See Also**: [Interface Lifecycle Details](LIFECYCLE_GUIDE.md#interface-lifecycle) for complete lifecycle documentation.
+
+### Interface Properties
+
+| Property | Description |
+|----------|-------------|
+| **Name** | Unique identifier for the interface |
+| **Direction** | Inbound, Outbound, or Bidirectional |
+| **Pattern** | REST, SOAP, MQ, Kafka, FileDrop, etc. |
+| **Frequency** | RealTime, NearRealTime, or Batch |
+| **Source Application** | Where data originates |
+| **Target Application** | Where data goes (or External Party) |
+| **SLA** | Service level agreement |
+
+### Viewing Interfaces
+
+1. Click **Environments** → select an environment → **Interfaces** tab
+2. Or view from Application details → **Interfaces** tab
+3. See all interfaces with their configurations
+
+### Interface Endpoint Configuration
+
+Each interface has endpoints configured per environment instance with different test modes:
+
+| Test Mode | Description | When to Use |
+|-----------|-------------|-------------|
+| **Live** | Real connection to target system | Production-like testing, E2E |
+| **Virtualised** | Service virtualization (Parasoft, WireMock) | Controlled testing in SIT |
+| **Stubbed** | Simple mock responses | Development, unit testing |
+| **Disabled** | Interface turned off | Isolated component testing |
+
+### Configuring Interface Endpoints
+
+1. Navigate to Environment Instance details
+2. Go to **Interfaces** tab
+3. For each interface, configure:
+   - **Endpoint URL** - Connection string/URL
+   - **Test Mode** - Live, Virtualised, Stubbed, or Disabled
+   - **Enabled** - Whether endpoint is active
+
+### Interface Endpoint Promotion Strategy
+
+As you move through environments, promote interface modes:
+
+```
+Development (Stubbed) → SIT (Virtualised) → UAT (Live/Virtualised) → PreProd (Live)
+```
+
+---
+
+## Components & Instances
+
+### Understanding Component Instances
+
+Component Instances track the deployment of individual application components (microservices, APIs, UIs) to specific environment instances.
+
+> **📘 See Also**: [Component Instance Lifecycle](LIFECYCLE_GUIDE.md#component-instance-lifecycle) for detailed status transitions.
+
+### Component Instance Status
+
+| Status | Description | Alert Level |
+|--------|-------------|-------------|
+| **Deployed** | Successfully running | ✅ None |
+| **PartiallyDeployed** | Some replicas running | ⚠️ Warning |
+| **RollbackPending** | Rolling back to previous version | ⚠️ Info |
+| **Failed** | Deployment failed | ❌ Critical |
+
+### Managing Component Instances
+
+1. Navigate to Application → **Components** tab
+2. Select a component
+3. View instances across environments
+4. For each instance, see:
+   - Environment Instance name
+   - Deployed version
+   - Deployment status
+   - Last deployed date
+
+### Deploying Component Instances
+
+1. From Application → Components → select component
+2. Click **Deploy to Instance**
+3. Select target Environment Instance
+4. Enter version number
+5. Click **Deploy**
+
+### Version Tracking Across Environments
+
+Component instances allow you to track versions across your environment landscape:
+
+```
+Example: payment-api versions
+
+┌─────────────────────────────────────────────┐
+│ Instance      │ Version  │ Status          │
+├───────────────┼──────────┼─────────────────┤
+│ DEV-1         │ 2.3.0    │ Deployed        │
+│ SIT-1         │ 2.2.0    │ Deployed        │
+│ UAT-1         │ 2.1.0    │ Deployed        │
+│ PreProd-1     │ 2.0.0    │ Deployed        │
+└─────────────────────────────────────────────┘
+```
+
+### Component Instance Best Practices
+
+1. **Version Consistency** - Keep track of version differences across environments
+2. **Status Monitoring** - Address PartiallyDeployed or Failed statuses promptly
+3. **Deployment Records** - Update last_deployed_date when deploying
+4. **Rollback Planning** - Know which version to rollback to if needed
 
 ---
 

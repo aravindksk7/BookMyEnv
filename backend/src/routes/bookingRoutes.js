@@ -17,7 +17,7 @@ router.get('/all-conflicts', bookingController.getConflictingBookings);
 router.get('/', bookingController.getAll);
 router.get('/calendar', bookingController.getCalendar);
 router.get('/my', bookingController.getMyBookings);
-router.get('/conflicts', bookingController.checkConflicts);
+router.post('/check-conflicts', bookingController.checkConflicts);
 router.get('/:id', bookingController.getById);
 router.post('/', bookingController.create);
 router.put('/:id', bookingController.update);

@@ -462,43 +462,40 @@ export default function BookingsPage() {
     }
 
     try {
-      // Check for overlapping bookings for each selected instance
-      const conflictList: ConflictInfo[] = [];
-      
-      for (const instance of selectedInstances) {
-        // Filter bookings that overlap with the selected time range and have this instance
-        const overlappingBookings = bookings.filter(b => {
-          const bookingStart = new Date(b.start_datetime);
-          const bookingEnd = new Date(b.end_datetime);
-          const formStart = new Date(formData.start_datetime);
-          const formEnd = new Date(formData.end_datetime);
-          
-          // Check time overlap
-          const hasOverlap = bookingStart < formEnd && bookingEnd > formStart;
-          
-          // Skip completed or cancelled bookings
-          const isActive = !['Completed', 'Cancelled'].includes(b.booking_status);
-          
-          return hasOverlap && isActive;
-        });
+      // Prepare resources for backend conflict check
+      const resources = selectedInstances.map(inst => ({
+        resource_type: 'EnvironmentInstance',
+        resource_ref_id: inst.env_instance_id,
+      }));
 
-        for (const booking of overlappingBookings) {
-          conflictList.push({
-            resource_type: 'EnvironmentInstance',
-            resource_ref_id: instance.env_instance_id,
-            resource_name: instance.name,
-            conflicting_booking_id: booking.booking_id,
-            conflicting_title: booking.title || 'Untitled Booking',
-            conflicting_start: booking.start_datetime,
-            conflicting_end: booking.end_datetime,
-          });
-        }
-      }
+      // Use backend API to check conflicts properly
+      const response = await bookingsAPI.checkConflicts({
+        resources,
+        start_datetime: formData.start_datetime,
+        end_datetime: formData.end_datetime,
+        exclude_booking_id: selectedBooking?.booking_id, // Exclude current booking when editing
+      });
+
+      // Map backend response to frontend conflict format
+      const conflictList: ConflictInfo[] = (response.data.conflicts || []).map((c: any) => {
+        const instance = selectedInstances.find(inst => inst.env_instance_id === c.resource_ref_id);
+        return {
+          resource_type: c.resource_type,
+          resource_ref_id: c.resource_ref_id,
+          resource_name: instance?.name || c.resource_ref_id,
+          conflicting_booking_id: c.conflicting_booking_id,
+          conflicting_title: c.conflicting_booking_title || 'Untitled Booking',
+          conflicting_start: c.conflicting_start,
+          conflicting_end: c.conflicting_end,
+        };
+      });
 
       setConflicts(conflictList);
       return conflictList;
     } catch (err) {
       console.error('Error checking conflicts:', err);
+      // Fall back to empty conflicts on error
+      setConflicts([]);
       return [];
     }
   };
