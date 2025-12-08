@@ -2,14 +2,18 @@
 
 import { io, Socket } from 'socket.io-client';
 
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:5000';
+// Use empty string for production (connects to same origin via nginx proxy)
+// For local dev without nginx, set NEXT_PUBLIC_WS_URL=http://localhost:5000
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL || '';
 
 let socket: Socket | null = null;
 
 export const getSocket = (): Socket => {
   if (!socket) {
-    socket = io(WS_URL, {
+    // When WS_URL is empty, socket.io connects to the current page origin
+    socket = io(WS_URL || undefined, {
       autoConnect: false,
+      path: '/socket.io',
     });
   }
   return socket;
