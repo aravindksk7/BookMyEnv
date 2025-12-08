@@ -12,7 +12,6 @@ import {
   IconButton,
   Tooltip,
   Chip,
-  Paper,
   Tab,
   Tabs,
   Table,
@@ -211,6 +210,7 @@ const StatCard = ({
 );
 
 export default function MonitoringPage() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

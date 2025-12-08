@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
-  Card,
   Button,
+  Card,
   Chip,
   Table,
   TableBody,
@@ -102,7 +102,7 @@ export default function ReleasesPage() {
   const { user } = useAuth();
   const [releases, setReleases] = useState<Release[]>([]);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
-  const [applications, setApplications] = useState<Application[]>([]);
+  const [_applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);

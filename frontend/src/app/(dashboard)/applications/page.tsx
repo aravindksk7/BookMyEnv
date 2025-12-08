@@ -50,7 +50,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { applicationsAPI, environmentsAPI } from '../../../lib/api';
 import { useAuth } from '../../../contexts/AuthContext';
-import DataGridWrapper, { createActionsColumn } from '../../../components/DataGridWrapper';
+import DataGridWrapper from '../../../components/DataGridWrapper';
 
 interface Application {
   application_id: string;

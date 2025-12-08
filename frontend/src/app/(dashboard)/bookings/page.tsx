@@ -36,7 +36,6 @@ import {
   ListItem,
   ListItemText,
   ListItemIcon,
-  Divider,
   Autocomplete,
   Collapse,
   RadioGroup,
@@ -44,11 +43,9 @@ import {
   FormControlLabel,
   FormLabel,
 } from '@mui/material';
-import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import {
   Add as AddIcon,
   Edit as EditIcon,
-  Delete as DeleteIcon,
   Visibility as ViewIcon,
   CalendarMonth as CalendarIcon,
   TableRows as TableIcon,
@@ -64,13 +61,13 @@ import {
   Apps as AppsIcon,
   SwapHoriz as InterfaceIcon,
   Storage as InstanceIcon,
-  Link as LinkIcon,
   Gavel as ResolveIcon,
   PriorityHigh as ConflictIcon,
 } from '@mui/icons-material';
 import { bookingsAPI, environmentsAPI, applicationsAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import DataGridWrapper from '@/components/DataGridWrapper';
+import { GridRenderCellParams } from '@mui/x-data-grid';
 
 // Dynamically import Schedule-X Calendar to avoid SSR issues
 const BookingCalendar = dynamic(
@@ -206,14 +203,13 @@ const RESOLUTION_TYPES = [
 
 const TEST_PHASES = ['SIT', 'UAT', 'NFT', 'Performance', 'DRRehearsal', 'PenTest', 'Other'];
 const BOOKING_TYPES = ['SingleEnv', 'MultiEnvE2E'];
-const BOOKING_STATUSES = ['Requested', 'PendingApproval', 'Approved', 'Active', 'Completed', 'Cancelled'];
-const LOGICAL_ROLES = ['SystemUnderTest', 'UpstreamDependency', 'DownstreamDependency', 'SharedInfra', 'DataStore', 'MessageBroker', 'SupportService', 'Other'];
 
 export default function BookingsPage() {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [environments, setEnvironments] = useState<Environment[]>([]);
   const [instances, setInstances] = useState<EnvironmentInstance[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [allApplications, setAllApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -232,7 +228,7 @@ export default function BookingsPage() {
 
   // Conflict management state
   const [conflictDetails, setConflictDetails] = useState<ConflictDetails | null>(null);
-  const [conflictingBookings, setConflictingBookings] = useState<Booking[]>([]);
+  const [_conflictingBookings, setConflictingBookings] = useState<Booking[]>([]);
   const [loadingConflicts, setLoadingConflicts] = useState(false);
   const [resolveDialogOpen, setResolveDialogOpen] = useState(false);
   const [selectedResolutionType, setSelectedResolutionType] = useState('AcceptOverlap');
@@ -261,7 +257,6 @@ export default function BookingsPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [conflictDialogOpen, setConflictDialogOpen] = useState(false);
 
   // Selected booking
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
@@ -313,7 +308,7 @@ export default function BookingsPage() {
               environment_name: env.name,
             });
           });
-        } catch (e) {
+        } catch (_e) {
           // Ignore errors for individual environments
         }
       }
@@ -330,7 +325,7 @@ export default function BookingsPage() {
     try {
       const response = await bookingsAPI.getById(bookingId);
       setDetailedBooking(response.data);
-    } catch (err: any) {
+    } catch (_err: any) {
       setError('Failed to fetch booking details');
     }
   };
@@ -509,6 +504,7 @@ export default function BookingsPage() {
     if (createDialogOpen || editDialogOpen) {
       checkConflicts();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.start_datetime, formData.end_datetime, selectedInstances, createDialogOpen, editDialogOpen]);
 
   const handleCreateBooking = async () => {
@@ -615,12 +611,14 @@ export default function BookingsPage() {
     setEditDialogOpen(true);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const openViewDialog = async (booking: Booking) => {
     setSelectedBooking(booking);
     await fetchBookingDetails(booking.booking_id);
     setViewDialogOpen(true);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const openDeleteDialog = (booking: Booking) => {
     setSelectedBooking(booking);
     setDeleteDialogOpen(true);
@@ -705,6 +703,7 @@ export default function BookingsPage() {
     });
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const renderCalendar = () => {
     const daysInMonth = getDaysInMonth(currentDate);
     const firstDay = getFirstDayOfMonth(currentDate);
@@ -743,7 +742,7 @@ export default function BookingsPage() {
           <Typography variant="body2" fontWeight={isToday ? 'bold' : 'normal'} sx={{ mb: 0.5 }}>
             {day}
           </Typography>
-          {dayBookings.slice(0, 3).map((b, idx) => (
+          {dayBookings.slice(0, 3).map((b, _idx) => (
             <Chip
               key={b.booking_id}
               label={b.title || b.test_phase}

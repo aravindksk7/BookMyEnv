@@ -37,7 +37,6 @@ import {
   Card,
   CardContent,
 } from '@mui/material';
-import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -48,7 +47,6 @@ import {
   Link as LinkIcon,
 } from '@mui/icons-material';
 import { interfacesAPI, environmentsAPI, componentInstancesAPI, applicationsAPI } from '@/lib/api';
-import DataGridWrapper from '@/components/DataGridWrapper';
 
 interface Application {
   application_id: string;

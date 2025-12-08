@@ -24,7 +24,6 @@ import {
   CardContent,
   CardHeader,
   Chip,
-  SvgIcon,
 } from '@mui/material';
 import {
   Menu as MenuIcon,

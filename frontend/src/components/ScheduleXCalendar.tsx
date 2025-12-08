@@ -287,6 +287,7 @@ export default function BookingCalendar({
       locale: 'en-US',
       firstDayOfWeek: 7, // Sunday (1=Monday, 7=Sunday)
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [events, bookings, onEventClick, onEventUpdate, canEdit]);
 
   const calendar = useCalendarApp(calendarConfig);

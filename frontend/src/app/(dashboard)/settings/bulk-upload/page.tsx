@@ -23,7 +23,6 @@ import {
   CircularProgress,
   Chip,
   IconButton,
-  Tooltip,
   Collapse,
   Divider,
   List,
@@ -46,7 +45,6 @@ import {
   Memory as ComponentIcon,
   Link as LinkIcon,
   Dns as InfraIcon,
-  Refresh as RefreshIcon,
   Hub as EndpointIcon,
   AccountTree as ComponentInstanceIcon,
 } from '@mui/icons-material';
@@ -285,7 +283,7 @@ export default function BulkUploadPage() {
           scrollButtons="auto"
           sx={{ borderBottom: 1, borderColor: 'divider' }}
         >
-          {uploadTypes.map((type, index) => (
+          {uploadTypes.map((type, _index) => (
             <Tab
               key={type.key}
               label={type.label}

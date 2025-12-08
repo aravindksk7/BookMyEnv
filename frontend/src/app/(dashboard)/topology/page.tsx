@@ -23,12 +23,10 @@ import {
   Paper,
   TextField,
   InputAdornment,
-  Collapse,
   List,
   ListItem,
   ListItemText,
   ListItemIcon,
-  Divider,
   Accordion,
   AccordionSummary,
   AccordionDetails,
@@ -43,9 +41,7 @@ import {
   Apps as AppsIcon,
   SwapHoriz as InterfaceIcon,
   KeyboardArrowRight as ArrowIcon,
-  Circle as DotIcon,
   AccountTree as TopologyIcon,
-  FilterList as FilterIcon,
 } from '@mui/icons-material';
 import { topologyAPI } from '@/lib/api';
 

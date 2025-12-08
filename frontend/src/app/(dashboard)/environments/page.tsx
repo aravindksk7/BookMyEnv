@@ -4,7 +4,6 @@ import React, { useEffect, useState, useCallback, lazy, Suspense } from 'react';
 import {
   Box,
   Typography,
-  Card,
   Button,
   Chip,
   Table,
@@ -36,13 +35,13 @@ import {
   Paper,
   Divider,
 } from '@mui/material';
-import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   Visibility as ViewIcon,
   Computer as InstanceIcon,
+  Dns as EnvironmentIcon,
   Apps as AppIcon,
   Close as CloseIcon,
   Storage as StorageIcon,
@@ -50,10 +49,10 @@ import {
   Link as LinkIcon,
   Cable as InterfaceIcon,
   Settings as ConfigIcon,
-  Terrain as EnvironmentIcon,
 } from '@mui/icons-material';
 import { environmentsAPI, applicationsAPI } from '@/lib/api';
 import DataGridWrapper from '@/components/DataGridWrapper';
+import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 
 // Lazy load the other page components
 const ApplicationsContent = lazy(() => import('../applications/page'));

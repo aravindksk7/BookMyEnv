@@ -18,7 +18,6 @@ import {
 import {
   Computer as EnvironmentIcon,
   CalendarMonth as BookingIcon,
-  Rocket as ReleaseIcon,
   Apps as ApplicationIcon,
   Person as PersonIcon,
   CheckCircle as CheckIcon,
