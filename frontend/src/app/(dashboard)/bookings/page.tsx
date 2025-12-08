@@ -827,7 +827,7 @@ export default function BookingsPage() {
           <Box>
             {canEdit && !['Completed', 'Cancelled'].includes(viewingBooking.booking_status) && (
               <>
-                {viewingBooking.booking_status === 'Requested' && (
+                {['Requested', 'PendingApproval'].includes(viewingBooking.booking_status) && (
                   <Button color="success" variant="contained" sx={{ mr: 1 }} onClick={() => handleUpdateStatus(viewingBooking.booking_id, 'Approved')}>
                     Approve
                   </Button>
@@ -1551,7 +1551,7 @@ export default function BookingsPage() {
                               <EditIcon />
                             </IconButton>
                           </Tooltip>
-                          {params.row.booking_status === 'Requested' && (
+                          {['Requested', 'PendingApproval'].includes(params.row.booking_status) && (
                             <Tooltip title="Approve">
                               <IconButton size="small" color="success" onClick={() => handleUpdateStatus(params.row.booking_id, 'Approved')}>
                                 <CheckCircleIcon />
@@ -1859,7 +1859,7 @@ export default function BookingsPage() {
         <DialogActions>
           {canEdit && selectedBooking && !['Completed', 'Cancelled'].includes(selectedBooking.booking_status) && (
             <>
-              {selectedBooking.booking_status === 'Requested' && (
+              {['Requested', 'PendingApproval'].includes(selectedBooking.booking_status) && (
                 <Button color="success" onClick={() => { handleUpdateStatus(selectedBooking.booking_id, 'Approved'); setViewDialogOpen(false); }}>
                   Approve
                 </Button>
