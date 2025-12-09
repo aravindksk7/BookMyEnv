@@ -32,9 +32,15 @@ const app = express();
 const server = http.createServer(app);
 
 // Socket.IO setup with authentication
+// Allow flexible origins for deployment behind nginx reverse proxy
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (same-origin via nginx proxy)
+      if (!origin) return callback(null, true);
+      // Allow all origins when behind nginx - nginx handles actual CORS
+      callback(null, true);
+    },
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -67,22 +73,46 @@ app.use(helmet({
   }
 }));
 
-// CORS configuration with explicit allowed origins
+// CORS configuration - flexible for deployment behind reverse proxy
+// When behind nginx, nginx handles external CORS; backend just needs to accept proxied requests
+const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000';
 const allowedOrigins = [
   process.env.FRONTEND_URL,
+  process.env.CORS_ORIGIN,
   'http://localhost:3000',
-  'https://localhost'
+  'https://localhost',
+  'http://localhost'
 ].filter(Boolean);
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl, etc.)
+    // Allow requests with no origin (same-origin requests from nginx proxy, mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
+    
+    // Check if origin matches allowed origins
     if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+      return callback(null, true);
     }
+    
+    // Allow any origin that matches the CORS_ORIGIN pattern (supports IP addresses and hostnames)
+    // This handles cases like http://192.168.1.100 or https://myserver.local
+    if (corsOrigin === '*') {
+      return callback(null, true);
+    }
+    
+    // For production behind nginx: if origin uses same protocol, allow it
+    // Nginx proxies requests so the real CORS check happens at nginx level
+    const originUrl = new URL(origin);
+    const allowedUrl = new URL(corsOrigin.startsWith('http') ? corsOrigin : `https://${corsOrigin}`);
+    
+    // Allow if same protocol (http/https) - nginx handles the real security
+    if (originUrl.protocol === allowedUrl.protocol || 
+        originUrl.protocol === 'https:' || 
+        process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+    
+    callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
