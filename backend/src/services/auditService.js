@@ -174,20 +174,20 @@ async function logAuditEvent({
     const query = `
       INSERT INTO audit_events (
         audit_id, timestamp_utc,
-        actor_user_id, actor_username, actor_display_name, actor_role,
-        actor_ip_address, actor_user_agent,
-        entity_type, entity_id, entity_name,
-        action_type, action_description,
-        source_system,
+        actor_user_id, actor_user_name, actor_role,
+        ip_address, user_agent,
+        entity_type, entity_id, entity_display_name,
+        action_type, action_result, comment,
+        source_channel,
         before_snapshot, after_snapshot, changed_fields,
-        regulatory_tag, request_id, session_id,
-        additional_context
+        regulatory_tag, correlation_id, session_id,
+        metadata
       ) VALUES (
         $1, NOW(),
-        $2, $3, $4, $5,
-        $6, $7,
-        $8, $9, $10,
-        $11, $12,
+        $2, $3, $4,
+        $5, $6,
+        $7, $8, $9,
+        $10, $11, $12,
         $13,
         $14, $15, $16,
         $17, $18, $19,
@@ -200,7 +200,6 @@ async function logAuditEvent({
       auditId,
       context.actorUserId,
       context.actorUserName || 'System',
-      context.actorUserName || 'System',
       context.actorRole || 'System',
       context.ipAddress,
       context.userAgent,
@@ -208,6 +207,7 @@ async function logAuditEvent({
       entityId,
       entityDisplayName,
       actionType,
+      'SUCCESS', // action_result
       comment,
       context.sourceChannel || SOURCE_CHANNELS.WEB_UI,
       sanitizedBefore ? JSON.stringify(sanitizedBefore) : null,
@@ -333,9 +333,9 @@ async function searchAuditEvents({
     // Full-text search
     if (searchText) {
       whereConditions.push(`
-        (entity_name ILIKE $${paramIndex} OR 
-         actor_username ILIKE $${paramIndex} OR
-         action_description ILIKE $${paramIndex})
+        (entity_display_name ILIKE $${paramIndex} OR 
+         actor_user_name ILIKE $${paramIndex} OR
+         comment ILIKE $${paramIndex})
       `);
       values.push(`%${searchText}%`);
       paramIndex++;
@@ -369,9 +369,9 @@ async function searchAuditEvents({
       paramIndex++;
     }
     
-    // Source system filter
+    // Source channel filter
     if (sourceChannel) {
-      whereConditions.push(`source_system = $${paramIndex}`);
+      whereConditions.push(`source_channel = $${paramIndex}`);
       values.push(sourceChannel);
       paramIndex++;
     }
@@ -410,7 +410,7 @@ async function searchAuditEvents({
     // Validate sort column
     const validSortColumns = [
       'timestamp_utc', 'entity_type', 'action_type', 
-      'actor_username', 'entity_name'
+      'actor_user_name', 'entity_display_name'
     ];
     const safeSortBy = validSortColumns.includes(sortBy) ? sortBy : 'timestamp_utc';
     const safeSortOrder = sortOrder === 'ASC' ? 'ASC' : 'DESC';
@@ -427,11 +427,11 @@ async function searchAuditEvents({
     const query = `
       SELECT 
         audit_id, timestamp_utc,
-        actor_user_id, actor_username, actor_display_name, actor_role,
-        entity_type, entity_id, entity_name,
-        action_type, action_description,
-        source_system, actor_ip_address,
-        regulatory_tag, request_id,
+        actor_user_id, actor_user_name, actor_role,
+        entity_type, entity_id, entity_display_name,
+        action_type, action_result, comment,
+        source_channel, ip_address,
+        regulatory_tag, correlation_id,
         changed_fields, before_snapshot, after_snapshot
       FROM audit_events
       ${whereClause}
@@ -515,12 +515,12 @@ async function getAuditStats(dateFrom, dateTo) {
     
     // Top actors
     const actorsQuery = `
-      SELECT actor_username as actor_user_name, COUNT(*) as count
+      SELECT actor_user_name, COUNT(*) as count
       FROM audit_events
-      WHERE actor_username IS NOT NULL
+      WHERE actor_user_name IS NOT NULL
         AND ($1::timestamptz IS NULL OR timestamp_utc >= $1)
         AND ($2::timestamptz IS NULL OR timestamp_utc <= $2)
-      GROUP BY actor_username
+      GROUP BY actor_user_name
       ORDER BY count DESC
       LIMIT 5
     `;
@@ -556,8 +556,8 @@ async function getReportTemplates() {
   try {
     const query = `
       SELECT 
-        template_id, name, description, report_type,
-        filters, columns, grouping,
+        template_id, name, description, category,
+        filter_template, output_columns,
         is_system_template,
         created_at, updated_at
       FROM audit_report_templates
@@ -588,7 +588,7 @@ async function generateReport(templateId, filters, userId) {
     const template = templateResult.rows[0];
     
     // Merge template filters with provided filters
-    const templateFilters = template.filters || {};
+    const templateFilters = template.filter_template || {};
     const mergedFilters = {
       entityTypes: filters.entityTypes || templateFilters.entity_type ? [templateFilters.entity_type] : null,
       actionTypes: filters.actionTypes || templateFilters.action_type,
