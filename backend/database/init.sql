@@ -1564,13 +1564,13 @@ CREATE TABLE IF NOT EXISTS audit_generated_reports (
 );
 
 -- Insert default audit report templates
-INSERT INTO audit_report_templates (template_id, name, description, report_type, filters, columns, is_system_template) VALUES
-('a0000001-0001-0001-0001-000000000001', 'All Activity Report', 'Complete audit trail of all system activities', 'COMPREHENSIVE', '{}', '["timestamp_utc", "actor_username", "entity_type", "action_type", "action_description"]', true),
-('a0000001-0001-0001-0001-000000000002', 'User Activity Report', 'All activities performed by a specific user', 'USER_ACTIVITY', '{"groupBy": "actor_user_id"}', '["timestamp_utc", "entity_type", "action_type", "entity_name", "action_description"]', true),
-('a0000001-0001-0001-0001-000000000003', 'Environment Changes', 'All changes to environment configurations', 'ENTITY_CHANGES', '{"entity_type": "Environment"}', '["timestamp_utc", "actor_username", "action_type", "entity_name", "changed_fields"]', true),
-('a0000001-0001-0001-0001-000000000004', 'Booking Audit Trail', 'Complete history of booking operations', 'ENTITY_CHANGES', '{"entity_type": "Booking"}', '["timestamp_utc", "actor_username", "action_type", "entity_name", "before_snapshot", "after_snapshot"]', true),
-('a0000001-0001-0001-0001-000000000005', 'Security Events', 'Login/logout and access-related events', 'SECURITY', '{"action_type": ["LOGIN", "LOGOUT"]}', '["timestamp_utc", "actor_username", "actor_ip_address", "action_type", "action_description"]', true),
-('a0000001-0001-0001-0001-000000000006', 'Compliance Report', 'Regulatory compliance audit report', 'COMPLIANCE', '{"regulatory_tag": "NOT NULL"}', '["timestamp_utc", "actor_username", "entity_type", "action_type", "regulatory_tag", "data_classification"]', true)
+INSERT INTO audit_report_templates (template_id, name, description, category, filter_template, output_columns, is_system_template) VALUES
+('a0000001-0001-0001-0001-000000000001', 'All Activity Report', 'Complete audit trail of all system activities', 'OPERATIONS', '{}', ARRAY['timestamp_utc', 'actor_username', 'entity_type', 'action_type', 'action_description'], true),
+('a0000001-0001-0001-0001-000000000002', 'User Activity Report', 'All activities performed by a specific user', 'OPERATIONS', '{"groupBy": "actor_user_id"}', ARRAY['timestamp_utc', 'entity_type', 'action_type', 'entity_name', 'action_description'], true),
+('a0000001-0001-0001-0001-000000000003', 'Environment Changes', 'All changes to environment configurations', 'OPERATIONS', '{"entity_type": "Environment"}', ARRAY['timestamp_utc', 'actor_username', 'action_type', 'entity_name', 'changed_fields'], true),
+('a0000001-0001-0001-0001-000000000004', 'Booking Audit Trail', 'Complete history of booking operations', 'OPERATIONS', '{"entity_type": "Booking"}', ARRAY['timestamp_utc', 'actor_username', 'action_type', 'entity_name', 'before_snapshot', 'after_snapshot'], true),
+('a0000001-0001-0001-0001-000000000005', 'Security Events', 'Login/logout and access-related events', 'SECURITY', '{"action_type": ["LOGIN", "LOGOUT"]}', ARRAY['timestamp_utc', 'actor_username', 'actor_ip_address', 'action_type', 'action_description'], true),
+('a0000001-0001-0001-0001-000000000006', 'Compliance Report', 'Regulatory compliance audit report', 'COMPLIANCE', '{"regulatory_tag": "NOT NULL"}', ARRAY['timestamp_utc', 'actor_username', 'entity_type', 'action_type', 'regulatory_tag', 'data_classification'], true)
 ON CONFLICT DO NOTHING;
 
 COMMIT;
