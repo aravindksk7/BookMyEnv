@@ -23,6 +23,7 @@ const configRoutes = require('./routes/configRoutes');
 const testDataRoutes = require('./routes/testDataRoutes');
 const topologyRoutes = require('./routes/topologyRoutes');
 const bulkUploadRoutes = require('./routes/bulkUploadRoutes');
+const refreshRoutes = require('./routes/refreshRoutes');
 
 // Import database
 const db = require('./config/database');
@@ -174,6 +175,7 @@ app.use('/api/configs', configRoutes);
 app.use('/api/test-data', testDataRoutes);
 app.use('/api/topology', topologyRoutes);
 app.use('/api/bulk-upload', bulkUploadRoutes);
+app.use('/api/refresh', refreshRoutes);
 
 // Import auth middleware for protected routes
 const { authenticate } = require('./middleware/auth');

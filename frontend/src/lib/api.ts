@@ -276,4 +276,145 @@ export const bulkUploadAPI = {
   uploadComponentInstances: (csvContent: string) => api.post('/bulk-upload/component-instances', { csvContent }),
 };
 
+// Refresh Lifecycle API
+export const refreshAPI = {
+  // Statistics & Calendar
+  getStatistics: (period?: number) => api.get('/refresh/statistics', { params: { period } }),
+  getCalendar: (startDate: string, endDate: string, entityType?: string) => 
+    api.get('/refresh/calendar', { params: { startDate, endDate, entityType } }),
+
+  // Refresh History
+  getAllHistory: (params?: {
+    entityType?: string;
+    refreshType?: string;
+    startDate?: string;
+    endDate?: string;
+    executionStatus?: string;
+    limit?: number;
+    offset?: number;
+  }) => api.get('/refresh/history', { params }),
+  
+  getHistory: (entityType: string, entityId: string, limit?: number, offset?: number) => 
+    api.get(`/refresh/history/${entityType}/${entityId}`, { params: { limit, offset } }),
+  
+  createHistory: (data: {
+    entityType: string;
+    entityId: string;
+    entityName?: string;
+    refreshDate: string;
+    refreshType: string;
+    sourceEnvironmentId?: string;
+    sourceEnvironmentName?: string;
+    sourceSnapshotName?: string;
+    sourceSnapshotDate?: string;
+    changeTicketRef?: string;
+    releaseId?: string;
+    jiraRef?: string;
+    servicenowRef?: string;
+    executionStatus?: string;
+    durationMinutes?: number;
+    dataVolumeGb?: number;
+    rowsAffected?: number;
+    notes?: string;
+    errorMessage?: string;
+    executionLogUrl?: string;
+    refreshIntentId?: string;
+  }) => api.post('/refresh/history', data),
+
+  // Refresh Intents
+  getIntents: (params?: {
+    status?: string;
+    entityType?: string;
+    startDate?: string;
+    endDate?: string;
+    requestedBy?: string;
+    pendingApproval?: boolean;
+    limit?: number;
+    offset?: number;
+  }) => api.get('/refresh/intents', { params }),
+  
+  getPendingApprovals: () => api.get('/refresh/intents/pending-approval'),
+  
+  getEntityIntents: (entityType: string, entityId: string, includeCompleted?: boolean) => 
+    api.get(`/refresh/intents/entity/${entityType}/${entityId}`, { params: { includeCompleted } }),
+  
+  getIntentById: (id: string) => api.get(`/refresh/intents/${id}`),
+  
+  createIntent: (data: {
+    entityType: string;
+    entityId: string;
+    entityName?: string;
+    plannedDate: string;
+    plannedEndDate?: string;
+    refreshType: string;
+    sourceEnvironmentId?: string;
+    sourceEnvironmentName?: string;
+    sourceSnapshotName?: string;
+    useLatestSnapshot?: boolean;
+    impactScope?: string[];
+    requiresDowntime?: boolean;
+    estimatedDowntimeMinutes?: number;
+    affectedApplications?: string[];
+    reason: string;
+    businessJustification?: string;
+    requiresApproval?: boolean;
+    changeTicketRef?: string;
+    releaseId?: string;
+    jiraRef?: string;
+    servicenowRef?: string;
+    notificationGroups?: string[];
+    notificationLeadDays?: number[];
+  }) => api.post('/refresh/intents', data),
+  
+  updateIntent: (id: string, data: Partial<{
+    plannedDate: string;
+    plannedEndDate: string;
+    refreshType: string;
+    sourceEnvironmentId: string;
+    sourceEnvironmentName: string;
+    sourceSnapshotName: string;
+    useLatestSnapshot: boolean;
+    impactScope: string[];
+    requiresDowntime: boolean;
+    estimatedDowntimeMinutes: number;
+    affectedApplications: string[];
+    reason: string;
+    businessJustification: string;
+    changeTicketRef: string;
+    releaseId: string;
+    jiraRef: string;
+    servicenowRef: string;
+    notificationGroups: string[];
+    notificationLeadDays: number[];
+  }>) => api.put(`/refresh/intents/${id}`, data),
+  
+  approveIntent: (id: string, approvalNotes?: string) => 
+    api.post(`/refresh/intents/${id}/approve`, { approvalNotes }),
+  
+  rejectIntent: (id: string, rejectionReason: string) => 
+    api.post(`/refresh/intents/${id}/reject`, { rejectionReason }),
+  
+  startExecution: (id: string) => api.post(`/refresh/intents/${id}/start`),
+  
+  completeExecution: (id: string, data: {
+    executionNotes?: string;
+    durationMinutes?: number;
+    dataVolumeGb?: number;
+    rowsAffected?: number;
+    executionStatus?: 'SUCCESS' | 'PARTIAL_SUCCESS' | 'FAILED';
+    errorMessage?: string;
+  }) => api.post(`/refresh/intents/${id}/complete`, data),
+  
+  cancelIntent: (id: string, cancellationReason?: string) => 
+    api.post(`/refresh/intents/${id}/cancel`, { cancellationReason }),
+
+  // Conflicts
+  getConflicts: (intentId: string) => api.get(`/refresh/intents/${intentId}/conflicts`),
+  
+  resolveConflict: (conflictId: string, data: {
+    resolutionStatus: 'ACKNOWLEDGED' | 'BOOKING_MOVED' | 'REFRESH_MOVED' | 'OVERRIDE_APPROVED' | 'DISMISSED';
+    resolutionNotes?: string;
+  }) => api.post(`/refresh/conflicts/${conflictId}/resolve`, data),
+};
+
 export default api;

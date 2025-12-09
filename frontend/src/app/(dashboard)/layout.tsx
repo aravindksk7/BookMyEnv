@@ -40,6 +40,7 @@ import {
   Analytics as MonitoringIcon,
   Storage as TestDataIcon,
   AccountTree as TopologyIcon,
+  Autorenew as RefreshIcon,
 } from '@mui/icons-material';
 import { useAuth } from '@/contexts/AuthContext';
 import { dashboardAPI } from '@/lib/api';
@@ -95,6 +96,7 @@ const menuItems = [
   { text: 'Topology', icon: <TopologyIcon />, path: '/topology' },
   { text: 'Environments', icon: <EnvironmentIcon />, path: '/environments' },
   { text: 'Bookings', icon: <BookingIcon />, path: '/bookings' },
+  { text: 'Refresh Calendar', icon: <RefreshIcon />, path: '/refresh' },
   { text: 'Releases', icon: <ReleaseIcon />, path: '/releases' },
   { text: 'Test Data', icon: <TestDataIcon />, path: '/testdata' },
   { text: 'Groups', icon: <GroupIcon />, path: '/groups' },

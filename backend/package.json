@@ -1,7 +1,7 @@
 {
   "name": "tem-backend",
-  "version": "1.0.0",
-  "description": "Test Environment Management Backend API",
+  "version": "4.0.0",
+  "description": "Test Environment Management Backend API - with Refresh Lifecycle Management",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
