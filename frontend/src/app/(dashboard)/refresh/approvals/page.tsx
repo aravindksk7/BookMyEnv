@@ -222,25 +222,83 @@ export default function RefreshApprovalsPage() {
 
       {/* Statistics Cards */}
       {statistics && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow p-4">
-            <div className="text-sm text-gray-500">Pending Approvals</div>
-            <div className="text-2xl font-bold text-yellow-600">{statistics.summary.pendingApprovals}</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
+          {/* Pending Approvals */}
+          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-yellow-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium text-gray-500">Pending Approvals</div>
+                <div className="text-2xl font-bold text-yellow-600">{statistics.summary?.pendingApprovals ?? 0}</div>
+              </div>
+              <div className="text-3xl opacity-30">⏳</div>
+            </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <div className="text-sm text-gray-500">Upcoming (7 days)</div>
-            <div className="text-2xl font-bold text-blue-600">{statistics.summary.upcomingRefreshes}</div>
+          
+          {/* Upcoming Refreshes */}
+          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium text-gray-500">Upcoming (7 days)</div>
+                <div className="text-2xl font-bold text-blue-600">{statistics.summary?.upcomingRefreshes ?? 0}</div>
+              </div>
+              <div className="text-3xl opacity-30">📅</div>
+            </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <div className="text-sm text-gray-500">Unresolved Conflicts</div>
-            <div className="text-2xl font-bold text-red-600">{statistics.summary.unresolvedConflicts}</div>
+          
+          {/* Unresolved Conflicts */}
+          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium text-gray-500">Unresolved Conflicts</div>
+                <div className="text-2xl font-bold text-red-600">{statistics.summary?.unresolvedConflicts ?? 0}</div>
+              </div>
+              <div className="text-3xl opacity-30">⚠️</div>
+            </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <div className="text-sm text-gray-500">Success Rate (30d)</div>
-            <div className="text-2xl font-bold text-green-600">
-              {statistics.historyStats.totalCount > 0 
-                ? `${Math.round((statistics.historyStats.successCount / statistics.historyStats.totalCount) * 100)}%`
-                : '-'}
+          
+          {/* Success Rate */}
+          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium text-gray-500">Success Rate (30d)</div>
+                <div className="text-2xl font-bold text-green-600">
+                  {statistics.historyStats?.totalCount > 0 
+                    ? `${Math.round((statistics.historyStats.successCount / statistics.historyStats.totalCount) * 100)}%`
+                    : 'N/A'}
+                </div>
+              </div>
+              <div className="text-3xl opacity-30">✅</div>
+            </div>
+          </div>
+          
+          {/* Total Completed */}
+          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-indigo-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium text-gray-500">Completed (30d)</div>
+                <div className="text-2xl font-bold text-indigo-600">
+                  <span className="text-green-600">{statistics.historyStats?.successCount ?? 0}</span>
+                  <span className="text-gray-400 mx-1">/</span>
+                  <span className="text-red-600">{statistics.historyStats?.failedCount ?? 0}</span>
+                </div>
+                <div className="text-xs text-gray-400">success / failed</div>
+              </div>
+              <div className="text-3xl opacity-30">📊</div>
+            </div>
+          </div>
+          
+          {/* Avg Duration */}
+          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-purple-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium text-gray-500">Avg Duration</div>
+                <div className="text-2xl font-bold text-purple-600">
+                  {statistics.historyStats?.avgDurationMinutes 
+                    ? `${statistics.historyStats.avgDurationMinutes}m`
+                    : 'N/A'}
+                </div>
+              </div>
+              <div className="text-3xl opacity-30">⏱️</div>
             </div>
           </div>
         </div>

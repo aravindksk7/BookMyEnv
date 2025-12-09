@@ -352,6 +352,7 @@ export const refreshAPI = {
     sourceSnapshotName?: string;
     useLatestSnapshot?: boolean;
     impactScope?: string[];
+    impactType?: 'DATA_OVERWRITE' | 'DOWNTIME_REQUIRED' | 'READ_ONLY' | 'CONFIG_CHANGE' | 'SCHEMA_CHANGE';
     requiresDowntime?: boolean;
     estimatedDowntimeMinutes?: number;
     affectedApplications?: string[];
@@ -364,6 +365,12 @@ export const refreshAPI = {
     servicenowRef?: string;
     notificationGroups?: string[];
     notificationLeadDays?: number[];
+    conflictAcknowledged?: boolean;
+    conflictSummary?: {
+      hasConflicts: boolean;
+      conflictFlag: string;
+      conflictCount: number;
+    };
   }) => api.post('/refresh/intents', data),
   
   updateIntent: (id: string, data: Partial<{
@@ -375,6 +382,7 @@ export const refreshAPI = {
     sourceSnapshotName: string;
     useLatestSnapshot: boolean;
     impactScope: string[];
+    impactType: 'DATA_OVERWRITE' | 'DOWNTIME_REQUIRED' | 'READ_ONLY' | 'CONFIG_CHANGE' | 'SCHEMA_CHANGE';
     requiresDowntime: boolean;
     estimatedDowntimeMinutes: number;
     affectedApplications: string[];
@@ -411,10 +419,129 @@ export const refreshAPI = {
   // Conflicts
   getConflicts: (intentId: string) => api.get(`/refresh/intents/${intentId}/conflicts`),
   
+  getDetailedConflicts: (intentId: string) => api.get(`/refresh/intents/${intentId}/conflicts/detailed`),
+  
+  revalidateConflicts: (intentId: string) => api.post(`/refresh/intents/${intentId}/conflicts/revalidate`),
+  
   resolveConflict: (conflictId: string, data: {
     resolutionStatus: 'ACKNOWLEDGED' | 'BOOKING_MOVED' | 'REFRESH_MOVED' | 'OVERRIDE_APPROVED' | 'DISMISSED';
     resolutionNotes?: string;
   }) => api.post(`/refresh/conflicts/${conflictId}/resolve`, data),
+  
+  resolveConflictEnhanced: (conflictId: string, data: {
+    resolution: 'ACKNOWLEDGED' | 'BOOKING_MOVED' | 'REFRESH_MOVED' | 'OVERRIDE_APPROVED' | 'DISMISSED';
+    notes?: string;
+  }) => api.post(`/refresh/conflicts/${conflictId}/resolve-enhanced`, data),
+  
+  bulkResolveConflicts: (data: {
+    conflictIds: string[];
+    resolution: 'ACKNOWLEDGED' | 'BOOKING_MOVED' | 'REFRESH_MOVED' | 'OVERRIDE_APPROVED' | 'DISMISSED';
+    notes?: string;
+  }) => api.post('/refresh/conflicts/bulk-resolve', data),
+  
+  getAllUnresolvedConflicts: (params?: {
+    entityType?: string;
+    severity?: string;
+    groupId?: string;
+  }) => api.get('/refresh/conflicts/unresolved', { params }),
+  
+  // Conflict Detection Preview
+  checkConflictsPreview: (data: {
+    entityType: string;
+    entityId: string;
+    plannedDate: string;
+    plannedEndDate?: string;
+    impactType?: 'DATA_OVERWRITE' | 'DOWNTIME_REQUIRED' | 'READ_ONLY' | 'CONFIG_CHANGE' | 'SCHEMA_CHANGE';
+    estimatedDowntimeMinutes?: number;
+  }) => api.post('/refresh/conflicts/check', data),
+  
+  suggestTimeSlots: (params: {
+    entityType: string;
+    entityId: string;
+    durationMinutes?: number;
+    preferredDateRange?: number;
+    impactType?: string;
+  }) => api.get('/refresh/conflicts/suggest-slots', { params }),
+};
+
+// Booking refresh awareness API
+export const bookingRefreshAPI = {
+  checkRefreshConflicts: (data: {
+    startDatetime: string;
+    endDatetime: string;
+    environmentInstanceIds: string[];
+  }) => api.post('/bookings/check-refresh-conflicts', data),
+  
+  getRefreshesForBooking: (bookingId: string) => api.get(`/bookings/${bookingId}/refresh-conflicts`),
+};
+
+// Audit & Compliance API
+export const auditAPI = {
+  // Search and filter events
+  searchEvents: (params: {
+    search?: string;
+    entityTypes?: string;
+    actionTypes?: string;
+    actorUserId?: string;
+    actorRole?: string;
+    sourceChannel?: string;
+    actionResult?: string;
+    regulatoryTag?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    entityId?: string;
+    correlationId?: string;
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: 'ASC' | 'DESC';
+  }) => api.get('/audit/events', { params }),
+  
+  // Get single event details
+  getEventById: (id: string) => api.get(`/audit/events/${id}`),
+  
+  // Get statistics
+  getStats: (params?: { dateFrom?: string; dateTo?: string }) => 
+    api.get('/audit/stats', { params }),
+  
+  // Filter options for dropdowns
+  getFilterOptions: () => api.get('/audit/options'),
+  
+  // Report templates
+  getReportTemplates: () => api.get('/audit/reports/templates'),
+  
+  // Generate report
+  generateReport: (data: {
+    templateId: string;
+    filters?: {
+      entityTypes?: string[];
+      actionTypes?: string[];
+      regulatoryTag?: string;
+      dateFrom?: string;
+      dateTo?: string;
+    };
+  }) => api.post('/audit/reports/generate', data),
+  
+  // Export events
+  exportEvents: (data: {
+    filters: {
+      search?: string;
+      entityTypes?: string[];
+      actionTypes?: string[];
+      dateFrom?: string;
+      dateTo?: string;
+    };
+    format: 'json' | 'csv';
+  }) => api.post('/audit/export', data),
+  
+  // Saved filters
+  getSavedFilters: () => api.get('/audit/filters'),
+  saveFilter: (data: {
+    name: string;
+    description?: string;
+    filters: Record<string, unknown>;
+    isShared?: boolean;
+  }) => api.post('/audit/filters', data),
 };
 
 export default api;

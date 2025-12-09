@@ -85,6 +85,12 @@
    - Interface Endpoints, Component Instances
 4. Download template → Fill → Upload
 
+### View Audit Trail ⭐ NEW
+1. Sidebar → Audit & Compliance
+2. Use filters: Category, Action, Date Range, Actor
+3. Click event row for full details
+4. Export reports using templates
+
 ### Create a Release
 1. Releases → + New Release
 2. Fill: Name, Version, Dates
@@ -156,6 +162,8 @@
 | Approve Booking | ✅ | ✅ | ❌ | ❌ | ❌ |
 | Create Release | ✅ | ❌ | ✅ | ❌ | ❌ |
 | Manage Users | ✅ | ❌ | ❌ | ❌ | ❌ |
+| View Audit Logs | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Export Audit Reports | ✅ | ✅ | ❌ | ❌ | ❌ |
 | View All | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 ---
@@ -203,6 +211,15 @@ GET  /api/interfaces/:id/endpoints        # Get interface endpoints
 GET  /api/groups                  # List groups
 GET  /api/dashboard/stats         # Get statistics
 GET  /health                      # Health check
+
+# Audit & Compliance Endpoints ⭐ NEW
+GET  /api/audit/events            # Search audit events
+GET  /api/audit/events/stats      # Get audit statistics
+GET  /api/audit/events/:id        # Get event details
+GET  /api/audit/reports/templates # List report templates
+POST /api/audit/reports/templates # Create report template
+POST /api/audit/reports/generate  # Generate audit report
+GET  /api/audit/reports           # List generated reports
 
 # Bulk Upload Endpoints
 POST /api/bulk-upload/environments        # Upload environments
@@ -297,4 +314,4 @@ See [terraform/README.md](../terraform/README.md) for complete AWS deployment gu
 
 ---
 
-**BookMyEnv v3.1.0** | December 2025
+**BookMyEnv v4.2.0** | January 2025

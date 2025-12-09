@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const auditService = require('../services/auditService');
 
 const applicationController = {
   // Get all applications
@@ -116,6 +117,15 @@ const applicationController = {
         [req.user.user_id, 'CREATE', 'Application', result.rows[0].application_id, name]
       );
 
+      // Audit log
+      await auditService.logCreate(
+        auditService.ENTITY_TYPES.APPLICATION,
+        result.rows[0].application_id,
+        name,
+        result.rows[0],
+        req
+      );
+
       res.status(201).json(result.rows[0]);
     } catch (error) {
       console.error('Create application error:', error);
@@ -155,6 +165,16 @@ const applicationController = {
         return res.status(404).json({ error: 'Application not found' });
       }
 
+      // Audit log
+      await auditService.logUpdate(
+        auditService.ENTITY_TYPES.APPLICATION,
+        id,
+        result.rows[0].name,
+        null,
+        result.rows[0],
+        req
+      );
+
       res.json(result.rows[0]);
     } catch (error) {
       console.error('Update application error:', error);
@@ -175,6 +195,15 @@ const applicationController = {
       if (result.rows.length === 0) {
         return res.status(404).json({ error: 'Application not found' });
       }
+
+      // Audit log
+      await auditService.logDelete(
+        auditService.ENTITY_TYPES.APPLICATION,
+        id,
+        result.rows[0].name,
+        result.rows[0],
+        req
+      );
 
       res.json({ message: 'Application deleted successfully' });
     } catch (error) {

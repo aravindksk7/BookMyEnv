@@ -32,9 +32,20 @@
             padding: 40px 20px;
         }
         
-        h1 { color: var(--primary); border-bottom: 3px solid var(--primary); padding-bottom: 10px; margin-bottom: 30px; }
-        h2 { color: var(--gray-800); margin: 30px 0 15px; padding-bottom: 8px; border-bottom: 1px solid var(--gray-200); }
+        h1 { 
+            color: var(--primary); 
+            border-bottom: 3px solid var(--primary); 
+            padding-bottom: 10px; 
+            margin-bottom: 30px; 
+        }
+        h2 { 
+            color: var(--gray-800); 
+            margin: 30px 0 15px; 
+            padding-bottom: 8px; 
+            border-bottom: 1px solid var(--gray-200); 
+        }
         h3 { color: var(--gray-800); margin: 20px 0 10px; }
+        h4 { color: var(--gray-800); margin: 15px 0 8px; }
         
         p { margin: 10px 0; }
         
@@ -69,6 +80,8 @@
             border-radius: 8px;
             overflow-x: auto;
             margin: 15px 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
         }
         
         pre code { background: none; padding: 0; color: inherit; }
@@ -100,93 +113,173 @@
             border-radius: 4px;
             font-size: 12px;
             font-weight: 600;
-            text-transform: uppercase;
         }
         
-        .badge-critical { background: #f44336; color: white; }
-        .badge-high { background: #ff9800; color: white; }
-        .badge-medium { background: #2196f3; color: white; }
-        .badge-low { background: #4caf50; color: white; }
+        .badge-new {
+            background: var(--success);
+            color: white;
+        }
         
         ul, ol { margin: 10px 0 10px 25px; }
         li { margin: 5px 0; }
+        
+        a { color: var(--primary); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        
+        blockquote {
+            border-left: 4px solid var(--primary);
+            padding: 10px 20px;
+            margin: 15px 0;
+            background: var(--gray-50);
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid var(--gray-200);
+            margin: 30px 0;
+        }
+        
+        .new-badge::after {
+            content: "NEW";
+            background: var(--success);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        
+        .version-badge {
+            background: var(--primary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        
+        /* Syntax highlighting classes */
+        .hljs-keyword { color: #c792ea; }
+        .hljs-string { color: #c3e88d; }
+        .hljs-comment { color: #546e7a; }
+        .hljs-number { color: #f78c6c; }
+        
+        /* Footer */
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid var(--gray-200);
+            text-align: center;
+            color: var(--gray-800);
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔒 BookMyEnv Security Guide</h1>
-        
-        <p>This document describes the security measures implemented in BookMyEnv and recommendations for production deployment.</p>
-        
-        <h2>Security Features Implemented</h2>
-        
-        <h3>1. Authentication & Authorization</h3>
-        
-        <h4>Password Security</h4>
-        <ul>
-            <li><strong>Bcrypt hashing</strong> with 12 rounds (OWASP recommended)</li>
-            <li><strong>Password strength validation</strong>: Minimum 8 characters with uppercase, lowercase, number, and special character</li>
-            <li>Passwords are never logged or exposed in API responses</li>
-        </ul>
-        
-        <h4>JWT Token Security</h4>
-        <ul>
-            <li>Tokens are signed with a secret key (must be set via environment variable)</li>
-            <li>Default expiration: 24 hours</li>
-            <li>User role embedded in token for authorization</li>
-        </ul>
-        
-        <h4>Rate Limiting</h4>
-        <ul>
-            <li><strong>General API</strong>: 100 requests per 15 minutes per IP</li>
-            <li><strong>Authentication endpoints</strong>: 5 login attempts per 15 minutes per IP</li>
-            <li>Protects against brute force and credential stuffing attacks</li>
-        </ul>
-        
-        <h3>2. Input Validation</h3>
-        <ul>
-            <li><strong>express-validator</strong> middleware for all user inputs</li>
-            <li>Email normalization and validation</li>
-            <li>Username alphanumeric validation (3-50 characters)</li>
-            <li>Request body size limited to 10KB (DoS protection)</li>
-        </ul>
-        
-        <h3>3. HTTP Security Headers</h3>
-        
-        <table>
-            <tr><th>Header</th><th>Value</th><th>Purpose</th></tr>
-            <tr><td>X-Frame-Options</td><td>SAMEORIGIN</td><td>Clickjacking protection</td></tr>
-            <tr><td>X-Content-Type-Options</td><td>nosniff</td><td>MIME sniffing protection</td></tr>
-            <tr><td>X-XSS-Protection</td><td>1; mode=block</td><td>XSS filter</td></tr>
-            <tr><td>Strict-Transport-Security</td><td>max-age=31536000; includeSubDomains; preload</td><td>Force HTTPS</td></tr>
-            <tr><td>Referrer-Policy</td><td>strict-origin-when-cross-origin</td><td>Referrer leakage protection</td></tr>
-            <tr><td>Content-Security-Policy</td><td>Restrictive policy</td><td>XSS/injection protection</td></tr>
-            <tr><td>Permissions-Policy</td><td>Disabled features</td><td>Feature policy</td></tr>
-        </table>
-        
-        <h3>4. Network Security</h3>
-        <ul>
-            <li>Database NOT exposed externally (internal Docker network only)</li>
-            <li>All external traffic via Nginx reverse proxy</li>
-            <li>SSL/TLS encryption for all connections</li>
-            <li>TLS 1.2 and 1.3 only (weak protocols disabled)</li>
-        </ul>
-        
-        <h2>Production Deployment Checklist</h2>
-        
-        <h3>Required Environment Variables</h3>
-        
-        <div class="alert alert-warning">
-            <strong>⚠️ Important:</strong> Create a <code>.env</code> file with secure values. Never commit this file to version control!
-        </div>
-        
-        <pre><code># Database (use strong passwords!)
+        <h1>BookMyEnv Security Guide</h1>
+<p>This document describes the security measures implemented in BookMyEnv and recommendations for production deployment.</p>
+<h2>Security Features Implemented</h2>
+<h3>1. Authentication &amp; Authorization</h3>
+<h4>Password Security</h4>
+<ul>
+<li><strong>Bcrypt hashing</strong> with 12 rounds (OWASP recommended)</li>
+<li><strong>Password strength validation</strong>: Minimum 8 characters with uppercase, lowercase, number, and special character</li>
+<li>Passwords are never logged or exposed in API responses</li>
+</ul>
+<h4>JWT Token Security</h4>
+<ul>
+<li>Tokens are signed with a secret key (must be set via environment variable)</li>
+<li>Default expiration: 24 hours</li>
+<li>User role embedded in token for authorization</li>
+</ul>
+<h4>Rate Limiting</h4>
+<ul>
+<li><strong>General API</strong>: 100 requests per 15 minutes per IP</li>
+<li><strong>Authentication endpoints</strong>: 5 login attempts per 15 minutes per IP</li>
+<li>Protects against brute force and credential stuffing attacks</li>
+</ul>
+<h3>2. Input Validation</h3>
+<ul>
+<li><strong>express-validator</strong> middleware for all user inputs</li>
+<li>Email normalization and validation</li>
+<li>Username alphanumeric validation (3-50 characters)</li>
+<li>Request body size limited to 10KB (DoS protection)</li>
+</ul>
+<h3>3. HTTP Security Headers (via Helmet + Nginx)</h3>
+<table>
+<thead>
+<tr>
+<th>Header</th>
+<th>Value</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>X-Frame-Options</td>
+<td>SAMEORIGIN</td>
+<td>Clickjacking protection</td>
+</tr>
+<tr>
+<td>X-Content-Type-Options</td>
+<td>nosniff</td>
+<td>MIME sniffing protection</td>
+</tr>
+<tr>
+<td>X-XSS-Protection</td>
+<td>1; mode=block</td>
+<td>XSS filter</td>
+</tr>
+<tr>
+<td>Strict-Transport-Security</td>
+<td>max-age=31536000; includeSubDomains; preload</td>
+<td>Force HTTPS</td>
+</tr>
+<tr>
+<td>Referrer-Policy</td>
+<td>strict-origin-when-cross-origin</td>
+<td>Referrer leakage protection</td>
+</tr>
+<tr>
+<td>Content-Security-Policy</td>
+<td>Restrictive policy</td>
+<td>XSS/injection protection</td>
+</tr>
+<tr>
+<td>Permissions-Policy</td>
+<td>Disabled features</td>
+<td>Feature policy</td>
+</tr>
+</tbody></table>
+<h3>4. CORS Configuration</h3>
+<ul>
+<li>Explicit allowed origins list</li>
+<li>Credentials support with proper validation</li>
+<li>No wildcard origins in production</li>
+</ul>
+<h3>5. Network Security</h3>
+<ul>
+<li>Database NOT exposed externally (internal Docker network only)</li>
+<li>All external traffic via Nginx reverse proxy</li>
+<li>SSL/TLS encryption for all connections</li>
+</ul>
+<h3>6. SSL/TLS Configuration</h3>
+<ul>
+<li>TLS 1.2 and 1.3 only (weak protocols disabled)</li>
+<li>Strong cipher suites</li>
+<li>HSTS enabled</li>
+</ul>
+<h2>Production Deployment Checklist</h2>
+<h3>Required Environment Variables</h3>
+<p>Create a <code>.env</code> file with secure values:</p>
+<pre><code class="language-bash"># Database (use strong passwords!)
 POSTGRES_USER=your_db_user
 POSTGRES_PASSWORD=&lt;GENERATE_SECURE_PASSWORD_32_CHARS&gt;
 POSTGRES_DB=bookmyenv_prod
 
 # JWT Secret (CRITICAL - use crypto random!)
-# Generate with: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+# Generate with: node -e &quot;console.log(require(&#39;crypto&#39;).randomBytes(64).toString(&#39;hex&#39;))&quot;
 JWT_SECRET=&lt;64_CHAR_RANDOM_HEX_STRING&gt;
 
 # Application
@@ -194,56 +287,402 @@ NODE_ENV=production
 
 # URLs (replace with your domain)
 CORS_ORIGIN=https://yourdomain.com
-FRONTEND_URL=https://yourdomain.com</code></pre>
-        
-        <h3>SSL Certificates</h3>
-        <p>For production, replace self-signed certificates with proper certificates:</p>
-        <ul>
-            <li><strong>Let's Encrypt (free)</strong>: Use certbot for automatic certificate renewal</li>
-            <li><strong>Commercial certificates</strong>: Place certificate files in <code>nginx/ssl/</code></li>
-        </ul>
-        
-        <h2>Demo Credentials</h2>
-        
-        <div class="alert alert-danger">
-            <strong>⚠️ WARNING:</strong> Change all demo passwords in production!
-        </div>
-        
-        <table>
-            <tr><th>User</th><th>Email</th><th>Password</th><th>Role</th></tr>
-            <tr><td>Admin</td><td>admin@bme.local</td><td>Admin@123</td><td>Admin</td></tr>
-            <tr><td>Manager</td><td>envmgr@bme.local</td><td>Admin@123</td><td>EnvironmentManager</td></tr>
-            <tr><td>Lead</td><td>lead@bme.local</td><td>Admin@123</td><td>ProjectLead</td></tr>
-            <tr><td>Tester</td><td>tester@bme.local</td><td>Admin@123</td><td>Tester</td></tr>
-            <tr><td>Viewer</td><td>viewer@bme.local</td><td>Admin@123</td><td>Viewer</td></tr>
-        </table>
-        
-        <h2>Security Vulnerabilities Fixed</h2>
-        
-        <table>
-            <tr><th>Vulnerability</th><th>Severity</th><th>Fix Applied</th></tr>
-            <tr><td>Demo password bypass</td><td><span class="badge badge-critical">Critical</span></td><td>Removed - bcrypt only</td></tr>
-            <tr><td>Hardcoded JWT secret</td><td><span class="badge badge-critical">Critical</span></td><td>Environment variable required</td></tr>
-            <tr><td>Open database port</td><td><span class="badge badge-high">High</span></td><td>Removed external port mapping</td></tr>
-            <tr><td>Missing rate limiting</td><td><span class="badge badge-high">High</span></td><td>Implemented on auth endpoints</td></tr>
-            <tr><td>No password validation</td><td><span class="badge badge-high">High</span></td><td>Added strength requirements</td></tr>
-            <tr><td>Role injection on register</td><td><span class="badge badge-high">High</span></td><td>Role forced to 'Tester'</td></tr>
-            <tr><td>Missing input validation</td><td><span class="badge badge-high">High</span></td><td>Added express-validator</td></tr>
-            <tr><td>No request size limit</td><td><span class="badge badge-medium">Medium</span></td><td>Limited to 10KB</td></tr>
-            <tr><td>Missing CSP header</td><td><span class="badge badge-medium">Medium</span></td><td>Added comprehensive policy</td></tr>
-            <tr><td>Missing Permissions-Policy</td><td><span class="badge badge-low">Low</span></td><td>Added to nginx</td></tr>
-            <tr><td>Low bcrypt rounds</td><td><span class="badge badge-low">Low</span></td><td>Increased to 12</td></tr>
-        </table>
-        
-        <h2>Additional Resources</h2>
-        <ul>
-            <li><a href="https://owasp.org/www-project-web-security-testing-guide/">OWASP Security Guidelines</a></li>
-            <li><a href="https://nodejs.org/en/docs/guides/security/">Node.js Security Best Practices</a></li>
-            <li><a href="https://docs.docker.com/engine/security/">Docker Security</a></li>
-        </ul>
-        
-        <div class="alert alert-success">
-            <strong>✅ Security Status:</strong> All 24 functional tests pass with security features enabled.
+FRONTEND_URL=https://yourdomain.com
+</code></pre>
+<h3>SSL Certificates</h3>
+<p>For production, replace self-signed certificates with proper certificates:</p>
+<ol>
+<li><p><strong>Let&#39;s Encrypt (free)</strong>:</p>
+<ul>
+<li>Uncomment certbot configuration in nginx.conf</li>
+<li>Use certbot for automatic certificate renewal</li>
+</ul>
+</li>
+<li><p><strong>Commercial certificates</strong>:</p>
+<ul>
+<li>Place certificate files in <code>nginx/ssl/</code></li>
+<li>Update paths in nginx.conf</li>
+</ul>
+</li>
+</ol>
+<h3>Security Hardening</h3>
+<ol>
+<li><p><strong>Remove development defaults</strong>:</p>
+<pre><code class="language-bash"># Ensure NODE_ENV=production
+# Ensure JWT_SECRET is unique and secure
+# Ensure database credentials are changed
+</code></pre>
+</li>
+<li><p><strong>Enable OCSP stapling</strong> (in nginx.conf, uncomment when using real certs):</p>
+<pre><code class="language-nginx">ssl_stapling on;
+ssl_stapling_verify on;
+</code></pre>
+</li>
+<li><p><strong>Database security</strong>:</p>
+<ul>
+<li>Remove port mapping from docker-compose.yml</li>
+<li>Use Docker secrets for passwords</li>
+<li>Enable PostgreSQL SSL if required</li>
+</ul>
+</li>
+<li><p><strong>Log management</strong>:</p>
+<ul>
+<li>Configure log rotation</li>
+<li>Don&#39;t log sensitive data</li>
+<li>Monitor for suspicious activity</li>
+</ul>
+</li>
+</ol>
+<h3>Vulnerability Scanning</h3>
+<p>Regularly run security audits:</p>
+<pre><code class="language-bash"># Check npm dependencies
+cd backend &amp;&amp; npm audit
+cd ../frontend &amp;&amp; npm audit
+
+# Docker security scan
+docker scan test-env-management-backend
+</code></pre>
+<h2>Demo Credentials</h2>
+<p>For development/testing only:</p>
+<table>
+<thead>
+<tr>
+<th>User</th>
+<th>Email</th>
+<th>Password</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Admin</td>
+<td><a href="mailto:admin@bme.local">admin@bme.local</a></td>
+<td>Admin@123</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>Manager</td>
+<td><a href="mailto:envmgr@bme.local">envmgr@bme.local</a></td>
+<td>Admin@123</td>
+<td>EnvironmentManager</td>
+</tr>
+<tr>
+<td>Lead</td>
+<td><a href="mailto:lead@bme.local">lead@bme.local</a></td>
+<td>Admin@123</td>
+<td>ProjectLead</td>
+</tr>
+<tr>
+<td>Tester</td>
+<td><a href="mailto:tester@bme.local">tester@bme.local</a></td>
+<td>Admin@123</td>
+<td>Tester</td>
+</tr>
+<tr>
+<td>Viewer</td>
+<td><a href="mailto:viewer@bme.local">viewer@bme.local</a></td>
+<td>Admin@123</td>
+<td>Viewer</td>
+</tr>
+</tbody></table>
+<p><strong>⚠️ IMPORTANT</strong>: Change all demo passwords in production!</p>
+<h2>Audit Logging &amp; Compliance <span class="badge badge-new">⭐ NEW</span></h2>
+<p>BookMyEnv v4.2.0 introduces comprehensive audit logging for security and compliance requirements.</p>
+<h3>Audit Trail Features</h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Immutable Logs</strong></td>
+<td>Audit events are append-only with no update/delete operations</td>
+</tr>
+<tr>
+<td><strong>Comprehensive Coverage</strong></td>
+<td>All CRUD operations on environments, bookings, applications, releases, users</td>
+</tr>
+<tr>
+<td><strong>Actor Tracking</strong></td>
+<td>Records user ID, username, and IP address for all actions</td>
+</tr>
+<tr>
+<td><strong>Entity Tracking</strong></td>
+<td>Records entity type, ID, and display name for all changes</td>
+</tr>
+<tr>
+<td><strong>Change Details</strong></td>
+<td>Stores before/after values in JSON format</td>
+</tr>
+<tr>
+<td><strong>Timestamp Precision</strong></td>
+<td>Millisecond-precision timestamps in UTC</td>
+</tr>
+<tr>
+<td><strong>Source System</strong></td>
+<td>Tracks whether action was via UI, API, or system process</td>
+</tr>
+</tbody></table>
+<h3>Audit Event Categories</h3>
+<pre><code class="language-javascript">// Event categories captured
+const AUDIT_CATEGORIES = {
+  AUTHENTICATION: &#39;authentication&#39;,    // Login, logout, token refresh
+  ENVIRONMENT: &#39;environment&#39;,          // Environment CRUD
+  BOOKING: &#39;booking&#39;,                   // Booking operations
+  APPLICATION: &#39;application&#39;,          // Application management
+  RELEASE: &#39;release&#39;,                   // Release scheduling
+  USER: &#39;user&#39;,                         // User management
+  CONFIGURATION: &#39;configuration&#39;,       // System settings
+  BULK_OPERATION: &#39;bulk_operation&#39;     // Bulk uploads
+};
+</code></pre>
+<h3>Audit Data Retention</h3>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Retention Period</td>
+<td>90 days</td>
+<td>Configurable via environment variable</td>
+</tr>
+<tr>
+<td>Auto-Cleanup</td>
+<td>Enabled</td>
+<td>Scheduled job removes old records</td>
+</tr>
+<tr>
+<td>Archive Option</td>
+<td>Available</td>
+<td>Export before deletion</td>
+</tr>
+</tbody></table>
+<p>Configure retention in environment:</p>
+<pre><code class="language-bash">AUDIT_RETENTION_DAYS=90
+AUDIT_AUTO_CLEANUP=true
+</code></pre>
+<h3>Audit Access Controls</h3>
+<p>Access to audit logs is role-restricted:</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Permissions</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Admin</td>
+<td>Full access: view, search, export, manage templates</td>
+</tr>
+<tr>
+<td>EnvironmentManager</td>
+<td>View and search audit events</td>
+</tr>
+<tr>
+<td>ProjectLead</td>
+<td>View audit events for their projects</td>
+</tr>
+<tr>
+<td>Tester</td>
+<td>No audit access</td>
+</tr>
+<tr>
+<td>Viewer</td>
+<td>No audit access</td>
+</tr>
+</tbody></table>
+<h3>Audit API Security</h3>
+<pre><code class="language-javascript">// Audit endpoints are protected with RBAC
+router.get(&#39;/audit/events&#39;, rbac(&#39;audit_read&#39;), getEvents);
+router.get(&#39;/audit/reports&#39;, rbac(&#39;audit_export&#39;), generateReport);
+router.post(&#39;/audit/templates&#39;, rbac(&#39;audit_manage&#39;), createTemplate);
+</code></pre>
+<h3>Audit Data Protection</h3>
+<ol>
+<li><strong>Encryption at Rest</strong>: Audit data follows same PostgreSQL encryption as other data</li>
+<li><strong>Encryption in Transit</strong>: All API calls use TLS 1.2+</li>
+<li><strong>Access Logging</strong>: Audit access itself is logged</li>
+<li><strong>No PII in Details</strong>: Passwords and sensitive fields are never recorded in change details</li>
+</ol>
+<h3>Compliance Report Templates</h3>
+<p>Pre-configured templates for common compliance needs:</p>
+<table>
+<thead>
+<tr>
+<th>Template</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>User Activity</td>
+<td>All actions by a specific user over time period</td>
+</tr>
+<tr>
+<td>Environment Changes</td>
+<td>All modifications to environments</td>
+</tr>
+<tr>
+<td>Access Report</td>
+<td>Login/logout activity and session information</td>
+</tr>
+<tr>
+<td>Booking History</td>
+<td>Complete booking audit trail</td>
+</tr>
+<tr>
+<td>Administrative Actions</td>
+<td>User management and configuration changes</td>
+</tr>
+</tbody></table>
+<h3>Sample Audit Query</h3>
+<pre><code class="language-sql">-- Find all booking changes by a specific user in last 7 days
+SELECT 
+  action_type,
+  entity_name,
+  action_description,
+  created_at
+FROM audit_events
+WHERE category = &#39;booking&#39;
+  AND actor_user_id = &#39;user-uuid&#39;
+  AND created_at &gt; NOW() - INTERVAL &#39;7 days&#39;
+ORDER BY created_at DESC;
+</code></pre>
+<h2>Security Vulnerabilities Fixed</h2>
+<table>
+<thead>
+<tr>
+<th>Vulnerability</th>
+<th>Severity</th>
+<th>Fix Applied</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Demo password bypass</td>
+<td>Critical</td>
+<td>Removed - bcrypt only</td>
+</tr>
+<tr>
+<td>Hardcoded JWT secret</td>
+<td>Critical</td>
+<td>Environment variable required</td>
+</tr>
+<tr>
+<td>Open database port</td>
+<td>High</td>
+<td>Removed external port mapping</td>
+</tr>
+<tr>
+<td>Missing rate limiting</td>
+<td>High</td>
+<td>Implemented on auth endpoints</td>
+</tr>
+<tr>
+<td>No password validation</td>
+<td>High</td>
+<td>Added strength requirements</td>
+</tr>
+<tr>
+<td>Role injection on register</td>
+<td>High</td>
+<td>Role forced to &#39;Tester&#39;</td>
+</tr>
+<tr>
+<td>Missing input validation</td>
+<td>High</td>
+<td>Added express-validator</td>
+</tr>
+<tr>
+<td>No request size limit</td>
+<td>Medium</td>
+<td>Limited to 10KB</td>
+</tr>
+<tr>
+<td>Missing CSP header</td>
+<td>Medium</td>
+<td>Added comprehensive policy</td>
+</tr>
+<tr>
+<td>Missing Permissions-Policy</td>
+<td>Low</td>
+<td>Added to nginx</td>
+</tr>
+<tr>
+<td>Low bcrypt rounds</td>
+<td>Low</td>
+<td>Increased to 12</td>
+</tr>
+<tr>
+<td>No audit logging</td>
+<td>Medium</td>
+<td>⭐ Implemented comprehensive audit trail</td>
+</tr>
+</tbody></table>
+<h2>Reporting Security Issues</h2>
+<p>If you discover a security vulnerability, please report it responsibly:</p>
+<ol>
+<li>Do not create a public issue</li>
+<li>Email security concerns to the maintainers</li>
+<li>Allow time for a fix before disclosure</li>
+</ol>
+<h2>Additional Resources</h2>
+<ul>
+<li><a href="https://owasp.org/www-project-web-security-testing-guide/">OWASP Security Guidelines</a></li>
+<li><a href="https://nodejs.org/en/docs/guides/security/">Node.js Security Best Practices</a></li>
+<li><a href="https://docs.docker.com/engine/security/">Docker Security</a></li>
+<li><a href="https://aws.amazon.com/architecture/security-identity-compliance/">AWS Security Best Practices</a></li>
+</ul>
+<h2>AWS Cloud Security</h2>
+<p>When deployed to AWS, BookMyEnv benefits from additional security features:</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>VPC Isolation</strong></td>
+<td>Private subnets for database and backend</td>
+</tr>
+<tr>
+<td><strong>Security Groups</strong></td>
+<td>Least-privilege network access</td>
+</tr>
+<tr>
+<td><strong>RDS Encryption</strong></td>
+<td>Data encrypted at rest and in transit</td>
+</tr>
+<tr>
+<td><strong>Secrets Manager</strong></td>
+<td>Secure credential storage</td>
+</tr>
+<tr>
+<td><strong>CloudFront SSL</strong></td>
+<td>TLS 1.2/1.3 with managed certificates</td>
+</tr>
+<tr>
+<td><strong>VPC Flow Logs</strong></td>
+<td>Network traffic monitoring</td>
+</tr>
+<tr>
+<td><strong>CloudWatch</strong></td>
+<td>Centralized logging and alerting</td>
+</tr>
+<tr>
+<td><strong>IAM Roles</strong></td>
+<td>Fine-grained access control</td>
+</tr>
+</tbody></table>
+<p>See <a href="../terraform/README.md">terraform/README.md</a> for AWS deployment details.</p>
+
+        <div class="footer">
+            <p>BookMyEnv v4.2.0 | January 2025</p>
+            <p>Documentation generated automatically</p>
         </div>
     </div>
 </body>

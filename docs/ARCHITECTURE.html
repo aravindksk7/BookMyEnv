@@ -3,471 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BookMyEnv - Architecture Documentation</title>
+    <title>BookMyEnv - Architecture</title>
     <style>
         :root {
             --primary: #1976d2;
-            --primary-dark: #1565c0;
-            --primary-light: #42a5f5;
             --success: #4caf50;
             --warning: #ff9800;
             --error: #f44336;
-            --info: #2196f3;
             --gray-50: #fafafa;
             --gray-100: #f5f5f5;
             --gray-200: #eeeeee;
-            --gray-300: #e0e0e0;
-            --gray-400: #bdbdbd;
-            --gray-500: #9e9e9e;
-            --gray-600: #757575;
-            --gray-700: #616161;
             --gray-800: #424242;
             --gray-900: #212121;
         }
         
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: var(--gray-100);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: white;
             color: var(--gray-900);
             line-height: 1.7;
         }
         
         .container {
-            max-width: 1400px;
+            max-width: 900px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 40px 20px;
         }
         
-        /* Header */
-        .header {
-            background: linear-gradient(135deg, var(--gray-900), var(--gray-800));
-            color: white;
-            padding: 60px 40px;
-            text-align: center;
-            margin: -20px -20px 40px;
+        h1 { 
+            color: var(--primary); 
+            border-bottom: 3px solid var(--primary); 
+            padding-bottom: 10px; 
+            margin-bottom: 30px; 
         }
-        
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 15px;
+        h2 { 
+            color: var(--gray-800); 
+            margin: 30px 0 15px; 
+            padding-bottom: 8px; 
+            border-bottom: 1px solid var(--gray-200); 
         }
+        h3 { color: var(--gray-800); margin: 20px 0 10px; }
+        h4 { color: var(--gray-800); margin: 15px 0 8px; }
         
-        .header p {
-            font-size: 1.2rem;
-            opacity: 0.8;
-        }
+        p { margin: 10px 0; }
         
-        /* Navigation */
-        .toc {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            margin-bottom: 40px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        
-        .toc h2 {
-            font-size: 1.3rem;
-            margin-bottom: 20px;
-            color: var(--gray-800);
-        }
-        
-        .toc-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 10px;
-        }
-        
-        .toc a {
-            display: block;
-            padding: 10px 15px;
-            color: var(--gray-700);
-            text-decoration: none;
-            border-radius: 6px;
-            transition: all 0.2s;
-        }
-        
-        .toc a:hover {
-            background: var(--gray-100);
-            color: var(--primary);
-        }
-        
-        /* Sections */
-        .section {
-            background: white;
-            border-radius: 12px;
-            padding: 40px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            scroll-margin-top: 20px;
-        }
-        
-        h2 {
-            font-size: 1.8rem;
-            color: var(--gray-900);
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 3px solid var(--primary);
-        }
-        
-        h3 {
-            font-size: 1.3rem;
-            color: var(--gray-800);
-            margin: 30px 0 15px;
-        }
-        
-        h4 {
-            font-size: 1.1rem;
-            color: var(--gray-700);
-            margin: 20px 0 10px;
-        }
-        
-        p {
-            margin-bottom: 1rem;
-            color: var(--gray-700);
-        }
-        
-        /* Diagram Container */
-        .diagram {
-            background: var(--gray-900);
-            color: #e0e0e0;
-            padding: 30px;
-            border-radius: 12px;
-            overflow-x: auto;
-            font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
-            font-size: 12px;
-            line-height: 1.4;
-            margin: 20px 0;
-            white-space: pre;
-        }
-        
-        .diagram .highlight { color: #64b5f6; }
-        .diagram .success { color: #81c784; }
-        .diagram .warning { color: #ffb74d; }
-        .diagram .comment { color: #9e9e9e; }
-        
-        /* Architecture Boxes */
-        .arch-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin: 20px 0;
-        }
-        
-        .arch-box {
-            background: var(--gray-50);
-            border: 2px solid var(--gray-200);
-            border-radius: 12px;
-            padding: 25px;
-            position: relative;
-        }
-        
-        .arch-box.frontend {
-            border-color: var(--info);
-            background: #e3f2fd;
-        }
-        
-        .arch-box.backend {
-            border-color: var(--success);
-            background: #e8f5e9;
-        }
-        
-        .arch-box.database {
-            border-color: var(--warning);
-            background: #fff3e0;
-        }
-        
-        .arch-box.security {
-            border-color: var(--error);
-            background: #ffebee;
-        }
-        
-        .arch-box h4 {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 0 0 15px;
-            font-size: 1.1rem;
-        }
-        
-        .arch-box ul {
-            margin: 0;
-            padding-left: 20px;
-        }
-        
-        .arch-box li {
-            margin: 5px 0;
-            color: var(--gray-700);
-        }
-        
-        /* Tech Stack */
-        .tech-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-        
-        .tech-item {
-            background: white;
-            border: 1px solid var(--gray-200);
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            transition: all 0.2s;
-        }
-        
-        .tech-item:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        
-        .tech-item .icon {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-        }
-        
-        .tech-item .name {
-            font-weight: 600;
-            color: var(--gray-800);
-        }
-        
-        .tech-item .version {
-            font-size: 0.85rem;
-            color: var(--gray-500);
-        }
-        
-        /* Tables */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
+            margin: 15px 0;
+            font-size: 14px;
         }
         
         th, td {
-            padding: 12px 16px;
+            border: 1px solid var(--gray-200);
+            padding: 10px 12px;
             text-align: left;
-            border-bottom: 1px solid var(--gray-200);
         }
         
-        th {
-            background: var(--gray-100);
-            font-weight: 600;
-            color: var(--gray-800);
-        }
+        th { background: var(--gray-100); font-weight: 600; }
+        tr:nth-child(even) { background: var(--gray-50); }
         
-        tr:last-child td {
-            border-bottom: none;
-        }
-        
-        /* Code */
         code {
             background: var(--gray-100);
-            padding: 2px 8px;
+            padding: 2px 6px;
             border-radius: 4px;
             font-family: 'Monaco', 'Consolas', monospace;
-            font-size: 0.9em;
-            color: var(--primary-dark);
+            font-size: 13px;
         }
         
         pre {
             background: var(--gray-900);
             color: #f5f5f5;
-            padding: 20px;
+            padding: 15px;
             border-radius: 8px;
             overflow-x: auto;
-            margin: 20px 0;
-            font-family: 'Monaco', 'Consolas', monospace;
-            font-size: 0.85rem;
-        }
-        
-        /* Flow Diagram */
-        .flow-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            flex-wrap: wrap;
-            padding: 30px;
-            background: var(--gray-50);
-            border-radius: 12px;
-            margin: 20px 0;
-        }
-        
-        .flow-box {
-            background: white;
-            border: 2px solid var(--gray-300);
-            border-radius: 10px;
-            padding: 20px 30px;
-            text-align: center;
-            min-width: 150px;
-        }
-        
-        .flow-box.primary { border-color: var(--primary); background: #e3f2fd; }
-        .flow-box.success { border-color: var(--success); background: #e8f5e9; }
-        .flow-box.warning { border-color: var(--warning); background: #fff3e0; }
-        
-        .flow-arrow {
-            font-size: 2rem;
-            color: var(--gray-400);
-        }
-        
-        /* Layers */
-        .layer {
-            border: 2px solid var(--gray-300);
-            border-radius: 12px;
             margin: 15px 0;
-            overflow: hidden;
+            white-space: pre-wrap;
+            word-wrap: break-word;
         }
         
-        .layer-header {
-            background: var(--gray-800);
-            color: white;
-            padding: 12px 20px;
+        pre code { background: none; padding: 0; color: inherit; }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .alert-warning {
+            background: #fff3e0;
+            border-left: 4px solid var(--warning);
+        }
+        
+        .alert-danger {
+            background: #ffebee;
+            border-left: 4px solid var(--error);
+        }
+        
+        .alert-success {
+            background: #e8f5e9;
+            border-left: 4px solid var(--success);
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
             font-weight: 600;
         }
         
-        .layer-content {
-            padding: 20px;
-            background: white;
+        .badge-new {
+            background: var(--success);
+            color: white;
         }
         
-        /* Cards */
-        .card-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin: 20px 0;
+        ul, ol { margin: 10px 0 10px 25px; }
+        li { margin: 5px 0; }
+        
+        a { color: var(--primary); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        
+        blockquote {
+            border-left: 4px solid var(--primary);
+            padding: 10px 20px;
+            margin: 15px 0;
+            background: var(--gray-50);
         }
         
-        .card {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            overflow: hidden;
+        hr {
+            border: none;
+            border-top: 1px solid var(--gray-200);
+            margin: 30px 0;
         }
         
-        .card-header {
+        .new-badge::after {
+            content: "NEW";
+            background: var(--success);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        
+        .version-badge {
             background: var(--primary);
             color: white;
-            padding: 15px 20px;
-            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            margin-left: 10px;
         }
         
-        .card-header.green { background: var(--success); }
-        .card-header.orange { background: var(--warning); }
-        .card-header.red { background: var(--error); }
-        
-        .card-body {
-            padding: 20px;
-        }
-        
-        /* File Tree */
-        .file-tree {
-            background: var(--gray-900);
-            color: #e0e0e0;
-            padding: 25px;
-            border-radius: 12px;
-            font-family: 'Monaco', 'Consolas', monospace;
-            font-size: 0.9rem;
-            line-height: 1.6;
-        }
-        
-        .file-tree .folder { color: #64b5f6; }
-        .file-tree .file { color: #a5d6a7; }
-        .file-tree .comment { color: #9e9e9e; font-style: italic; }
+        /* Syntax highlighting classes */
+        .hljs-keyword { color: #c792ea; }
+        .hljs-string { color: #c3e88d; }
+        .hljs-comment { color: #546e7a; }
+        .hljs-number { color: #f78c6c; }
         
         /* Footer */
         .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid var(--gray-200);
             text-align: center;
-            padding: 40px;
-            color: var(--gray-500);
-        }
-        
-        /* Print */
-        @media print {
-            body { background: white; }
-            .section { box-shadow: none; border: 1px solid var(--gray-300); }
-            .header { background: white; color: black; }
+            color: var(--gray-800);
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>🏗️ BookMyEnv Architecture</h1>
-            <p>Technical documentation for the Environment Booking and Management System</p>
-        </div>
-        
-        <!-- Table of Contents -->
-        <nav class="toc">
-            <h2>📑 Table of Contents</h2>
-            <div class="toc-grid">
-                <a href="#overview">System Overview</a>
-                <a href="#containers">Container Architecture</a>
-                <a href="#data-model">Data Model</a>
-                <a href="#request-flow">Request Flow</a>
-                <a href="#auth-flow">Authentication Flow</a>
-                <a href="#tech-stack">Technology Stack</a>
-                <a href="#security">Security Architecture</a>
-                <a href="#deployment">Deployment Options</a>
-                <a href="#env-vars">Environment Variables</a>
-                <a href="#file-structure">File Structure</a>
-            </div>
-        </nav>
-        
-        <!-- System Overview -->
-        <section id="overview" class="section">
-            <h2>System Architecture Overview</h2>
-            
-            <p>BookMyEnv is a three-tier web application consisting of a React frontend, Node.js backend, and PostgreSQL database.</p>
-            
-            <div class="arch-grid">
-                <div class="arch-box frontend">
-                    <h4>🖥️ Presentation Layer</h4>
-                    <ul>
-                        <li>Next.js 15 with App Router</li>
-                        <li>React 19 with Hooks</li>
-                        <li>Material UI (MUI) 6 Components</li>
-                        <li>TypeScript 5.7 for type safety</li>
-                        <li>Tailwind CSS for styling</li>
-                    </ul>
-                </div>
-                
-                <div class="arch-box backend">
-                    <h4>⚙️ Application Layer</h4>
-                    <ul>
-                        <li>Node.js 22 Runtime</li>
-                        <li>Express.js Framework</li>
-                        <li>JWT Authentication</li>
-                        <li>RBAC Authorization</li>
-                        <li>RESTful API Design</li>
-                    </ul>
-                </div>
-                
-                <div class="arch-box database">
-                    <h4>💾 Data Layer</h4>
-                    <ul>
-                        <li>PostgreSQL 15</li>
-                        <li>30+ Entity Tables</li>
-                        <li>UUID Primary Keys</li>
-                        <li>JSONB for Metadata</li>
-                        <li>Foreign Key Constraints</li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="diagram">
-┌─────────────────────────────────────────────────────────────────────────────────┐
+        <h1>BookMyEnv - Architecture Documentation</h1>
+<h2>System Architecture Overview</h2>
+<pre><code>┌─────────────────────────────────────────────────────────────────────────────────┐
 │                              BOOKMYENV ARCHITECTURE                              │
 └─────────────────────────────────────────────────────────────────────────────────┘
 
@@ -476,89 +189,156 @@
                                     │  (Browser)  │
                                     └──────┬──────┘
                                            │
-                                           │ HTTPS (Port 3000)
+                                           │ HTTPS (Port 443)
+                                           ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              REVERSE PROXY LAYER                                 │
+│  ┌───────────────────────────────────────────────────────────────────────────┐  │
+│  │                         NGINX REVERSE PROXY                                │  │
+│  │                           (tem-nginx)                                      │  │
+│  │                                                                           │  │
+│  │  • SSL/TLS Termination (TLS 1.2/1.3)                                     │  │
+│  │  • Security Headers (CSP, HSTS, X-Frame-Options)                         │  │
+│  │  • Request Routing (/api → backend, / → frontend)                        │  │
+│  │  • WebSocket Proxying (/socket.io)                                       │  │
+│  │  • Gzip Compression                                                       │  │
+│  │                                                                           │  │
+│  │  Tech: Nginx Alpine │ Let&#39;s Encrypt Ready │ HTTP/2                       │  │
+│  └───────────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                           │
+                              Internal Docker Network
                                            ▼
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                              PRESENTATION LAYER                                  │
 │  ┌───────────────────────────────────────────────────────────────────────────┐  │
 │  │                         NEXT.JS FRONTEND                                   │  │
+│  │                         (tem-frontend)                                     │  │
 │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐      │  │
 │  │  │  Dashboard  │  │ Environments│  │  Bookings   │  │  Releases   │      │  │
 │  │  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘      │  │
 │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐      │  │
 │  │  │Applications │  │   Groups    │  │ Monitoring  │  │  Settings   │      │  │
 │  │  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘      │  │
+│  │                                                                           │  │
+│  │  Tech: React 19 │ Next.js 15 │ MUI 6 │ TypeScript 5.7 │ Tailwind CSS   │  │
 │  └───────────────────────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────────────────────┘
                                            │
-                                           │ REST API (Port 5000)
+                                           │ Internal REST API (Port 5000)
                                            ▼
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                               APPLICATION LAYER                                  │
 │  ┌───────────────────────────────────────────────────────────────────────────┐  │
 │  │                       EXPRESS.JS BACKEND                                   │  │
+│  │                        (tem-backend)                                       │  │
+│  │                                                                           │  │
 │  │  ┌─────────────────────────────────────────────────────────────────────┐  │  │
-│  │  │ MIDDLEWARE: Auth (JWT) │ CORS │ Helmet │ RBAC                       │  │  │
+│  │  │                         MIDDLEWARE                                   │  │  │
+│  │  │ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐  │  │  │
+│  │  │ │   Auth   │ │   CORS   │ │  Helmet  │ │   RBAC   │ │   Rate   │  │  │  │
+│  │  │ │   JWT    │ │          │ │ Security │ │          │ │  Limit   │  │  │  │
+│  │  │ └──────────┘ └──────────┘ └──────────┘ └──────────┘ └──────────┘  │  │  │
 │  │  └─────────────────────────────────────────────────────────────────────┘  │  │
+│  │                                                                           │  │
 │  │  ┌─────────────────────────────────────────────────────────────────────┐  │  │
-│  │  │ ROUTES: /auth /environments /bookings /releases /applications       │  │  │
+│  │  │                          ROUTES                                      │  │  │
+│  │  │  /auth  /environments  /bookings  /releases  /applications          │  │  │
+│  │  │  /groups  /users  /integrations  /changes  /dashboard  /audit      │  │  │
 │  │  └─────────────────────────────────────────────────────────────────────┘  │  │
+│  │                                                                           │  │
 │  │  ┌─────────────────────────────────────────────────────────────────────┐  │  │
-│  │  │ CONTROLLERS: Auth │ Environment │ Booking │ Release │ Application   │  │  │
+│  │  │                       CONTROLLERS                                    │  │  │
+│  │  │  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐       │  │  │
+│  │  │  │    Auth    │ │Environment │ │  Booking   │ │  Release   │       │  │  │
+│  │  │  └────────────┘ └────────────┘ └────────────┘ └────────────┘       │  │  │
+│  │  │  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐       │  │  │
+│  │  │  │Application │ │   Group    │ │    User    │ │Integration │       │  │  │
+│  │  │  └────────────┘ └────────────┘ └────────────┘ └────────────┘       │  │  │
 │  │  └─────────────────────────────────────────────────────────────────────┘  │  │
+│  │                                                                           │  │
+│  │  Tech: Node.js 22 │ Express.js │ JWT │ bcrypt │ express-validator        │  │
 │  └───────────────────────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────────────────────┘
                                            │
-                                           │ SQL (Port 5432)
+                                           │ SQL (Internal Network Only)
                                            ▼
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                                 DATA LAYER                                       │
 │  ┌───────────────────────────────────────────────────────────────────────────┐  │
 │  │                       POSTGRESQL DATABASE                                  │  │
-│  │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐           │  │
-│  │  │ User & Identity │  │  Environments   │  │  Applications   │           │  │
-│  │  └─────────────────┘  └─────────────────┘  └─────────────────┘           │  │
-│  │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐           │  │
-│  │  │    Bookings     │  │    Releases     │  │  Integrations   │           │  │
-│  │  └─────────────────┘  └─────────────────┘  └─────────────────┘           │  │
+│  │                         (tem-postgres)                                     │  │
+│  │                                                                           │  │
+│  │  ┌─────────────────────────────────────────────────────────────────────┐  │  │
+│  │  │                     CORE ENTITIES (30+)                              │  │  │
+│  │  │                                                                      │  │  │
+│  │  │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐     │  │  │
+│  │  │  │ User &amp; Identity │  │  Environments   │  │  Applications   │     │  │  │
+│  │  │  │  • users        │  │  • environments │  │  • applications │     │  │  │
+│  │  │  │  • user_groups  │  │  • env_instances│  │  • app_components│    │  │  │
+│  │  │  │  • memberships  │  │  • infra_comps  │  │  • comp_instances│    │  │  │
+│  │  │  │  • identities   │  │  • interfaces   │  │  • app_env_inst │     │  │  │
+│  │  │  └─────────────────┘  └─────────────────┘  └─────────────────┘     │  │  │
+│  │  │                                                                      │  │  │
+│  │  │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐     │  │  │
+│  │  │  │    Bookings     │  │    Releases     │  │  Integrations   │     │  │  │
+│  │  │  │  • bookings     │  │  • releases     │  │  • integrations │     │  │  │
+│  │  │  │  • resources    │  │  • rel_apps     │  │  • int_links    │     │  │  │
+│  │  │  │  • applications │  │  • rel_envs     │  │  • jira_mapping │     │  │  │
+│  │  │  │                 │  │  • changes      │  │  • gitlab_map   │     │  │  │
+│  │  │  └─────────────────┘  └─────────────────┘  └─────────────────┘     │  │  │
+│  │  │                                                                      │  │  │
+│  │  │  ┌─────────────────┐                                                │  │  │
+│  │  │  │  Audit &amp; Logs   │  &lt;span class=&quot;badge badge-new&quot;&gt;⭐ NEW&lt;/span&gt; in v4.2.0                              │  │  │
+│  │  │  │  • audit_events │                                                │  │  │
+│  │  │  │  • audit_report │                                                │  │  │
+│  │  │  │    _templates   │                                                │  │  │
+│  │  │  │  • audit_gen_   │                                                │  │  │
+│  │  │  │    reports      │                                                │  │  │
+│  │  │  └─────────────────┘                                                │  │  │
+│  │  └─────────────────────────────────────────────────────────────────────┘  │  │
+│  │                                                                           │  │
+│  │  Tech: PostgreSQL 15 │ UUID Primary Keys │ JSONB │ Timestamps            │  │
 │  └───────────────────────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────────────────────┘
-            </div>
-        </section>
-        
-        <!-- Container Architecture -->
-        <section id="containers" class="section">
-            <h2>Container Architecture</h2>
-            
-            <p>The application runs as three Docker containers orchestrated by Docker Compose:</p>
-            
-            <div class="flow-container">
-                <div class="flow-box primary">
-                    <strong>tem-frontend</strong><br>
-                    <small>Next.js</small><br>
-                    <code>:3000</code>
-                </div>
-                <span class="flow-arrow">→</span>
-                <div class="flow-box success">
-                    <strong>tem-backend</strong><br>
-                    <small>Express.js</small><br>
-                    <code>:5000</code>
-                </div>
-                <span class="flow-arrow">→</span>
-                <div class="flow-box warning">
-                    <strong>tem-postgres</strong><br>
-                    <small>PostgreSQL 15</small><br>
-                    <code>:5432</code>
-                </div>
-            </div>
-            
-            <div class="diagram">
+
+
 ┌─────────────────────────────────────────────────────────────────────────────────┐
+│                           EXTERNAL INTEGRATIONS                                  │
+│                                                                                  │
+│   ┌──────────────┐      ┌──────────────┐      ┌──────────────┐                 │
+│   │     JIRA     │      │    GITLAB    │      │  SERVICENOW  │                 │
+│   │              │      │              │      │              │                 │
+│   │ • Issues     │      │ • Pipelines  │      │ • Changes    │                 │
+│   │ • Projects   │      │ • MRs        │      │ • CMDB       │                 │
+│   │ • Releases   │      │ • Tags       │      │ • Approvals  │                 │
+│   └──────────────┘      └──────────────┘      └──────────────┘                 │
+│          ▲                     ▲                     ▲                          │
+│          │                     │                     │                          │
+│          └─────────────────────┼─────────────────────┘                          │
+│                                │                                                 │
+│                         REST API / Webhooks                                      │
+└─────────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<hr>
+<h2>Container Architecture</h2>
+<pre><code>┌─────────────────────────────────────────────────────────────────────────────────┐
 │                            DOCKER COMPOSE NETWORK                                │
 │                              (tem-network)                                       │
 │                                                                                  │
 │  ┌─────────────────────┐                                                        │
-│  │   tem-frontend      │◄─────── Port 3000 ──────► Browser                      │
+│  │   tem-nginx         │◄─────── Port 443 (HTTPS) ──────► Browser               │
+│  │   (Nginx Alpine)    │◄─────── Port 80 (→ 443 redirect)                       │
+│  │                     │                                                        │
+│  │   • SSL Termination │                                                        │
+│  │   • Security Headers│                                                        │
+│  │   • Request Routing │                                                        │
+│  └──────────┬──────────┘                                                        │
+│             │                                                                    │
+│             │ Internal Network                                                   │
+│             ▼                                                                    │
+│  ┌─────────────────────┐                                                        │
+│  │   tem-frontend      │◄─────── Internal Port 3000                             │
 │  │   (Next.js)         │                                                        │
 │  │   Node 22 Alpine    │                                                        │
 │  └──────────┬──────────┘                                                        │
@@ -566,92 +346,46 @@
 │             │ Internal Network                                                   │
 │             ▼                                                                    │
 │  ┌─────────────────────┐                                                        │
-│  │   tem-backend       │◄─────── Port 5000 ──────► API Clients                  │
+│  │   tem-backend       │◄─────── Internal Port 5000                             │
 │  │   (Express.js)      │                                                        │
 │  │   Node 22 Alpine    │                                                        │
+│  │                     │                                                        │
+│  │   Security Features:│                                                        │
+│  │   • Rate Limiting   │                                                        │
+│  │   • Input Validation│                                                        │
+│  │   • JWT Auth        │                                                        │
 │  └──────────┬──────────┘                                                        │
 │             │                                                                    │
-│             │ Internal Network                                                   │
+│             │ Internal Network ONLY (No external port)                          │
 │             ▼                                                                    │
 │  ┌─────────────────────┐                                                        │
-│  │   tem-postgres      │◄─────── Port 5432 ──────► DB Clients                   │
+│  │   tem-postgres      │                                                        │
 │  │   (PostgreSQL 15)   │                                                        │
 │  │   Alpine            │                                                        │
-│  │   Volume: postgres_data                                                      │
+│  │                     │                                                        │
+│  │   Volume:           │                                                        │
+│  │   postgres_data     │                                                        │
 │  └─────────────────────┘                                                        │
 │                                                                                  │
 └─────────────────────────────────────────────────────────────────────────────────┘
-            </div>
-        </section>
-        
-        <!-- Data Model -->
-        <section id="data-model" class="section">
-            <h2>Data Model</h2>
-            
-            <p>The database consists of 30+ entities organized into logical domains:</p>
-            
-            <div class="card-grid">
-                <div class="card">
-                    <div class="card-header">👤 User & Identity</div>
-                    <div class="card-body">
-                        <ul>
-                            <li><code>users</code></li>
-                            <li><code>user_groups</code></li>
-                            <li><code>user_group_members</code></li>
-                            <li><code>identity_providers</code></li>
-                            <li><code>user_identities</code></li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <div class="card-header green">🖥️ Environments</div>
-                    <div class="card-body">
-                        <ul>
-                            <li><code>environments</code></li>
-                            <li><code>environment_instances</code></li>
-                            <li><code>infra_components</code></li>
-                            <li><code>interfaces</code></li>
-                            <li><code>interface_endpoints</code></li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <div class="card-header orange">📅 Bookings</div>
-                    <div class="card-body">
-                        <ul>
-                            <li><code>environment_bookings</code></li>
-                            <li><code>booking_resources</code></li>
-                            <li><code>booking_applications</code></li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <div class="card-header red">🚀 Releases</div>
-                    <div class="card-body">
-                        <ul>
-                            <li><code>releases</code></li>
-                            <li><code>release_applications</code></li>
-                            <li><code>release_environments</code></li>
-                            <li><code>changes</code></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="diagram">
-                          ENTITY RELATIONSHIPS
+</code></pre>
+<hr>
+<h2>Data Model (Entity Relationship)</h2>
+<pre><code>┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              ENTITY RELATIONSHIPS                                │
+└─────────────────────────────────────────────────────────────────────────────────┘
 
-                          USER & IDENTITY DOMAIN
+                          USER &amp; IDENTITY DOMAIN
     ┌───────────────────────────────────────────────────────────────┐
+    │                                                               │
     │  ┌──────────┐     ┌──────────────────┐     ┌──────────────┐  │
-    │  │  users   │────<│user_group_members│>────│ user_groups  │  │
+    │  │  users   │────&lt;│user_group_members│&gt;────│ user_groups  │  │
     │  └────┬─────┘     └──────────────────┘     └──────────────┘  │
+    │       │                                                       │
     │       │           ┌──────────────────┐                       │
-    │       └──────────<│ user_identities  │                       │
+    │       └──────────&lt;│ user_identities  │                       │
     │                   └────────┬─────────┘                       │
+    │                            │                                  │
     │                   ┌────────▼─────────┐                       │
     │                   │identity_providers│                       │
     │                   └──────────────────┘                       │
@@ -659,21 +393,41 @@
 
                          ENVIRONMENT DOMAIN
     ┌───────────────────────────────────────────────────────────────┐
+    │                                                               │
     │  ┌──────────────┐     ┌────────────────────┐                 │
-    │  │ environments │────<│environment_instances│                 │
+    │  │ environments │────&lt;│environment_instances│                 │
     │  └──────────────┘     └─────────┬──────────┘                 │
+    │                                 │                             │
     │                    ┌────────────┼────────────┐               │
     │                    ▼            ▼            ▼               │
     │           ┌────────────┐ ┌──────────┐ ┌────────────────┐    │
     │           │infra_comps │ │interfaces│ │app_env_instance│    │
-    │           └────────────┘ └──────────┘ └────────────────┘    │
+    │           └────────────┘ └────┬─────┘ └────────────────┘    │
+    │                               │                              │
+    │                    ┌──────────▼──────────┐                   │
+    │                    │interface_endpoints  │                   │
+    │                    └─────────────────────┘                   │
+    └───────────────────────────────────────────────────────────────┘
+
+                          APPLICATION DOMAIN
+    ┌───────────────────────────────────────────────────────────────┐
+    │                                                               │
+    │  ┌──────────────┐     ┌────────────────┐                     │
+    │  │ applications │────&lt;│ app_components │                     │
+    │  └──────────────┘     └───────┬────────┘                     │
+    │                               │                               │
+    │                    ┌──────────▼──────────┐                   │
+    │                    │component_instances  │                   │
+    │                    └─────────────────────┘                   │
     └───────────────────────────────────────────────────────────────┘
 
                             BOOKING DOMAIN
     ┌───────────────────────────────────────────────────────────────┐
+    │                                                               │
     │  ┌────────────────────┐                                      │
     │  │environment_bookings│                                      │
     │  └─────────┬──────────┘                                      │
+    │            │                                                  │
     │     ┌──────┴──────┐                                          │
     │     ▼             ▼                                          │
     │ ┌─────────────┐ ┌───────────────────┐                       │
@@ -681,25 +435,41 @@
     │ │resources    │ └───────────────────┘                       │
     │ └─────────────┘                                              │
     └───────────────────────────────────────────────────────────────┘
-            </div>
-        </section>
-        
-        <!-- Request Flow -->
-        <section id="request-flow" class="section">
-            <h2>Request Flow</h2>
-            
-            <p>Example flow for creating a booking:</p>
-            
-            <div class="diagram">
+
+                            RELEASE DOMAIN
+    ┌───────────────────────────────────────────────────────────────┐
+    │                                                               │
+    │  ┌──────────┐                                                │
+    │  │ releases │                                                │
+    │  └────┬─────┘                                                │
+    │       │                                                       │
+    │  ┌────┴────────────────────────┐                             │
+    │  ▼            ▼                ▼                             │
+    │ ┌────────┐ ┌────────────────┐ ┌────────────────────────┐    │
+    │ │release_│ │release_        │ │release_component_      │    │
+    │ │apps    │ │environments    │ │instances               │    │
+    │ └────────┘ └────────────────┘ └────────────────────────┘    │
+    │                                                               │
+    │  ┌─────────┐                                                 │
+    │  │ changes │ (linked to releases)                            │
+    │  └─────────┘                                                 │
+    └───────────────────────────────────────────────────────────────┘
+</code></pre>
+<hr>
+<h2>Request Flow</h2>
+<pre><code>┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              REQUEST FLOW                                        │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
    User Action                API Request              Database Query
   ┌──────────┐              ┌───────────┐              ┌──────────┐
   │  Browser │              │  Backend  │              │ PostgreSQL│
   └────┬─────┘              └─────┬─────┘              └────┬─────┘
        │                          │                         │
-       │  1. Click "Create       │                         │
-       │     Booking"            │                         │
+       │  1. Click &quot;Create       │                         │
+       │     Booking&quot;            │                         │
        │                          │                         │
-       │  2. Fill form &         │                         │
+       │  2. Fill form &amp;         │                         │
        │     Submit              │                         │
        │                          │                         │
        │  ─────────────────────► │                         │
@@ -721,6 +491,9 @@
        │                          │  WHERE overlapping     │
        │                          │                         │
        │                          │  ◄─────────────────────│
+       │                          │  Return conflicts      │
+       │                          │                         │
+       │                          │  ◄─────────────────────│
        │                          │  Return booking_id     │
        │                          │                         │
        │  ◄───────────────────── │                         │
@@ -728,406 +501,815 @@
        │  {booking details}      │                         │
        │                          │                         │
        │  7. Update UI           │                         │
+       │                          │                         │
        ▼                          ▼                         ▼
-            </div>
-        </section>
-        
-        <!-- Authentication Flow -->
-        <section id="auth-flow" class="section">
-            <h2>Authentication Flow</h2>
-            
-            <h3>Local Authentication</h3>
-            
-            <div class="diagram">
-  ┌────────┐         ┌─────────┐         ┌──────────┐
-  │ Client │         │ Backend │         │ Database │
-  └───┬────┘         └────┬────┘         └────┬─────┘
-      │                   │                   │
-      │ POST /auth/login  │                   │
-      │ {email, password} │                   │
-      │──────────────────►│                   │
-      │                   │                   │
-      │                   │ SELECT user       │
-      │                   │──────────────────►│
-      │                   │                   │
-      │                   │◄──────────────────│
-      │                   │ user record       │
-      │                   │                   │
-      │                   │ Verify bcrypt     │
-      │                   │ hash              │
-      │                   │                   │
-      │                   │ Generate JWT      │
-      │                   │ {userId, role}    │
-      │                   │                   │
-      │◄──────────────────│                   │
-      │ {token, user}     │                   │
-      │                   │                   │
-      │ Store token       │                   │
-      │ (localStorage)    │                   │
-      ▼                   ▼                   ▼
-            </div>
-        </section>
-        
-        <!-- Technology Stack -->
-        <section id="tech-stack" class="section">
-            <h2>Technology Stack</h2>
-            
-            <h3>Frontend</h3>
-            <div class="tech-grid">
-                <div class="tech-item">
-                    <div class="icon">⚛️</div>
-                    <div class="name">Next.js</div>
-                    <div class="version">14.x</div>
-                </div>
-                <div class="tech-item">
-                    <div class="icon">⚛️</div>
-                    <div class="name">React</div>
-                    <div class="version">18.x</div>
-                </div>
-                <div class="tech-item">
-                    <div class="icon">📘</div>
-                    <div class="name">TypeScript</div>
-                    <div class="version">5.x</div>
-                </div>
-                <div class="tech-item">
-                    <div class="icon">🎨</div>
-                    <div class="name">Material UI</div>
-                    <div class="version">5.16</div>
-                </div>
-                <div class="tech-item">
-                    <div class="icon">💨</div>
-                    <div class="name">Tailwind CSS</div>
-                    <div class="version">3.x</div>
-                </div>
-                <div class="tech-item">
-                    <div class="icon">🌐</div>
-                    <div class="name">Axios</div>
-                    <div class="version">1.7.x</div>
-                </div>
-            </div>
-            
-            <h3>Backend</h3>
-            <div class="tech-grid">
-                <div class="tech-item">
-                    <div class="icon">🟢</div>
-                    <div class="name">Node.js</div>
-                    <div class="version">22.x</div>
-                </div>
-                <div class="tech-item">
-                    <div class="icon">🚂</div>
-                    <div class="name">Express.js</div>
-                    <div class="version">4.21</div>
-                </div>
-                <div class="tech-item">
-                    <div class="icon">🔐</div>
-                    <div class="name">JWT</div>
-                    <div class="version">jsonwebtoken</div>
-                </div>
-                <div class="tech-item">
-                    <div class="icon">🔒</div>
-                    <div class="name">bcrypt</div>
-                    <div class="version">5.1.x</div>
-                </div>
-                <div class="tech-item">
-                    <div class="icon">🐘</div>
-                    <div class="name">pg</div>
-                    <div class="version">8.13</div>
-                </div>
-                <div class="tech-item">
-                    <div class="icon">🛡️</div>
-                    <div class="name">Helmet</div>
-                    <div class="version">8.0.x</div>
-                </div>
-            </div>
-            
-            <h3>Database & DevOps</h3>
-            <div class="tech-grid">
-                <div class="tech-item">
-                    <div class="icon">🐘</div>
-                    <div class="name">PostgreSQL</div>
-                    <div class="version">15</div>
-                </div>
-                <div class="tech-item">
-                    <div class="icon">🐳</div>
-                    <div class="name">Docker</div>
-                    <div class="version">Latest</div>
-                </div>
-                <div class="tech-item">
-                    <div class="icon">🐙</div>
-                    <div class="name">Docker Compose</div>
-                    <div class="version">3.8</div>
-                </div>
-            </div>
-        </section>
-        
-        <!-- Security Architecture -->
-        <section id="security" class="section">
-            <h2>Security Architecture</h2>
-            
-            <p>The application implements a 5-layer security model:</p>
-            
-            <div class="layer">
-                <div class="layer-header">Layer 1: Network Security</div>
-                <div class="layer-content">
-                    <ul>
-                        <li>HTTPS/TLS encryption (production)</li>
-                        <li>CORS policy - restricted origins</li>
-                        <li>Docker network isolation</li>
-                        <li>Rate limiting (recommended for production)</li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="layer">
-                <div class="layer-header">Layer 2: Application Security</div>
-                <div class="layer-content">
-                    <ul>
-                        <li>Helmet.js security headers</li>
-                        <li>Input validation & sanitization</li>
-                        <li>SQL injection prevention (parameterized queries)</li>
-                        <li>XSS protection</li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="layer">
-                <div class="layer-header">Layer 3: Authentication</div>
-                <div class="layer-content">
-                    <ul>
-                        <li>JWT tokens (24h expiry)</li>
-                        <li>bcrypt password hashing (salt rounds: 10)</li>
-                        <li>SSO integration (OIDC/SAML)</li>
-                        <li>Session management</li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="layer">
-                <div class="layer-header">Layer 4: Authorization (RBAC)</div>
-                <div class="layer-content">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Role</th>
-                                <th>Create</th>
-                                <th>Read</th>
-                                <th>Update</th>
-                                <th>Delete</th>
-                                <th>Approve</th>
-                                <th>Admin</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Admin</td>
-                                <td style="color: var(--success);">✓</td>
-                                <td style="color: var(--success);">✓</td>
-                                <td style="color: var(--success);">✓</td>
-                                <td style="color: var(--success);">✓</td>
-                                <td style="color: var(--success);">✓</td>
-                                <td style="color: var(--success);">✓</td>
-                            </tr>
-                            <tr>
-                                <td>EnvManager</td>
-                                <td style="color: var(--success);">✓</td>
-                                <td style="color: var(--success);">✓</td>
-                                <td style="color: var(--success);">✓</td>
-                                <td style="color: var(--success);">✓</td>
-                                <td style="color: var(--success);">✓</td>
-                                <td style="color: var(--error);">✗</td>
-                            </tr>
-                            <tr>
-                                <td>ProjectLead</td>
-                                <td style="color: var(--success);">✓</td>
-                                <td style="color: var(--success);">✓</td>
-                                <td style="color: var(--success);">✓</td>
-                                <td style="color: var(--error);">✗</td>
-                                <td style="color: var(--error);">✗</td>
-                                <td style="color: var(--error);">✗</td>
-                            </tr>
-                            <tr>
-                                <td>Tester</td>
-                                <td style="color: var(--warning);">✓*</td>
-                                <td style="color: var(--success);">✓</td>
-                                <td style="color: var(--error);">✗</td>
-                                <td style="color: var(--error);">✗</td>
-                                <td style="color: var(--error);">✗</td>
-                                <td style="color: var(--error);">✗</td>
-                            </tr>
-                            <tr>
-                                <td>Viewer</td>
-                                <td style="color: var(--error);">✗</td>
-                                <td style="color: var(--success);">✓</td>
-                                <td style="color: var(--error);">✗</td>
-                                <td style="color: var(--error);">✗</td>
-                                <td style="color: var(--error);">✗</td>
-                                <td style="color: var(--error);">✗</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <p style="font-size: 0.9rem; color: var(--gray-600); margin-top: 10px;">* Tester can create bookings only</p>
-                </div>
-            </div>
-            
-            <div class="layer">
-                <div class="layer-header">Layer 5: Data Security</div>
-                <div class="layer-content">
-                    <ul>
-                        <li>Encrypted passwords (never stored in plain text)</li>
-                        <li>Prepared statements (prevent SQL injection)</li>
-                        <li>Audit logging (activity_log table)</li>
-                        <li>Data sensitivity classification</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-        
-        <!-- Deployment Options -->
-        <section id="deployment" class="section">
-            <h2>Deployment Options</h2>
-            
-            <div class="card-grid">
-                <div class="card">
-                    <div class="card-header">🐳 Docker Compose</div>
-                    <div class="card-body">
-                        <p><strong>Best for:</strong> Development, Small Teams</p>
-                        <ul>
-                            <li>Simple setup</li>
-                            <li>All services on single host</li>
-                            <li>Easy to start/stop</li>
-                        </ul>
-                        <p style="color: var(--warning); margin-top: 10px;"><strong>Note:</strong> Single point of failure</p>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <div class="card-header green">☁️ Cloud Platform</div>
-                    <div class="card-body">
-                        <p><strong>Best for:</strong> Production</p>
-                        <ul>
-                            <li>Vercel/Netlify for frontend</li>
-                            <li>Railway/Render for backend</li>
-                            <li>Managed PostgreSQL (RDS, Cloud SQL)</li>
-                        </ul>
-                        <p style="color: var(--success); margin-top: 10px;"><strong>Pros:</strong> Scalable, managed services</p>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <div class="card-header orange">☸️ Kubernetes</div>
-                    <div class="card-body">
-                        <p><strong>Best for:</strong> Enterprise</p>
-                        <ul>
-                            <li>Horizontal scaling</li>
-                            <li>Self-healing</li>
-                            <li>Rolling deployments</li>
-                        </ul>
-                        <p style="color: var(--warning); margin-top: 10px;"><strong>Note:</strong> Requires K8s expertise</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-        
-        <!-- Environment Variables -->
-        <section id="env-vars" class="section">
-            <h2>Environment Variables</h2>
-            
-            <h3>Backend (.env)</h3>
-            <pre>
-# Server
-NODE_ENV=production
-PORT=5000
+</code></pre>
+<hr>
+<h2>Authentication Flow</h2>
+<pre><code>┌─────────────────────────────────────────────────────────────────────────────────┐
+│                           AUTHENTICATION FLOW                                    │
+└─────────────────────────────────────────────────────────────────────────────────┘
 
-# Database (Option A: Connection String)
-DATABASE_URL=postgresql://user:password@host:5432/dbname
+                         LOCAL AUTHENTICATION
+    ┌─────────────────────────────────────────────────────────────────┐
+    │                                                                 │
+    │  ┌────────┐         ┌─────────┐         ┌──────────┐          │
+    │  │ Client │         │ Backend │         │ Database │          │
+    │  └───┬────┘         └────┬────┘         └────┬─────┘          │
+    │      │                   │                   │                 │
+    │      │ POST /auth/login  │                   │                 │
+    │      │ {email, password} │                   │                 │
+    │      │──────────────────►│                   │                 │
+    │      │                   │                   │                 │
+    │      │                   │ SELECT user       │                 │
+    │      │                   │──────────────────►│                 │
+    │      │                   │                   │                 │
+    │      │                   │◄──────────────────│                 │
+    │      │                   │ user record       │                 │
+    │      │                   │                   │                 │
+    │      │                   │ Verify bcrypt     │                 │
+    │      │                   │ hash              │                 │
+    │      │                   │                   │                 │
+    │      │                   │ Generate JWT      │                 │
+    │      │                   │ {userId, role}    │                 │
+    │      │                   │                   │                 │
+    │      │◄──────────────────│                   │                 │
+    │      │ {token, user}     │                   │                 │
+    │      │                   │                   │                 │
+    │      │ Store token       │                   │                 │
+    │      │ (localStorage)    │                   │                 │
+    │      │                   │                   │                 │
+    └─────────────────────────────────────────────────────────────────┘
 
-# Database (Option B: Individual Variables)
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=tem_db
-DB_USER=tem_user
-DB_PASSWORD=your_secure_password
+                         PROTECTED REQUEST
+    ┌─────────────────────────────────────────────────────────────────┐
+    │                                                                 │
+    │  ┌────────┐         ┌─────────┐         ┌──────────┐          │
+    │  │ Client │         │ Backend │         │ Database │          │
+    │  └───┬────┘         └────┬────┘         └────┬─────┘          │
+    │      │                   │                   │                 │
+    │      │ GET /api/envs     │                   │                 │
+    │      │ Authorization:    │                   │                 │
+    │      │ Bearer &lt;token&gt;    │                   │                 │
+    │      │──────────────────►│                   │                 │
+    │      │                   │                   │                 │
+    │      │                   │ Verify JWT        │                 │
+    │      │                   │ signature         │                 │
+    │      │                   │                   │                 │
+    │      │                   │ Check expiry      │                 │
+    │      │                   │                   │                 │
+    │      │                   │ Extract userId    │                 │
+    │      │                   │ &amp; role            │                 │
+    │      │                   │                   │                 │
+    │      │                   │ RBAC check        │                 │
+    │      │                   │                   │                 │
+    │      │                   │ Query data        │                 │
+    │      │                   │──────────────────►│                 │
+    │      │                   │                   │                 │
+    │      │                   │◄──────────────────│                 │
+    │      │                   │                   │                 │
+    │      │◄──────────────────│                   │                 │
+    │      │ {environments}    │                   │                 │
+    │      │                   │                   │                 │
+    └─────────────────────────────────────────────────────────────────┘
+</code></pre>
+<hr>
+<h2>Technology Stack</h2>
+<pre><code>┌─────────────────────────────────────────────────────────────────────────────────┐
+│                            TECHNOLOGY STACK                                      │
+└─────────────────────────────────────────────────────────────────────────────────┘
 
-# Authentication
-JWT_SECRET=your-very-long-random-secret-key-min-32-chars
-JWT_EXPIRES_IN=24h
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ FRONTEND                                                                         │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐        │
+│  │   Next.js    │  │    React     │  │  TypeScript  │  │     MUI      │        │
+│  │    14.x      │  │    18.x      │  │     5.x      │  │    5.16      │        │
+│  │              │  │              │  │              │  │  (Material)  │        │
+│  │ • SSR/SSG    │  │ • Hooks      │  │ • Type Safe  │  │ • Components │        │
+│  │ • App Router │  │ • Context    │  │ • Interfaces │  │ • Theming    │        │
+│  │ • API Routes │  │ • State Mgmt │  │ • Generics   │  │ • Icons      │        │
+│  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘        │
+│                                                                                  │
+│  ┌──────────────┐  ┌──────────────┐                                             │
+│  │ Tailwind CSS │  │    Axios     │                                             │
+│  │     3.x      │  │    1.7.x     │                                             │
+│  │              │  │              │                                             │
+│  │ • Utility    │  │ • HTTP Client│                                             │
+│  │ • Responsive │  │ • Interceptor│                                             │
+│  └──────────────┘  └──────────────┘                                             │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
 
-# CORS
-CORS_ORIGIN=https://your-frontend-domain.com
-            </pre>
-            
-            <h3>Frontend (.env.local)</h3>
-            <pre>
-NEXT_PUBLIC_API_URL=https://your-backend-domain.com/api
-            </pre>
-        </section>
-        
-        <!-- File Structure -->
-        <section id="file-structure" class="section">
-            <h2>File Structure</h2>
-            
-            <div class="file-tree">
-<span class="folder">BookMyEnv/</span>
-├── docker-compose.yml          <span class="comment"># Container orchestration</span>
-├── start.ps1                   <span class="comment"># Windows startup script</span>
-├── README.md                   <span class="comment"># Project overview</span>
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ BACKEND                                                                          │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐        │
+│  │   Node.js    │  │  Express.js  │  │     JWT      │  │    bcrypt    │        │
+│  │    22.x      │  │    4.21      │  │  jsonwebtoken│  │    5.1.x     │        │
+│  │              │  │              │  │              │  │              │        │
+│  │ • Runtime    │  │ • Routing    │  │ • Auth Token │  │ • Password   │        │
+│  │ • ES Modules │  │ • Middleware │  │ • Claims     │  │   Hashing    │        │
+│  │ • Async/Await│  │ • REST API   │  │ • Expiry     │  │ • Salt       │        │
+│  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘        │
+│                                                                                  │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                          │
+│  │      pg      │  │    Helmet    │  │     CORS     │                          │
+│  │    8.13      │  │    8.0.x     │  │    2.8.x     │                          │
+│  │              │  │              │  │              │                          │
+│  │ • PostgreSQL │  │ • Security   │  │ • Cross-     │                          │
+│  │   Client     │  │   Headers    │  │   Origin     │                          │
+│  │ • Connection │  │ • CSP        │  │ • Preflight  │                          │
+│  │   Pooling    │  │              │  │              │                          │
+│  └──────────────┘  └──────────────┘  └──────────────┘                          │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ DATABASE                                                                         │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│  ┌──────────────────────────────────────────────────────────────────┐          │
+│  │                      PostgreSQL 15                                │          │
+│  │                                                                   │          │
+│  │  • UUID primary keys for all entities                            │          │
+│  │  • JSONB columns for flexible metadata                           │          │
+│  │  • Timestamp columns (created_at, updated_at)                    │          │
+│  │  • Foreign key constraints with cascading                        │          │
+│  │  • Indexes on frequently queried columns                         │          │
+│  │  • CHECK constraints for enums                                   │          │
+│  │                                                                   │          │
+│  └──────────────────────────────────────────────────────────────────┘          │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ DEVOPS                                                                           │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                          │
+│  │    Docker    │  │   Docker     │  │     Git      │                          │
+│  │              │  │   Compose    │  │              │                          │
+│  │              │  │              │  │              │                          │
+│  │ • Containers │  │ • Multi-     │  │ • Version    │                          │
+│  │ • Images     │  │   Container  │  │   Control    │                          │
+│  │ • Volumes    │  │ • Networks   │  │ • Branches   │                          │
+│  └──────────────┘  └──────────────┘  └──────────────┘                          │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<hr>
+<h2>Security Architecture</h2>
+<pre><code>┌─────────────────────────────────────────────────────────────────────────────────┐
+│                           SECURITY LAYERS                                        │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ Layer 0: REVERSE PROXY (Nginx)                                                   │
+│ ┌─────────────────────────────────────────────────────────────────────────────┐ │
+│ │  • SSL/TLS Termination (TLS 1.2/1.3 only)                                   │ │
+│ │  • HTTP/2 enabled                                                           │ │
+│ │  • Security Headers:                                                        │ │
+│ │    - Content-Security-Policy (XSS/injection protection)                     │ │
+│ │    - Strict-Transport-Security (HSTS with preload)                          │ │
+│ │    - X-Frame-Options: SAMEORIGIN (clickjacking)                             │ │
+│ │    - X-Content-Type-Options: nosniff                                        │ │
+│ │    - Permissions-Policy (disabled geolocation, camera, etc.)                │ │
+│ │  • HTTP → HTTPS redirect                                                    │ │
+│ └─────────────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ Layer 1: NETWORK SECURITY                                                        │
+│ ┌─────────────────────────────────────────────────────────────────────────────┐ │
+│ │  • Docker network isolation (tem-network)                                   │ │
+│ │  • Database NOT exposed externally (internal network only)                  │ │
+│ │  • CORS policy - explicit allowed origins                                   │ │
+│ │  • Rate limiting:                                                           │ │
+│ │    - General: 100 requests per 15 minutes                                   │ │
+│ │    - Auth endpoints: 5 requests per 15 minutes                              │ │
+│ │  • Request body size limit: 10KB                                            │ │
+│ └─────────────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ Layer 2: APPLICATION SECURITY                                                    │
+│ ┌─────────────────────────────────────────────────────────────────────────────┐ │
+│ │  • Helmet.js security headers                                               │ │
+│ │  • express-validator input validation &amp; sanitization                        │ │
+│ │  • SQL injection prevention (parameterized queries)                         │ │
+│ │  • XSS protection via CSP                                                   │ │
+│ │  • Error messages don&#39;t expose internal details                             │ │
+│ └─────────────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ Layer 3: AUTHENTICATION                                                          │
+│ ┌─────────────────────────────────────────────────────────────────────────────┐ │
+│ │  • JWT tokens (configurable expiry, default 24h)                            │ │
+│ │  • bcrypt password hashing (12 rounds - OWASP recommended)                  │ │
+│ │  • Password strength requirements:                                          │ │
+│ │    - Minimum 8 characters                                                   │ │
+│ │    - Uppercase, lowercase, number, special character                        │ │
+│ │  • JWT secret via environment variable (required)                           │ │
+│ │  • SSO integration ready (OIDC/SAML)                                        │ │
+│ └─────────────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ Layer 4: AUTHORIZATION (RBAC)                                                    │
+│ ┌─────────────────────────────────────────────────────────────────────────────┐ │
+│ │  • Role-based access control                                                │ │
+│ │  • Resource-level permissions                                               │ │
+│ │  • Group-based access                                                       │ │
+│ │  • Registration forced to &#39;Tester&#39; role (no role injection)                 │ │
+│ │                                                                             │ │
+│ │  ┌─────────────────────────────────────────────────────────────────────┐   │ │
+│ │  │ Role          │ Create │ Read │ Update │ Delete │ Approve │ Admin  │   │ │
+│ │  ├───────────────┼────────┼──────┼────────┼────────┼─────────┼────────┤   │ │
+│ │  │ Admin         │   ✓    │  ✓   │   ✓    │   ✓    │    ✓    │   ✓    │   │ │
+│ │  │ EnvManager    │   ✓    │  ✓   │   ✓    │   ✓    │    ✓    │   ✗    │   │ │
+│ │  │ ProjectLead   │   ✓    │  ✓   │   ✓    │   ✗    │    ✗    │   ✗    │   │ │
+│ │  │ Tester        │   ✓*   │  ✓   │   ✗    │   ✗    │    ✗    │   ✗    │   │ │
+│ │  │ Viewer        │   ✗    │  ✓   │   ✗    │   ✗    │    ✗    │   ✗    │   │ │
+│ │  └─────────────────────────────────────────────────────────────────────┘   │ │
+│ │  * Tester can create bookings only                                         │ │
+│ └─────────────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ Layer 5: DATA SECURITY                                                           │
+│ ┌─────────────────────────────────────────────────────────────────────────────┐ │
+│ │  • Encrypted passwords (bcrypt, never stored in plain text)                 │ │
+│ │  • Prepared statements (prevent SQL injection)                              │ │
+│ │  • Audit logging (activity_log table)                                       │ │
+│ │  • Data sensitivity classification                                          │ │
+│ │  • Credentials via environment variables (not in code)                      │ │
+│ └─────────────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<hr>
+<h2>Deployment Options</h2>
+<pre><code>┌─────────────────────────────────────────────────────────────────────────────────┐
+│                          DEPLOYMENT OPTIONS                                      │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ OPTION 1: Docker Compose (Development/Small Teams)                               │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│  ┌─────────────────────────────────────────────────────────┐                   │
+│  │                   Single Host                            │                   │
+│  │  ┌───────────┐  ┌───────────┐  ┌───────────┐           │                   │
+│  │  │ Frontend  │  │  Backend  │  │ PostgreSQL│           │                   │
+│  │  │ Container │  │ Container │  │ Container │           │                   │
+│  │  └───────────┘  └───────────┘  └───────────┘           │                   │
+│  └─────────────────────────────────────────────────────────┘                   │
+│                                                                                  │
+│  Pros: Simple setup, good for development                                       │
+│  Cons: Single point of failure, limited scalability                             │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ OPTION 2: Cloud Platform (Production)                                            │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│  ┌─────────────────────────────────────────────────────────────────────────┐   │
+│  │                         Cloud Provider                                   │   │
+│  │                                                                          │   │
+│  │  ┌─────────────┐      ┌─────────────┐      ┌─────────────┐             │   │
+│  │  │   Vercel    │      │  Railway/   │      │  Managed    │             │   │
+│  │  │   or CDN    │      │  Render     │      │  PostgreSQL │             │   │
+│  │  │             │      │             │      │             │             │   │
+│  │  │  Frontend   │─────►│   Backend   │─────►│  Database   │             │   │
+│  │  │             │      │             │      │  (RDS/Cloud │             │   │
+│  │  │             │      │             │      │   SQL)      │             │   │
+│  │  └─────────────┘      └─────────────┘      └─────────────┘             │   │
+│  │                                                                          │   │
+│  └─────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                  │
+│  Pros: Scalable, managed services, high availability                            │
+│  Cons: Higher cost, vendor lock-in                                              │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ OPTION 3: Kubernetes (Enterprise)                                                │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│  ┌─────────────────────────────────────────────────────────────────────────┐   │
+│  │                      Kubernetes Cluster                                  │   │
+│  │                                                                          │   │
+│  │  ┌─────────────────────────────────────────────────────────────────┐   │   │
+│  │  │ Ingress Controller (nginx/traefik)                               │   │   │
+│  │  └─────────────────────────────────────────────────────────────────┘   │   │
+│  │                            │                                            │   │
+│  │            ┌───────────────┼───────────────┐                           │   │
+│  │            ▼               ▼               ▼                           │   │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                   │   │
+│  │  │  Frontend   │  │  Frontend   │  │  Frontend   │                   │   │
+│  │  │   Pod 1     │  │   Pod 2     │  │   Pod 3     │                   │   │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘                   │   │
+│  │                                                                          │   │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                   │   │
+│  │  │  Backend    │  │  Backend    │  │  Backend    │                   │   │
+│  │  │   Pod 1     │  │   Pod 2     │  │   Pod 3     │                   │   │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘                   │   │
+│  │                            │                                            │   │
+│  │                            ▼                                            │   │
+│  │  ┌─────────────────────────────────────────────────────────────────┐   │   │
+│  │  │ PostgreSQL StatefulSet (with PVC)                                │   │   │
+│  │  └─────────────────────────────────────────────────────────────────┘   │   │
+│  │                                                                          │   │
+│  └─────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                  │
+│  Pros: Highly scalable, self-healing, enterprise features                       │
+│  Cons: Complex setup, requires K8s expertise                                    │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<hr>
+<h2>Environment Variables</h2>
+<pre><code>┌─────────────────────────────────────────────────────────────────────────────────┐
+│                        ENVIRONMENT VARIABLES                                     │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+BACKEND (.env)
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ # Server                                                                         │
+│ NODE_ENV=production                                                              │
+│ PORT=5000                                                                        │
+│                                                                                  │
+│ # Database (Option A: Connection String)                                         │
+│ DATABASE_URL=postgresql://user:password@host:5432/dbname                        │
+│                                                                                  │
+│ # Database (Option B: Individual Variables)                                      │
+│ DB_HOST=localhost                                                                │
+│ DB_PORT=5432                                                                     │
+│ DB_NAME=tem_db                                                                   │
+│ DB_USER=tem_user                                                                 │
+│ DB_PASSWORD=your_secure_password                                                 │
+│                                                                                  │
+│ # Authentication                                                                 │
+│ JWT_SECRET=your-very-long-random-secret-key-min-32-chars                        │
+│ JWT_EXPIRES_IN=24h                                                               │
+│                                                                                  │
+│ # CORS                                                                           │
+│ CORS_ORIGIN=https://your-frontend-domain.com                                    │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+FRONTEND (.env.local)
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ NEXT_PUBLIC_API_URL=https://your-backend-domain.com/api                         │
+└─────────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<hr>
+<h2>File Structure</h2>
+<pre><code>BookMyEnv/
+├── docker-compose.yml          # Container orchestration
+├── start.ps1                   # Windows startup script
+├── README.md                   # Project overview
 │
-├── <span class="folder">docs/</span>
-│   ├── <span class="file">ARCHITECTURE.md</span>
-│   ├── <span class="file">USER_GUIDE.md</span>
-│   └── <span class="file">QUICK_REFERENCE.md</span>
+├── docs/
+│   ├── ARCHITECTURE.md         # This file
+│   ├── USER_GUIDE.md           # User documentation
+│   └── QUICK_REFERENCE.md      # Quick reference card
 │
-├── <span class="folder">backend/</span>
-│   ├── Dockerfile
-│   ├── package.json
+├── backend/
+│   ├── Dockerfile              # Backend container config
+│   ├── package.json            # Node.js dependencies
 │   │
-│   ├── <span class="folder">database/</span>
-│   │   └── <span class="file">init.sql</span>           <span class="comment"># Database schema</span>
+│   ├── database/
+│   │   └── init.sql            # Database schema &amp; seed data
 │   │
-│   └── <span class="folder">src/</span>
-│       ├── <span class="file">server.js</span>           <span class="comment"># Entry point</span>
-│       ├── <span class="folder">config/</span>
-│       │   └── <span class="file">database.js</span>
-│       ├── <span class="folder">middleware/</span>
-│       │   ├── <span class="file">auth.js</span>
-│       │   └── <span class="file">rbac.js</span>
-│       ├── <span class="folder">routes/</span>
-│       │   ├── <span class="file">authRoutes.js</span>
-│       │   ├── <span class="file">environmentRoutes.js</span>
-│       │   ├── <span class="file">bookingRoutes.js</span>
-│       │   └── ...
-│       └── <span class="folder">controllers/</span>
-│           ├── <span class="file">authController.js</span>
-│           ├── <span class="file">environmentController.js</span>
-│           └── ...
+│   └── src/
+│       ├── server.js           # Application entry point
+│       │
+│       ├── config/
+│       │   └── database.js     # PostgreSQL connection
+│       │
+│       ├── middleware/
+│       │   ├── auth.js         # JWT authentication
+│       │   └── rbac.js         # Role-based access control
+│       │
+│       ├── routes/
+│       │   ├── authRoutes.js
+│       │   ├── environmentRoutes.js
+│       │   ├── bookingRoutes.js
+│       │   ├── releaseRoutes.js
+│       │   ├── applicationRoutes.js
+│       │   ├── groupRoutes.js
+│       │   ├── userRoutes.js
+│       │   ├── integrationRoutes.js
+│       │   └── changeRoutes.js
+│       │
+│       └── controllers/
+│           ├── authController.js
+│           ├── environmentController.js
+│           ├── bookingController.js
+│           ├── releaseController.js
+│           ├── applicationController.js
+│           ├── groupController.js
+│           ├── userController.js
+│           ├── integrationController.js
+│           └── changeController.js
 │
-└── <span class="folder">frontend/</span>
-    ├── Dockerfile
-    ├── package.json
-    ├── next.config.js
+└── frontend/
+    ├── Dockerfile              # Frontend container config
+    ├── package.json            # Node.js dependencies
+    ├── next.config.js          # Next.js configuration
+    ├── tailwind.config.js      # Tailwind CSS config
+    ├── tsconfig.json           # TypeScript config
     │
-    └── <span class="folder">src/</span>
-        ├── <span class="folder">app/</span>
-        │   ├── <span class="file">layout.tsx</span>
-        │   ├── <span class="file">page.tsx</span>
-        │   ├── <span class="folder">login/</span>
-        │   └── <span class="folder">(dashboard)/</span>
-        │       ├── <span class="file">layout.tsx</span>
-        │       ├── <span class="folder">dashboard/</span>
-        │       ├── <span class="folder">environments/</span>
-        │       ├── <span class="folder">bookings/</span>
-        │       └── ...
-        ├── <span class="folder">contexts/</span>
-        │   └── <span class="file">AuthContext.tsx</span>
-        └── <span class="folder">lib/</span>
-            ├── <span class="file">api.ts</span>
-            └── <span class="file">socket.ts</span>
-            </div>
-        </section>
-        
+    ├── public/                 # Static assets
+    │
+    └── src/
+        ├── app/
+        │   ├── globals.css     # Global styles
+        │   ├── layout.tsx      # Root layout
+        │   ├── page.tsx        # Landing page (redirect)
+        │   │
+        │   ├── login/
+        │   │   └── page.tsx    # Login page
+        │   │
+        │   └── (dashboard)/
+        │       ├── layout.tsx  # Dashboard layout with sidebar
+        │       ├── dashboard/page.tsx
+        │       ├── environments/page.tsx
+        │       ├── bookings/page.tsx
+        │       ├── releases/page.tsx
+        │       ├── applications/page.tsx
+        │       ├── groups/page.tsx
+        │       ├── monitoring/page.tsx
+        │       ├── integrations/page.tsx
+        │       ├── topology/page.tsx
+        │       ├── testdata/page.tsx
+        │       ├── interfaces/page.tsx
+        │       ├── configs/page.tsx
+        │       └── settings/page.tsx
+        │
+        ├── contexts/
+        │   └── AuthContext.tsx # Authentication state
+        │
+        └── lib/
+            ├── api.ts          # Axios API client
+            └── socket.ts       # WebSocket client
+</code></pre>
+<hr>
+<h2>Feature Summary</h2>
+<h3>Core Features</h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Environment Management</strong></td>
+<td>Create environments with multiple instances, track operational status</td>
+</tr>
+<tr>
+<td><strong>Application Deployments</strong></td>
+<td>Deploy/undeploy apps to instances, track versions and models</td>
+</tr>
+<tr>
+<td><strong>Booking System</strong></td>
+<td>Reserve environments, detect conflicts, calendar view</td>
+</tr>
+<tr>
+<td><strong>Conflict Resolution</strong></td>
+<td>View and resolve booking conflicts with multiple resolution types</td>
+</tr>
+<tr>
+<td><strong>Release Management</strong></td>
+<td>Plan releases with app/env associations, track status</td>
+</tr>
+<tr>
+<td><strong>Bulk Data Upload</strong></td>
+<td>Import environments, instances, apps, interfaces, components via CSV</td>
+</tr>
+<tr>
+<td><strong>Topology View</strong></td>
+<td>Visual representation of environment-app relationships</td>
+</tr>
+<tr>
+<td><strong>Real-time Dashboard</strong></td>
+<td>Live stats, activity feed, availability metrics</td>
+</tr>
+</tbody></table>
+<h3>Security Features</h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>JWT Authentication</strong></td>
+<td>Secure token-based auth with configurable expiry</td>
+</tr>
+<tr>
+<td><strong>Role-Based Access</strong></td>
+<td>5 roles: Admin, EnvironmentManager, ProjectLead, Tester, Viewer</td>
+</tr>
+<tr>
+<td><strong>HTTPS/TLS</strong></td>
+<td>TLS 1.2/1.3 via Nginx reverse proxy</td>
+</tr>
+<tr>
+<td><strong>Rate Limiting</strong></td>
+<td>Configurable request limits (currently disabled for dev)</td>
+</tr>
+<tr>
+<td><strong>Security Headers</strong></td>
+<td>CSP, HSTS, X-Frame-Options, X-Content-Type-Options</td>
+</tr>
+<tr>
+<td><strong>Password Security</strong></td>
+<td>bcrypt with 12 rounds, policy enforcement</td>
+</tr>
+</tbody></table>
+<h3>Integration Features</h3>
+<table>
+<thead>
+<tr>
+<th>Integration</th>
+<th>Capabilities</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Jira</strong></td>
+<td>Link issues, sync status, auto-create for conflicts</td>
+</tr>
+<tr>
+<td><strong>GitLab</strong></td>
+<td>Link pipelines/MRs, trigger deployments, track status</td>
+</tr>
+<tr>
+<td><strong>ServiceNow</strong></td>
+<td>Change tickets, CMDB sync, approval workflows</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>AWS Cloud Deployment Architecture</h2>
+<pre><code>┌─────────────────────────────────────────────────────────────────────────────────┐
+│                         AWS CLOUD ARCHITECTURE                                   │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+                                    ┌─────────────┐
+                                    │   Users     │
+                                    │  (Browser)  │
+                                    └──────┬──────┘
+                                           │
+                                           │ HTTPS
+                                           ▼
+                                    ┌─────────────┐
+                                    │  Route 53   │
+                                    │    (DNS)    │
+                                    └──────┬──────┘
+                                           │
+                                           ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              CLOUDFRONT (CDN)                                    │
+│  ┌───────────────────────────────────────────────────────────────────────────┐  │
+│  │  • SSL/TLS Termination (TLS 1.2/1.3)                                     │  │
+│  │  • Global Edge Caching                                                    │  │
+│  │  • Request Routing (/ → S3, /api → ALB)                                  │  │
+│  │  • DDoS Protection (AWS Shield)                                          │  │
+│  └───────────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                        │                               │
+                        │                               │
+              ┌─────────▼─────────┐           ┌─────────▼─────────┐
+              │   S3 BUCKET       │           │   ALB             │
+              │   (Frontend)      │           │   (Load Balancer) │
+              │                   │           │                   │
+              │ • Static Assets   │           │ • Health Checks   │
+              │ • Next.js Export  │           │ • Target Groups   │
+              │ • Versioning      │           │ • SSL Offload     │
+              └───────────────────┘           └─────────┬─────────┘
+                                                        │
+                                              ┌─────────▼─────────┐
+┌─────────────────────────────────────────────┤      VPC          ├──────────────┐
+│                                             └───────────────────┘              │
+│  ┌─────────────────────────────────────────────────────────────────────────┐  │
+│  │                         PUBLIC SUBNETS (2 AZs)                           │  │
+│  │  ┌─────────────────────┐           ┌─────────────────────┐              │  │
+│  │  │    NAT Gateway      │           │    NAT Gateway      │              │  │
+│  │  │    (AZ-1)           │           │    (AZ-2)           │              │  │
+│  │  └─────────────────────┘           └─────────────────────┘              │  │
+│  └─────────────────────────────────────────────────────────────────────────┘  │
+│                                      │                                         │
+│  ┌───────────────────────────────────▼─────────────────────────────────────┐  │
+│  │                         PRIVATE SUBNETS (2 AZs)                          │  │
+│  │                                                                          │  │
+│  │  ┌─────────────────────────────────────────────────────────────────┐   │  │
+│  │  │                      ECS FARGATE CLUSTER                         │   │  │
+│  │  │  ┌─────────────────┐           ┌─────────────────┐              │   │  │
+│  │  │  │  Backend Task   │           │  Backend Task   │              │   │  │
+│  │  │  │  (Container 1)  │           │  (Container 2)  │              │   │  │
+│  │  │  │                 │           │                 │              │   │  │
+│  │  │  │ • Express.js    │           │ • Express.js    │              │   │  │
+│  │  │  │ • Node.js 22    │           │ • Node.js 22    │              │   │  │
+│  │  │  │ • Auto-scaling  │           │ • Auto-scaling  │              │   │  │
+│  │  │  └─────────────────┘           └─────────────────┘              │   │  │
+│  │  └─────────────────────────────────────────────────────────────────┘   │  │
+│  │                                      │                                  │  │
+│  │  ┌───────────────────────────────────▼─────────────────────────────┐   │  │
+│  │  │                      RDS POSTGRESQL                              │   │  │
+│  │  │  ┌─────────────────────────────────────────────────────────┐   │   │  │
+│  │  │  │ • PostgreSQL 15                                          │   │   │  │
+│  │  │  │ • Multi-AZ (optional)                                    │   │   │  │
+│  │  │  │ • Encrypted Storage                                      │   │   │  │
+│  │  │  │ • Automated Backups                                      │   │   │  │
+│  │  │  │ • Performance Insights                                   │   │   │  │
+│  │  │  └─────────────────────────────────────────────────────────┘   │   │  │
+│  │  └─────────────────────────────────────────────────────────────────┘   │  │
+│  └─────────────────────────────────────────────────────────────────────────┘  │
+└────────────────────────────────────────────────────────────────────────────────┘
+
+                    ┌─────────────────────────────────────────┐
+                    │           SUPPORTING SERVICES            │
+                    │                                          │
+                    │  ┌──────────────┐  ┌──────────────┐    │
+                    │  │    ECR       │  │   Secrets    │    │
+                    │  │  (Images)    │  │   Manager    │    │
+                    │  └──────────────┘  └──────────────┘    │
+                    │                                          │
+                    │  ┌──────────────┐  ┌──────────────┐    │
+                    │  │  CloudWatch  │  │    ACM       │    │
+                    │  │   (Logs)     │  │   (SSL)      │    │
+                    │  └──────────────┘  └──────────────┘    │
+                    └─────────────────────────────────────────┘
+</code></pre>
+<h3>AWS Services Used</h3>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>VPC</strong></td>
+<td>Network isolation with public/private subnets across 2 AZs</td>
+</tr>
+<tr>
+<td><strong>ECS Fargate</strong></td>
+<td>Serverless container hosting for backend API</td>
+</tr>
+<tr>
+<td><strong>RDS PostgreSQL</strong></td>
+<td>Managed database with encryption and backups</td>
+</tr>
+<tr>
+<td><strong>S3</strong></td>
+<td>Static website hosting for Next.js frontend</td>
+</tr>
+<tr>
+<td><strong>CloudFront</strong></td>
+<td>Global CDN with SSL/TLS termination</td>
+</tr>
+<tr>
+<td><strong>ALB</strong></td>
+<td>Application Load Balancer for backend traffic</td>
+</tr>
+<tr>
+<td><strong>ECR</strong></td>
+<td>Docker container registry</td>
+</tr>
+<tr>
+<td><strong>Secrets Manager</strong></td>
+<td>Secure credential storage</td>
+</tr>
+<tr>
+<td><strong>CloudWatch</strong></td>
+<td>Logging, monitoring, and alerting</td>
+</tr>
+<tr>
+<td><strong>Route 53</strong></td>
+<td>DNS management (optional)</td>
+</tr>
+<tr>
+<td><strong>ACM</strong></td>
+<td>SSL/TLS certificates</td>
+</tr>
+</tbody></table>
+<h3>Infrastructure as Code (Terraform)</h3>
+<p>The complete AWS infrastructure is defined in Terraform modules:</p>
+<pre><code>terraform/
+├── main.tf                 # Main configuration
+├── variables.tf            # Input variables
+├── outputs.tf              # Output values
+├── terraform.tfvars.example
+│
+└── modules/
+    ├── vpc/               # VPC, subnets, NAT gateways
+    ├── rds/               # PostgreSQL database
+    ├── ecs/               # ECS Fargate cluster
+    ├── alb/               # Application Load Balancer
+    ├── s3/                # S3 bucket for frontend
+    ├── cloudfront/        # CloudFront distribution
+    └── secrets/           # Secrets Manager
+</code></pre>
+<h3>Estimated Monthly Cost</h3>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Configuration</th>
+<th>Cost</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ECS Fargate</td>
+<td>0.5 vCPU, 1GB RAM, 2 tasks</td>
+<td>~$30</td>
+</tr>
+<tr>
+<td>RDS PostgreSQL</td>
+<td>db.t3.micro, 20GB</td>
+<td>~$15</td>
+</tr>
+<tr>
+<td>ALB</td>
+<td>Application Load Balancer</td>
+<td>~$20</td>
+</tr>
+<tr>
+<td>CloudFront</td>
+<td>100GB transfer</td>
+<td>~$10</td>
+</tr>
+<tr>
+<td>S3</td>
+<td>1GB storage</td>
+<td>~$0.05</td>
+</tr>
+<tr>
+<td>Secrets Manager</td>
+<td>2 secrets</td>
+<td>~$1</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td></td>
+<td><strong>~$76/month</strong></td>
+</tr>
+</tbody></table>
+<p>See <a href="../terraform/README.md">terraform/README.md</a> for complete deployment instructions.</p>
+<hr>
+<h2>Version History</h2>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Date</th>
+<th>Key Changes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>3.1.0</td>
+<td>Dec 2025</td>
+<td>AWS Terraform deployment, CI/CD pipeline</td>
+</tr>
+<tr>
+<td>3.0.0</td>
+<td>Dec 2025</td>
+<td>Interface Endpoints and Component Instances bulk upload</td>
+</tr>
+<tr>
+<td>2.1.0</td>
+<td>Dec 2025</td>
+<td>Application deployments management, deploy/undeploy UI</td>
+</tr>
+<tr>
+<td>2.0.0</td>
+<td>Dec 2025</td>
+<td>Conflict detection &amp; resolution, bulk data upload</td>
+</tr>
+<tr>
+<td>1.0.0</td>
+<td>Nov 2025</td>
+<td>Initial release</td>
+</tr>
+</tbody></table>
+<hr>
+<p><strong>© 2025 BookMyEnv. All rights reserved.</strong></p>
+
         <div class="footer">
-            <p>© 2025 BookMyEnv. All rights reserved.</p>
-            <p style="margin-top: 10px; font-size: 0.9rem;">Version 1.0.0 | Last Updated: November 2025</p>
+            <p>BookMyEnv v4.2.0 | January 2025</p>
+            <p>Documentation generated automatically</p>
         </div>
     </div>
 </body>

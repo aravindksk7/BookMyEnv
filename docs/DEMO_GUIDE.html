@@ -3,879 +3,1009 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BookMyEnv - Application Demo Guide</title>
+    <title>BookMyEnv - Demo Guide</title>
     <style>
         :root {
             --primary: #1976d2;
-            --primary-dark: #1565c0;
-            --secondary: #9c27b0;
-            --success: #2e7d32;
-            --warning: #ed6c02;
-            --error: #d32f2f;
-            --info: #0288d1;
-            --bg-light: #f5f5f5;
-            --border-color: #e0e0e0;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --error: #f44336;
+            --gray-50: #fafafa;
+            --gray-100: #f5f5f5;
+            --gray-200: #eeeeee;
+            --gray-800: #424242;
+            --gray-900: #212121;
         }
         
-        * {
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 1200px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: white;
+            color: var(--gray-900);
+            line-height: 1.7;
+        }
+        
+        .container {
+            max-width: 900px;
             margin: 0 auto;
-            padding: 20px;
-            background: #fafafa;
+            padding: 40px 20px;
         }
         
-        .header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            padding: 40px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-            text-align: center;
+        h1 { 
+            color: var(--primary); 
+            border-bottom: 3px solid var(--primary); 
+            padding-bottom: 10px; 
+            margin-bottom: 30px; 
         }
+        h2 { 
+            color: var(--gray-800); 
+            margin: 30px 0 15px; 
+            padding-bottom: 8px; 
+            border-bottom: 1px solid var(--gray-200); 
+        }
+        h3 { color: var(--gray-800); margin: 20px 0 10px; }
+        h4 { color: var(--gray-800); margin: 15px 0 8px; }
         
-        .header h1 {
-            margin: 0 0 10px 0;
-            font-size: 2.5em;
-        }
-        
-        .header .subtitle {
-            font-size: 1.2em;
-            opacity: 0.9;
-        }
-        
-        .header .version {
-            margin-top: 15px;
-            background: rgba(255,255,255,0.2);
-            display: inline-block;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.9em;
-        }
-        
-        .toc {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-        }
-        
-        .toc h2 {
-            margin-top: 0;
-            color: var(--primary);
-            border-bottom: 2px solid var(--primary);
-            padding-bottom: 10px;
-        }
-        
-        .toc ul {
-            list-style: none;
-            padding: 0;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 10px;
-        }
-        
-        .toc li {
-            padding: 8px 15px;
-            background: var(--bg-light);
-            border-radius: 8px;
-            transition: all 0.2s;
-        }
-        
-        .toc li:hover {
-            background: var(--primary);
-            color: white;
-        }
-        
-        .toc a {
-            text-decoration: none;
-            color: inherit;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .section {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 25px;
-        }
-        
-        .section h2 {
-            color: var(--primary);
-            border-bottom: 3px solid var(--primary);
-            padding-bottom: 10px;
-            margin-top: 0;
-        }
-        
-        .section h3 {
-            color: var(--primary-dark);
-            margin-top: 25px;
-        }
+        p { margin: 10px 0; }
         
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 15px 0;
+            font-size: 14px;
         }
         
         th, td {
-            padding: 12px 15px;
+            border: 1px solid var(--gray-200);
+            padding: 10px 12px;
             text-align: left;
-            border-bottom: 1px solid var(--border-color);
         }
         
-        th {
-            background: var(--primary);
-            color: white;
-            font-weight: 600;
-        }
-        
-        tr:hover {
-            background: var(--bg-light);
-        }
-        
-        .info-box {
-            background: #e3f2fd;
-            border-left: 4px solid var(--info);
-            padding: 15px 20px;
-            margin: 15px 0;
-            border-radius: 0 8px 8px 0;
-        }
-        
-        .warning-box {
-            background: #fff3e0;
-            border-left: 4px solid var(--warning);
-            padding: 15px 20px;
-            margin: 15px 0;
-            border-radius: 0 8px 8px 0;
-        }
-        
-        .success-box {
-            background: #e8f5e9;
-            border-left: 4px solid var(--success);
-            padding: 15px 20px;
-            margin: 15px 0;
-            border-radius: 0 8px 8px 0;
-        }
-        
-        .step-list {
-            counter-reset: step;
-            list-style: none;
-            padding: 0;
-        }
-        
-        .step-list li {
-            counter-increment: step;
-            padding: 15px 15px 15px 60px;
-            position: relative;
-            border-left: 2px solid var(--border-color);
-            margin-left: 20px;
-        }
-        
-        .step-list li::before {
-            content: counter(step);
-            position: absolute;
-            left: -22px;
-            top: 12px;
-            width: 40px;
-            height: 40px;
-            background: var(--primary);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-        
-        .step-list li:last-child {
-            border-left: none;
-        }
-        
-        .workflow {
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            padding: 20px;
-            background: var(--bg-light);
-            border-radius: 8px;
-            margin: 15px 0;
-        }
-        
-        .workflow-step {
-            background: white;
-            padding: 10px 20px;
-            border-radius: 20px;
-            border: 2px solid var(--primary);
-            font-weight: 500;
-        }
-        
-        .workflow-arrow {
-            font-size: 1.5em;
-            color: var(--primary);
-        }
-        
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            font-weight: 500;
-        }
-        
-        .status-green { background: #c8e6c9; color: #2e7d32; }
-        .status-yellow { background: #fff3e0; color: #ed6c02; }
-        .status-red { background: #ffcdd2; color: #c62828; }
-        .status-blue { background: #bbdefb; color: #1565c0; }
-        .status-gray { background: #e0e0e0; color: #616161; }
-        
-        .card-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin: 20px 0;
-        }
-        
-        .feature-card {
-            background: var(--bg-light);
-            padding: 20px;
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-        }
-        
-        .feature-card h4 {
-            margin-top: 0;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .feature-card .icon {
-            font-size: 1.5em;
-        }
+        th { background: var(--gray-100); font-weight: 600; }
+        tr:nth-child(even) { background: var(--gray-50); }
         
         code {
-            background: #f5f5f5;
-            padding: 2px 8px;
+            background: var(--gray-100);
+            padding: 2px 6px;
             border-radius: 4px;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 0.9em;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 13px;
         }
         
-        .code-block {
-            background: #263238;
-            color: #aed581;
-            padding: 15px 20px;
+        pre {
+            background: var(--gray-900);
+            color: #f5f5f5;
+            padding: 15px;
             border-radius: 8px;
             overflow-x: auto;
-            font-family: 'Consolas', 'Monaco', monospace;
+            margin: 15px 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
         }
         
-        .keyboard-shortcut {
-            display: inline-block;
-            background: #424242;
-            color: white;
-            padding: 3px 10px;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 0.85em;
-            margin: 2px;
-        }
+        pre code { background: none; padding: 0; color: inherit; }
         
-        .tabs {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-        
-        .tab {
-            background: var(--bg-light);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.9em;
-            border: 1px solid var(--border-color);
-        }
-        
-        .tab.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-        
-        .credentials-box {
-            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-            border: 2px solid var(--success);
-            padding: 20px;
-            border-radius: 10px;
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
             margin: 15px 0;
         }
         
-        .credentials-box h4 {
-            margin-top: 0;
-            color: var(--success);
+        .alert-warning {
+            background: #fff3e0;
+            border-left: 4px solid var(--warning);
         }
         
-        .credentials-box .credential {
-            display: flex;
-            gap: 10px;
-            margin: 8px 0;
+        .alert-danger {
+            background: #ffebee;
+            border-left: 4px solid var(--error);
         }
         
-        .credentials-box .label {
-            font-weight: 600;
-            min-width: 80px;
+        .alert-success {
+            background: #e8f5e9;
+            border-left: 4px solid var(--success);
         }
         
-        .credentials-box .value {
-            font-family: monospace;
-            background: white;
-            padding: 2px 10px;
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
             border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
         }
         
-        @media (max-width: 768px) {
-            .header {
-                padding: 25px;
-            }
-            .header h1 {
-                font-size: 1.8em;
-            }
-            .section {
-                padding: 20px;
-            }
-            .workflow {
-                flex-direction: column;
-            }
-            .workflow-arrow {
-                transform: rotate(90deg);
-            }
+        .badge-new {
+            background: var(--success);
+            color: white;
         }
         
-        @media print {
-            body {
-                background: white;
-            }
-            .section {
-                box-shadow: none;
-                border: 1px solid #ddd;
-            }
+        ul, ol { margin: 10px 0 10px 25px; }
+        li { margin: 5px 0; }
+        
+        a { color: var(--primary); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        
+        blockquote {
+            border-left: 4px solid var(--primary);
+            padding: 10px 20px;
+            margin: 15px 0;
+            background: var(--gray-50);
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid var(--gray-200);
+            margin: 30px 0;
+        }
+        
+        .new-badge::after {
+            content: "NEW";
+            background: var(--success);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        
+        .version-badge {
+            background: var(--primary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        
+        /* Syntax highlighting classes */
+        .hljs-keyword { color: #c792ea; }
+        .hljs-string { color: #c3e88d; }
+        .hljs-comment { color: #546e7a; }
+        .hljs-number { color: #f78c6c; }
+        
+        /* Footer */
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid var(--gray-200);
+            text-align: center;
+            color: var(--gray-800);
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>📅 BookMyEnv</h1>
-        <div class="subtitle">Test Environment Management System - Demo Guide</div>
-        <div class="version">Version 2.0.0 | December 2025</div>
-    </div>
+    <div class="container">
+        <h1>BookMyEnv - Application Demo Guide</h1>
+<h2>Overview</h2>
+<p><strong>BookMyEnv</strong> is a comprehensive Test Environment Management (TEM) system designed to help teams book, manage, and coordinate test environments across enterprise organizations. This guide walks through the key features and functionality of the application.</p>
+<hr>
+<h2>Table of Contents</h2>
+<ol>
+<li><a href="#1-getting-started">Getting Started</a></li>
+<li><a href="#2-dashboard-overview">Dashboard Overview</a></li>
+<li><a href="#3-environment-management">Environment Management</a></li>
+<li><a href="#4-application-management">Application Management</a></li>
+<li><a href="#5-application-deployments">Application Deployments</a></li>
+<li><a href="#6-booking-management">Booking Management</a></li>
+<li><a href="#7-conflict-detection--resolution">Conflict Detection &amp; Resolution</a></li>
+<li><a href="#8-bulk-data-upload">Bulk Data Upload</a></li>
+<li><a href="#9-topology-view">Topology View</a></li>
+<li><a href="#10-additional-features">Additional Features</a></li>
+</ol>
+<hr>
+<h2>1. Getting Started</h2>
+<h3>Login</h3>
+<ol>
+<li>Navigate to the application URL (default: <code>http://localhost:3000</code>)</li>
+<li>Enter your credentials:<ul>
+<li><strong>Email</strong>: <code>admin@bme.local</code></li>
+<li><strong>Password</strong>: <code>Admin@123</code></li>
+</ul>
+</li>
+<li>Click <strong>Sign In</strong></li>
+</ol>
+<p><img src="screenshots/login.png" alt="Login Page"></p>
+<h3>User Roles</h3>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Permissions</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Admin</strong></td>
+<td>Full system access, user management, all CRUD operations</td>
+</tr>
+<tr>
+<td><strong>EnvironmentManager</strong></td>
+<td>Manage environments, approve bookings, view all data</td>
+</tr>
+<tr>
+<td><strong>ProjectLead</strong></td>
+<td>Create bookings, manage team resources, view reports</td>
+</tr>
+<tr>
+<td><strong>TestEngineer</strong></td>
+<td>Create bookings, view environments, limited edit access</td>
+</tr>
+<tr>
+<td><strong>Viewer</strong></td>
+<td>Read-only access to all data</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>2. Dashboard Overview</h2>
+<p>The Dashboard provides a real-time overview of your environment management system.</p>
+<h3>Key Metrics Displayed</h3>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Environments</strong></td>
+<td>Total number of configured environments</td>
+</tr>
+<tr>
+<td><strong>Total Instances</strong></td>
+<td>All environment instances across the system</td>
+</tr>
+<tr>
+<td><strong>Available Instances</strong></td>
+<td>Instances currently not booked</td>
+</tr>
+<tr>
+<td><strong>Active Bookings</strong></td>
+<td>Current ongoing bookings</td>
+</tr>
+<tr>
+<td><strong>Applications</strong></td>
+<td>Registered applications in the system</td>
+</tr>
+<tr>
+<td><strong>Active Users</strong></td>
+<td>Users who have logged in recently</td>
+</tr>
+</tbody></table>
+<h3>Quick Stats</h3>
+<ul>
+<li><strong>Instance Availability</strong>: Percentage of instances available for booking</li>
+<li><strong>Active Bookings Count</strong>: Real-time booking activity</li>
+</ul>
+<h3>Recent Activity Feed</h3>
+<p>Shows the latest system activities including:</p>
+<ul>
+<li>User logins</li>
+<li>Booking creations and updates</li>
+<li>Environment changes</li>
+<li>Conflict resolutions</li>
+<li>Bulk uploads</li>
+</ul>
+<hr>
+<h2>3. Environment Management</h2>
+<h3>Navigating to Environments</h3>
+<p>Click <strong>Environments</strong> in the left sidebar to access the environment management section.</p>
+<h3>Environments Tab</h3>
+<p>Displays all configured environments with:</p>
+<ul>
+<li><strong>Name</strong>: Environment identifier (e.g., SIT, UAT, PERF)</li>
+<li><strong>Category</strong>: NonProd, PreProd, DR, Training, or Sandpit</li>
+<li><strong>Lifecycle Stage</strong>: Active, Deprecated, or Planned</li>
+<li><strong>Owner Team</strong>: Team responsible for the environment</li>
+<li><strong>Instances</strong>: Number of instances in the environment</li>
+</ul>
+<h3>Creating a New Environment</h3>
+<ol>
+<li>Click <strong>New Environment</strong> button</li>
+<li>Fill in the required fields:<ul>
+<li><strong>Name</strong> (required): Unique environment name</li>
+<li><strong>Description</strong>: Purpose of the environment</li>
+<li><strong>Category</strong>: Select from dropdown</li>
+<li><strong>Lifecycle Stage</strong>: Current status</li>
+<li><strong>Owner Team</strong>: Responsible team</li>
+</ul>
+</li>
+<li>Click <strong>Create</strong></li>
+</ol>
+<h3>Environment Instances</h3>
+<p>Each environment can have multiple instances. To manage instances:</p>
+<ol>
+<li>Click <strong>View Details</strong> on any environment</li>
+<li>Navigate to the <strong>Instances</strong> tab</li>
+<li>Click <strong>Add Instance</strong> to create new instances</li>
+</ol>
+<p>Instance properties include:</p>
+<ul>
+<li>Instance Name</li>
+<li>URL/Connection String</li>
+<li>Operational Status (Available, InUse, Maintenance, Offline)</li>
+<li>Version Information</li>
+</ul>
+<hr>
+<h2>4. Application Management</h2>
+<h3>Navigating to Applications</h3>
+<p>Click <strong>Applications</strong> in the sidebar (under Environments).</p>
+<h3>Applications List</h3>
+<p>Displays all registered applications with:</p>
+<ul>
+<li><strong>Name</strong>: Application identifier</li>
+<li><strong>Business Domain</strong>: Domain category (Banking, Payments, Digital, etc.)</li>
+<li><strong>Owner Team</strong>: Team responsible for the application</li>
+<li><strong>Criticality</strong>: High, Medium, or Low</li>
+<li><strong>Components</strong>: Number of application components</li>
+</ul>
+<h3>Creating an Application</h3>
+<ol>
+<li>Click <strong>Add Application</strong> button</li>
+<li>Fill in the required fields:<ul>
+<li><strong>Name</strong> (required): Unique application name</li>
+<li><strong>Description</strong>: Purpose of the application</li>
+<li><strong>Business Domain</strong>: Select or enter domain</li>
+<li><strong>Criticality</strong>: High, Medium, or Low</li>
+<li><strong>Data Sensitivity</strong>: PII, PCI, Confidential, or NonProdDummy</li>
+<li><strong>Owner Team</strong>: Team responsible</li>
+<li><strong>Test Owner</strong>: QA team or lead</li>
+</ul>
+</li>
+<li>Click <strong>Create</strong></li>
+</ol>
+<h3>Application Detail View</h3>
+<p>Click <strong>View Details</strong> on any application to see multiple tabs:</p>
+<table>
+<thead>
+<tr>
+<th>Tab</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Details</strong></td>
+<td>Application metadata (owner, criticality, dates)</td>
+</tr>
+<tr>
+<td><strong>Deployments</strong></td>
+<td>Where the application is deployed (environment instances)</td>
+</tr>
+<tr>
+<td><strong>Components</strong></td>
+<td>Application components (APIs, UIs, Batch jobs)</td>
+</tr>
+<tr>
+<td><strong>Interfaces</strong></td>
+<td>Connected interfaces (inbound/outbound)</td>
+</tr>
+<tr>
+<td><strong>Configs</strong></td>
+<td>Configuration sets linked to the application</td>
+</tr>
+<tr>
+<td><strong>Test Data</strong></td>
+<td>Test data sets associated with the application</td>
+</tr>
+</tbody></table>
+<h3>Managing Components</h3>
+<ol>
+<li>Open application details → <strong>Components</strong> tab</li>
+<li>Click <strong>Add Component</strong></li>
+<li>Fill in:<ul>
+<li><strong>Name</strong>: Component name</li>
+<li><strong>Type</strong>: API, UI, Batch, MessageProcessor, etc.</li>
+<li><strong>Source Repo</strong>: Git repository URL</li>
+<li><strong>Runtime Platform</strong>: Kubernetes, VM, etc.</li>
+</ul>
+</li>
+<li>Click <strong>Create</strong></li>
+</ol>
+<hr>
+<h2>5. Application Deployments</h2>
+<h3>Overview</h3>
+<p>Application Deployments track which applications are deployed to which environment instances. This is a <strong>many-to-many relationship</strong> - one application can be deployed to multiple instances, and one instance can host multiple applications.</p>
+<h3>Viewing Deployments from Application</h3>
+<ol>
+<li>Open any application&#39;s details</li>
+<li>Click the <strong>Deployments</strong> tab</li>
+<li>View all environment instances where the app is deployed:<ul>
+<li><strong>Environment</strong>: Environment name (SIT, UAT, etc.)</li>
+<li><strong>Instance</strong>: Specific instance name</li>
+<li><strong>Version</strong>: Deployed version</li>
+<li><strong>Model</strong>: Deployment model (Monolith, Microservices, SaaS, COTS)</li>
+<li><strong>Status</strong>: Aligned, Mixed, OutOfSync, or Broken</li>
+</ul>
+</li>
+</ol>
+<h3>Deploying an Application to an Instance</h3>
+<ol>
+<li>Open application details → <strong>Deployments</strong> tab</li>
+<li>Click <strong>Deploy to Environment</strong> button</li>
+<li>Fill in the deployment details:<ul>
+<li><strong>Environment Instance</strong> (required): Select from available instances</li>
+<li><strong>Version</strong>: Application version (e.g., &quot;2.5.0&quot;)</li>
+<li><strong>Deployment Model</strong>: Monolith, Microservices, SaaS, or COTS</li>
+<li><strong>Deployment Status</strong>: Aligned (default), Mixed, OutOfSync, Broken</li>
+</ul>
+</li>
+<li>Click <strong>Deploy</strong></li>
+</ol>
+<h3>Editing a Deployment</h3>
+<ol>
+<li>Click the <strong>Edit</strong> icon on any deployment row</li>
+<li>Update version, model, or status</li>
+<li>Click <strong>Update</strong></li>
+</ol>
+<h3>Undeploying an Application</h3>
+<ol>
+<li>Click the <strong>Undeploy</strong> icon on the deployment row</li>
+<li>Confirm the undeploy action</li>
+<li>The application is removed from that instance</li>
+</ol>
+<h3>Viewing Deployments from Environment</h3>
+<p>You can also manage deployments from the Environment side:</p>
+<ol>
+<li>Go to <strong>Environments</strong> page</li>
+<li>Click <strong>View Details</strong> on an environment</li>
+<li>Click the <strong>Applications</strong> tab</li>
+<li>See all applications deployed to this environment&#39;s instances</li>
+<li>Use <strong>Link Application</strong> to deploy new applications</li>
+</ol>
+<h3>Deployment Models</h3>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Monolith</strong></td>
+<td>Traditional single-unit deployment</td>
+</tr>
+<tr>
+<td><strong>Microservices</strong></td>
+<td>Distributed service-based deployment</td>
+</tr>
+<tr>
+<td><strong>SaaS</strong></td>
+<td>Software as a Service</td>
+</tr>
+<tr>
+<td><strong>COTS</strong></td>
+<td>Commercial Off-The-Shelf product</td>
+</tr>
+</tbody></table>
+<h3>Deployment Statuses</h3>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Aligned</strong></td>
+<td>All components at expected versions</td>
+</tr>
+<tr>
+<td><strong>Mixed</strong></td>
+<td>Some components at different versions</td>
+</tr>
+<tr>
+<td><strong>OutOfSync</strong></td>
+<td>Deployment differs from expected state</td>
+</tr>
+<tr>
+<td><strong>Broken</strong></td>
+<td>Deployment has issues</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>6. Booking Management</h2>
+<h3>Accessing Bookings</h3>
+<p>Click <strong>Bookings</strong> in the left sidebar.</p>
+<h3>View Modes</h3>
+<p>Toggle between two views using the buttons in the top-right:</p>
+<ul>
+<li><strong>Table View</strong>: Traditional list format with sortable columns</li>
+<li><strong>Calendar View</strong>: Month-based calendar showing bookings by date</li>
+</ul>
+<h3>Booking List Tabs</h3>
+<table>
+<thead>
+<tr>
+<th>Tab</th>
+<th>Shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>All</strong></td>
+<td>All bookings in the system</td>
+</tr>
+<tr>
+<td><strong>Active</strong></td>
+<td>Currently active and approved bookings</td>
+</tr>
+<tr>
+<td><strong>Pending</strong></td>
+<td>Requested and pending approval bookings</td>
+</tr>
+<tr>
+<td><strong>Past</strong></td>
+<td>Completed and cancelled bookings</td>
+</tr>
+<tr>
+<td><strong>Conflicts</strong></td>
+<td>Bookings with unresolved conflicts ⚠️</td>
+</tr>
+</tbody></table>
+<h3>Creating a New Booking</h3>
+<ol>
+<li><p>Click <strong>New Booking</strong> button</p>
+</li>
+<li><p>Fill in the booking details:</p>
+<ul>
+<li><strong>Title</strong>: Descriptive name for the booking</li>
+<li><strong>Description</strong>: Purpose and details</li>
+<li><strong>Test Phase</strong>: SIT, UAT, NFT, Performance, DR Rehearsal, PenTest, or Other</li>
+<li><strong>Booking Type</strong>: SingleEnv or MultiEnvE2E</li>
+<li><strong>Start Date/Time</strong>: When the booking begins</li>
+<li><strong>End Date/Time</strong>: When the booking ends</li>
+<li><strong>Project ID</strong>: Optional project reference</li>
+<li><strong>Environment Instances</strong>: Select required instances</li>
+</ul>
+</li>
+<li><p>Review any <strong>conflict warnings</strong> displayed</p>
+</li>
+<li><p>Click <strong>Create</strong> (or <strong>Create with Conflicts</strong> if conflicts exist)</p>
+</li>
+</ol>
+<h3>Booking Workflow</h3>
+<pre><code>Requested → PendingApproval → Approved → Active → Completed
+                ↓                          ↓
+           Cancelled                  Cancelled
+</code></pre>
+<h3>Booking Actions</h3>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>View Details</strong></td>
+<td>Open detailed booking view with tabs</td>
+</tr>
+<tr>
+<td><strong>Edit</strong></td>
+<td>Modify booking details</td>
+</tr>
+<tr>
+<td><strong>Approve</strong></td>
+<td>Approve a requested booking</td>
+</tr>
+<tr>
+<td><strong>Cancel</strong></td>
+<td>Cancel an active booking</td>
+</tr>
+<tr>
+<td><strong>Delete</strong></td>
+<td>Permanently remove booking</td>
+</tr>
+<tr>
+<td><strong>Resolve</strong></td>
+<td>Resolve conflicts (if applicable)</td>
+</tr>
+</tbody></table>
+<h3>Booking Detail View</h3>
+<p>Click <strong>View Details</strong> on any booking to see:</p>
+<ul>
+<li><strong>Summary</strong>: Time period, requester, owning group</li>
+<li><strong>Applications Tab</strong>: Applications involved in the booking</li>
+<li><strong>Interfaces Tab</strong>: Interfaces being tested</li>
+<li><strong>Instances Tab</strong>: Environment instances allocated</li>
+<li><strong>Conflicts Tab</strong>: Conflict details and resolution options</li>
+</ul>
+<hr>
+<h2>7. Conflict Detection &amp; Resolution</h2>
+<h3>How Conflicts Are Detected</h3>
+<p>The system automatically detects conflicts when:</p>
+<ul>
+<li>Multiple bookings request the same resource</li>
+<li>Booking time periods overlap</li>
+<li>Resource availability changes</li>
+</ul>
+<h3>Conflict Status Types</h3>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>None</strong></td>
+<td>No conflicts detected</td>
+</tr>
+<tr>
+<td><strong>PotentialConflict</strong></td>
+<td>Overlapping booking detected, needs review</td>
+</tr>
+<tr>
+<td><strong>ConflictConfirmed</strong></td>
+<td>Conflict verified and pending resolution</td>
+</tr>
+<tr>
+<td><strong>Resolved</strong></td>
+<td>Conflict has been addressed</td>
+</tr>
+</tbody></table>
+<h3>Viewing Conflicts</h3>
+<ol>
+<li>Go to <strong>Bookings</strong> page</li>
+<li>Click the <strong>Conflicts</strong> tab to see all unresolved conflicts</li>
+<li>Or click <strong>View Details</strong> on a booking with conflict indicator</li>
+</ol>
+<h3>Resolving Conflicts</h3>
+<ol>
+<li>Click the <strong>Resolve</strong> button (gavel icon) on a conflicting booking</li>
+<li>Select a resolution method:</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Resolution Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Accept Overlap</strong></td>
+<td>Both bookings share the resource (with coordination)</td>
+</tr>
+<tr>
+<td><strong>Mark as Resolved</strong></td>
+<td>Manually mark as resolved without changes</td>
+</tr>
+<tr>
+<td><strong>Remove Resource</strong></td>
+<td>Remove the conflicting resource from this booking</td>
+</tr>
+<tr>
+<td><strong>Adjust Timing</strong></td>
+<td>Change booking start/end times</td>
+</tr>
+<tr>
+<td><strong>Reject Booking</strong></td>
+<td>Cancel the booking due to conflict</td>
+</tr>
+</tbody></table>
+<ol start="3">
+<li>Add resolution notes</li>
+<li>Click <strong>Apply Resolution</strong></li>
+</ol>
+<h3>Conflict Resolution Dialog</h3>
+<p>The resolution dialog shows:</p>
+<ul>
+<li>Booking summary and time period</li>
+<li>Number of overlapping bookings</li>
+<li>Resolution options with descriptions</li>
+<li>Notes field for documentation</li>
+</ul>
+<hr>
+<h2>8. Bulk Data Upload</h2>
+<h3>Accessing Bulk Upload</h3>
+<ol>
+<li>Navigate to <strong>Settings</strong> (gear icon in sidebar)</li>
+<li>Click the <strong>Data Management</strong> tab</li>
+<li>Click <strong>Go to Bulk Upload</strong></li>
+</ol>
+<h3>Supported Entity Types</h3>
+<table>
+<thead>
+<tr>
+<th>Entity</th>
+<th>Required Fields</th>
+<th>Optional Fields</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Environments</strong></td>
+<td>name</td>
+<td>description, environment_category, lifecycle_stage, owner_team</td>
+</tr>
+<tr>
+<td><strong>Instances</strong></td>
+<td>environment_name, instance_name</td>
+<td>instance_url, status, version</td>
+</tr>
+<tr>
+<td><strong>Applications</strong></td>
+<td>name, short_code</td>
+<td>description, business_domain, criticality, owner_group</td>
+</tr>
+<tr>
+<td><strong>Interfaces</strong></td>
+<td>name, direction</td>
+<td>description, source_app, target_app, pattern, frequency</td>
+</tr>
+<tr>
+<td><strong>App Components</strong></td>
+<td>application_name, component_name</td>
+<td>component_type, version</td>
+</tr>
+<tr>
+<td><strong>App Deployments</strong></td>
+<td>application_name, instance_name</td>
+<td>deployment_status, version</td>
+</tr>
+<tr>
+<td><strong>Infrastructure</strong></td>
+<td>instance_name, infra_name</td>
+<td>infra_type, hostname, ip_address, port</td>
+</tr>
+</tbody></table>
+<h3>Upload Process</h3>
+<ol>
+<li>Select the entity type tab (Environments, Instances, etc.)</li>
+<li>Click <strong>Download Template</strong> to get a sample CSV</li>
+<li>Fill in your data in CSV format</li>
+<li>Click <strong>Upload CSV</strong> and select your file</li>
+<li>Review the results:<ul>
+<li>✅ Success count</li>
+<li>❌ Error details with line numbers</li>
+</ul>
+</li>
+</ol>
+<h3>Recommended Upload Order</h3>
+<p>For best results, upload data in this sequence:</p>
+<ol>
+<li><strong>Environments</strong> - Base environment definitions</li>
+<li><strong>Instances</strong> - Environment instances (requires environments)</li>
+<li><strong>Applications</strong> - Application definitions</li>
+<li><strong>App Components &amp; Interfaces</strong> - Requires applications</li>
+<li><strong>App Deployments &amp; Infrastructure</strong> - Links apps to instances</li>
+</ol>
+<h3>CSV Format Tips</h3>
+<ul>
+<li>Use UTF-8 encoding</li>
+<li>First row must be header with field names</li>
+<li>Use commas as delimiters</li>
+<li>Wrap text containing commas in quotes</li>
+<li>Leave optional fields empty if not needed</li>
+</ul>
+<hr>
+<h2>9. Topology View</h2>
+<h3>Overview</h3>
+<p>The Topology view provides a visual representation of your environment landscape.</p>
+<h3>Accessing Topology</h3>
+<p>Click <strong>Topology</strong> in the left sidebar.</p>
+<h3>Statistics Cards</h3>
+<p>Quick overview showing:</p>
+<ul>
+<li>Total Environments</li>
+<li>Total Instances</li>
+<li>Total Applications</li>
+<li>Total Interfaces</li>
+</ul>
+<h3>View Options</h3>
+<table>
+<thead>
+<tr>
+<th>View</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Hierarchical View</strong></td>
+<td>Tree structure: Environments → Instances → Applications</td>
+</tr>
+<tr>
+<td><strong>Applications View</strong></td>
+<td>Application-centric view with deployments</td>
+</tr>
+<tr>
+<td><strong>Interfaces View</strong></td>
+<td>Interface connections between applications</td>
+</tr>
+<tr>
+<td><strong>Flat List</strong></td>
+<td>Simple tabular list of all entities</td>
+</tr>
+</tbody></table>
+<h3>Searching</h3>
+<p>Use the search bar to filter by:</p>
+<ul>
+<li>Environment name</li>
+<li>Instance name</li>
+<li>Application name</li>
+<li>Interface name</li>
+</ul>
+<h3>Expanding Nodes</h3>
+<p>In Hierarchical View:</p>
+<ul>
+<li>Click the expand icon (▶) to show child instances</li>
+<li>Click instance to see deployed applications</li>
+<li>View infrastructure components within instances</li>
+</ul>
+<hr>
+<h2>10. Additional Features</h2>
+<h3>Applications Management</h3>
+<p>Navigate to <strong>Environments</strong> → <strong>Applications</strong> tab:</p>
+<ul>
+<li>View all registered applications</li>
+<li>See business domain and criticality</li>
+<li>Manage application components</li>
+<li>Track deployments across environments</li>
+</ul>
+<h3>Interfaces Management</h3>
+<p>Navigate to <strong>Environments</strong> → <strong>Interfaces</strong> tab:</p>
+<ul>
+<li>Define application interfaces</li>
+<li>Specify source and target applications</li>
+<li>Set direction (Inbound/Outbound/Bidirectional)</li>
+<li>Configure patterns and frequencies</li>
+</ul>
+<h3>Releases Management</h3>
+<p>Click <strong>Releases</strong> in the sidebar:</p>
+<ul>
+<li>Track release schedules</li>
+<li>Associate releases with applications</li>
+<li>Link releases to environment bookings</li>
+<li>Monitor release status</li>
+</ul>
+<h3>Test Data Management</h3>
+<p>Click <strong>Test Data</strong> in the sidebar:</p>
+<ul>
+<li>Catalog test data sets</li>
+<li>Track data refresh schedules</li>
+<li>Link test data to applications</li>
+<li>Mark data as refreshed</li>
+</ul>
+<h3>Groups Management</h3>
+<p>Click <strong>Groups</strong> in the sidebar:</p>
+<ul>
+<li>Create and manage user groups</li>
+<li>Assign users to teams</li>
+<li>Set group ownership for environments</li>
+</ul>
+<h3>Integrations</h3>
+<p>Click <strong>Integrations</strong> in the sidebar:</p>
+<ul>
+<li>Configure external tool integrations</li>
+<li>Connect to Jira, ServiceNow, etc.</li>
+<li>Sync data with external systems</li>
+</ul>
+<h3>User Management (Admin Only)</h3>
+<p>Navigate to <strong>Settings</strong> → <strong>User Management</strong>:</p>
+<ul>
+<li>Create new users</li>
+<li>Assign roles</li>
+<li>Deactivate users</li>
+<li>Reset passwords</li>
+</ul>
+<h3>SSO Configuration (Admin Only)</h3>
+<p>Navigate to <strong>Settings</strong> → <strong>SSO Configuration</strong>:</p>
+<ul>
+<li>Configure identity providers</li>
+<li>Set up SAML/OIDC integration</li>
+<li>Manage SSO settings</li>
+</ul>
+<hr>
+<h2>Quick Reference</h2>
+<h3>Keyboard Shortcuts</h3>
+<table>
+<thead>
+<tr>
+<th>Shortcut</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>/</code></td>
+<td>Focus search</td>
+</tr>
+<tr>
+<td><code>Esc</code></td>
+<td>Close dialogs</td>
+</tr>
+<tr>
+<td><code>Enter</code></td>
+<td>Submit forms</td>
+</tr>
+</tbody></table>
+<h3>Status Colors</h3>
+<table>
+<thead>
+<tr>
+<th>Color</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>🟢 Green</td>
+<td>Active, Available, Approved, Success</td>
+</tr>
+<tr>
+<td>🟡 Yellow/Orange</td>
+<td>Pending, Warning, In Progress</td>
+</tr>
+<tr>
+<td>🔴 Red</td>
+<td>Error, Cancelled, Conflict</td>
+</tr>
+<tr>
+<td>🔵 Blue</td>
+<td>Info, Requested</td>
+</tr>
+<tr>
+<td>⚫ Gray</td>
+<td>Inactive, Completed, Default</td>
+</tr>
+</tbody></table>
+<h3>Common Actions</h3>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Steps</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Book an environment</td>
+<td>Bookings → New Booking → Fill form → Create</td>
+</tr>
+<tr>
+<td>Check availability</td>
+<td>Bookings → Calendar view → Browse dates</td>
+</tr>
+<tr>
+<td>Resolve conflict</td>
+<td>Bookings → Conflicts tab → Resolve → Apply</td>
+</tr>
+<tr>
+<td>Bulk upload data</td>
+<td>Settings → Data Management → Bulk Upload</td>
+</tr>
+<tr>
+<td>View topology</td>
+<td>Topology → Select view → Explore</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Support</h2>
+<p>For issues or questions:</p>
+<ul>
+<li>Check the documentation in <code>/docs</code> folder</li>
+<li>Review the DATA_SETUP_GUIDE for data configuration</li>
+<li>Contact your system administrator</li>
+</ul>
+<hr>
+<h2>Version Information</h2>
+<ul>
+<li><strong>Application</strong>: BookMyEnv v2.1.0</li>
+<li><strong>Release Date</strong>: December 2025</li>
+<li><strong>New Features in v2.1</strong>: <ul>
+<li><strong>Application Deployments Management</strong> - Track and manage app-to-environment deployments</li>
+<li>Deploy/Undeploy applications to environment instances</li>
+<li>Bidirectional deployment view (from Application or Environment)</li>
+</ul>
+</li>
+<li><strong>Features in v2.0</strong>: <ul>
+<li>Conflict View &amp; Resolution</li>
+<li>Bulk Data Upload (7 entity types)</li>
+<li>Enhanced Booking Management</li>
+</ul>
+</li>
+</ul>
 
-    <div class="toc">
-        <h2>📋 Table of Contents</h2>
-        <ul>
-            <li><a href="#getting-started">🚀 Getting Started</a></li>
-            <li><a href="#dashboard">📊 Dashboard Overview</a></li>
-            <li><a href="#environments">🖥️ Environment Management</a></li>
-            <li><a href="#bookings">📆 Booking Management</a></li>
-            <li><a href="#conflicts">⚠️ Conflict Resolution</a></li>
-            <li><a href="#bulk-upload">📤 Bulk Data Upload</a></li>
-            <li><a href="#topology">🗺️ Topology View</a></li>
-            <li><a href="#additional">✨ Additional Features</a></li>
-        </ul>
-    </div>
-
-    <div class="section" id="getting-started">
-        <h2>🚀 1. Getting Started</h2>
-        
-        <h3>Login to the Application</h3>
-        <ol class="step-list">
-            <li>Navigate to the application URL: <code>http://localhost:3000</code></li>
-            <li>Enter your credentials in the login form</li>
-            <li>Click the <strong>Sign In</strong> button</li>
-            <li>You'll be redirected to the Dashboard</li>
-        </ol>
-
-        <div class="credentials-box">
-            <h4>🔐 Demo Credentials</h4>
-            <div class="credential">
-                <span class="label">Email:</span>
-                <span class="value">admin@bme.local</span>
-            </div>
-            <div class="credential">
-                <span class="label">Password:</span>
-                <span class="value">Admin@123</span>
-            </div>
+        <div class="footer">
+            <p>BookMyEnv v4.2.0 | January 2025</p>
+            <p>Documentation generated automatically</p>
         </div>
-
-        <h3>User Roles & Permissions</h3>
-        <table>
-            <tr>
-                <th>Role</th>
-                <th>Permissions</th>
-            </tr>
-            <tr>
-                <td><span class="status-badge status-blue">Admin</span></td>
-                <td>Full system access, user management, all CRUD operations</td>
-            </tr>
-            <tr>
-                <td><span class="status-badge status-green">EnvironmentManager</span></td>
-                <td>Manage environments, approve bookings, view all data</td>
-            </tr>
-            <tr>
-                <td><span class="status-badge status-yellow">ProjectLead</span></td>
-                <td>Create bookings, manage team resources, view reports</td>
-            </tr>
-            <tr>
-                <td><span class="status-badge status-gray">TestEngineer</span></td>
-                <td>Create bookings, view environments, limited edit access</td>
-            </tr>
-            <tr>
-                <td><span class="status-badge status-gray">Viewer</span></td>
-                <td>Read-only access to all data</td>
-            </tr>
-        </table>
-    </div>
-
-    <div class="section" id="dashboard">
-        <h2>📊 2. Dashboard Overview</h2>
-        
-        <p>The Dashboard provides a real-time overview of your environment management system with key metrics and recent activity.</p>
-
-        <div class="card-grid">
-            <div class="feature-card">
-                <h4><span class="icon">🖥️</span> Environments</h4>
-                <p>Total number of configured test environments (SIT, UAT, PERF, etc.)</p>
-            </div>
-            <div class="feature-card">
-                <h4><span class="icon">📦</span> Instances</h4>
-                <p>All environment instances with availability status</p>
-            </div>
-            <div class="feature-card">
-                <h4><span class="icon">📅</span> Active Bookings</h4>
-                <p>Current ongoing environment bookings</p>
-            </div>
-            <div class="feature-card">
-                <h4><span class="icon">📱</span> Applications</h4>
-                <p>Registered applications deployed across environments</p>
-            </div>
-        </div>
-
-        <h3>Recent Activity Feed</h3>
-        <p>The activity feed shows real-time system events:</p>
-        <ul>
-            <li>✅ User logins and authentication</li>
-            <li>📝 Booking creations and updates</li>
-            <li>🔄 Environment changes</li>
-            <li>⚠️ Conflict resolutions</li>
-            <li>📤 Bulk upload operations</li>
-        </ul>
-    </div>
-
-    <div class="section" id="environments">
-        <h2>🖥️ 3. Environment Management</h2>
-
-        <h3>Environment Categories</h3>
-        <div class="tabs">
-            <span class="tab">NonProd</span>
-            <span class="tab">PreProd</span>
-            <span class="tab">DR</span>
-            <span class="tab">Training</span>
-            <span class="tab">Sandpit</span>
-        </div>
-
-        <h3>Creating a New Environment</h3>
-        <ol class="step-list">
-            <li>Navigate to <strong>Environments</strong> in the sidebar</li>
-            <li>Click the <strong>New Environment</strong> button</li>
-            <li>Fill in the required fields:
-                <ul>
-                    <li><strong>Name</strong> (required) - e.g., "SIT-Core"</li>
-                    <li><strong>Description</strong> - Purpose of the environment</li>
-                    <li><strong>Category</strong> - Select from dropdown</li>
-                    <li><strong>Owner Team</strong> - Responsible team</li>
-                </ul>
-            </li>
-            <li>Click <strong>Create</strong> to save</li>
-        </ol>
-
-        <h3>Managing Instances</h3>
-        <div class="info-box">
-            <strong>💡 Tip:</strong> Each environment can have multiple instances. For example, SIT environment might have SIT-Instance-1, SIT-Instance-2, etc.
-        </div>
-
-        <table>
-            <tr>
-                <th>Status</th>
-                <th>Description</th>
-            </tr>
-            <tr>
-                <td><span class="status-badge status-green">Available</span></td>
-                <td>Instance is free and can be booked</td>
-            </tr>
-            <tr>
-                <td><span class="status-badge status-yellow">InUse</span></td>
-                <td>Instance is currently being used</td>
-            </tr>
-            <tr>
-                <td><span class="status-badge status-gray">Maintenance</span></td>
-                <td>Instance is under maintenance</td>
-            </tr>
-            <tr>
-                <td><span class="status-badge status-red">Offline</span></td>
-                <td>Instance is not operational</td>
-            </tr>
-        </table>
-    </div>
-
-    <div class="section" id="bookings">
-        <h2>📆 4. Booking Management</h2>
-
-        <h3>View Modes</h3>
-        <div class="card-grid">
-            <div class="feature-card">
-                <h4><span class="icon">📋</span> Table View</h4>
-                <p>Traditional list format with sortable columns, filters, and search</p>
-            </div>
-            <div class="feature-card">
-                <h4><span class="icon">📅</span> Calendar View</h4>
-                <p>Month-based calendar showing bookings by date with visual chips</p>
-            </div>
-        </div>
-
-        <h3>Booking List Tabs</h3>
-        <div class="tabs">
-            <span class="tab active">All</span>
-            <span class="tab">Active</span>
-            <span class="tab">Pending</span>
-            <span class="tab">Past</span>
-            <span class="tab">⚠️ Conflicts</span>
-        </div>
-
-        <h3>Booking Workflow</h3>
-        <div class="workflow">
-            <span class="workflow-step">Requested</span>
-            <span class="workflow-arrow">→</span>
-            <span class="workflow-step">PendingApproval</span>
-            <span class="workflow-arrow">→</span>
-            <span class="workflow-step">Approved</span>
-            <span class="workflow-arrow">→</span>
-            <span class="workflow-step">Active</span>
-            <span class="workflow-arrow">→</span>
-            <span class="workflow-step">Completed</span>
-        </div>
-
-        <h3>Creating a New Booking</h3>
-        <ol class="step-list">
-            <li>Click <strong>New Booking</strong> button</li>
-            <li>Enter booking details:
-                <ul>
-                    <li><strong>Title</strong> - Descriptive name</li>
-                    <li><strong>Test Phase</strong> - SIT, UAT, NFT, Performance, etc.</li>
-                    <li><strong>Start/End Date</strong> - Booking period</li>
-                    <li><strong>Environment Instances</strong> - Select required instances</li>
-                </ul>
-            </li>
-            <li>Review any <span class="status-badge status-yellow">⚠️ conflict warnings</span> displayed</li>
-            <li>Click <strong>Create</strong> to submit the booking</li>
-        </ol>
-
-        <h3>Booking Detail View</h3>
-        <p>Click <strong>View Details</strong> on any booking to see comprehensive information:</p>
-        <div class="tabs">
-            <span class="tab">Applications</span>
-            <span class="tab">Interfaces</span>
-            <span class="tab">Instances</span>
-            <span class="tab">⚠️ Conflicts</span>
-        </div>
-    </div>
-
-    <div class="section" id="conflicts">
-        <h2>⚠️ 5. Conflict Detection & Resolution</h2>
-
-        <div class="warning-box">
-            <strong>What is a Conflict?</strong><br>
-            Conflicts occur when multiple bookings request the same resource during overlapping time periods. The system automatically detects these situations.
-        </div>
-
-        <h3>Conflict Status Types</h3>
-        <table>
-            <tr>
-                <th>Status</th>
-                <th>Meaning</th>
-            </tr>
-            <tr>
-                <td><span class="status-badge status-green">None</span></td>
-                <td>No conflicts detected for this booking</td>
-            </tr>
-            <tr>
-                <td><span class="status-badge status-yellow">PotentialConflict</span></td>
-                <td>Overlapping booking detected, needs review</td>
-            </tr>
-            <tr>
-                <td><span class="status-badge status-red">ConflictConfirmed</span></td>
-                <td>Conflict verified and pending resolution</td>
-            </tr>
-            <tr>
-                <td><span class="status-badge status-green">Resolved</span></td>
-                <td>Conflict has been addressed</td>
-            </tr>
-        </table>
-
-        <h3>Resolution Methods</h3>
-        <div class="card-grid">
-            <div class="feature-card">
-                <h4>✅ Accept Overlap</h4>
-                <p>Both bookings share the resource with coordination between teams</p>
-            </div>
-            <div class="feature-card">
-                <h4>🔄 Mark as Resolved</h4>
-                <p>Manually mark as resolved without system changes</p>
-            </div>
-            <div class="feature-card">
-                <h4>❌ Remove Resource</h4>
-                <p>Remove the conflicting resource from this booking</p>
-            </div>
-            <div class="feature-card">
-                <h4>⏰ Adjust Timing</h4>
-                <p>Change booking start/end times to avoid overlap</p>
-            </div>
-            <div class="feature-card">
-                <h4>🚫 Reject Booking</h4>
-                <p>Cancel the booking due to unresolvable conflict</p>
-            </div>
-        </div>
-
-        <h3>Resolving a Conflict</h3>
-        <ol class="step-list">
-            <li>Go to <strong>Bookings</strong> page and click the <strong>Conflicts</strong> tab</li>
-            <li>Click the <strong>⚖️ Resolve</strong> button on the conflicting booking</li>
-            <li>Review the conflict details and overlapping bookings</li>
-            <li>Select a resolution method from the options</li>
-            <li>Add resolution notes for documentation</li>
-            <li>Click <strong>Apply Resolution</strong></li>
-        </ol>
-    </div>
-
-    <div class="section" id="bulk-upload">
-        <h2>📤 6. Bulk Data Upload</h2>
-
-        <div class="success-box">
-            <strong>🚀 New in v2.0.0!</strong><br>
-            Quickly populate your system with environments, applications, and infrastructure using CSV files.
-        </div>
-
-        <h3>Supported Entity Types</h3>
-        <div class="tabs">
-            <span class="tab">Environments</span>
-            <span class="tab">Instances</span>
-            <span class="tab">Applications</span>
-            <span class="tab">Interfaces</span>
-            <span class="tab">Components</span>
-            <span class="tab">Deployments</span>
-            <span class="tab">Infrastructure</span>
-        </div>
-
-        <h3>Upload Process</h3>
-        <ol class="step-list">
-            <li>Navigate to <strong>Settings → Data Management → Bulk Upload</strong></li>
-            <li>Select the entity type tab (e.g., Environments)</li>
-            <li>Click <strong>Download Template</strong> to get a sample CSV</li>
-            <li>Fill in your data following the template format</li>
-            <li>Click <strong>Upload CSV</strong> and select your file</li>
-            <li>Review the results showing success count and any errors</li>
-        </ol>
-
-        <h3>Recommended Upload Order</h3>
-        <table>
-            <tr>
-                <th>Order</th>
-                <th>Entity</th>
-                <th>Dependencies</th>
-            </tr>
-            <tr>
-                <td>1️⃣</td>
-                <td><strong>Environments</strong></td>
-                <td>None (upload first)</td>
-            </tr>
-            <tr>
-                <td>2️⃣</td>
-                <td><strong>Instances</strong></td>
-                <td>Requires environments to exist</td>
-            </tr>
-            <tr>
-                <td>3️⃣</td>
-                <td><strong>Applications</strong></td>
-                <td>None</td>
-            </tr>
-            <tr>
-                <td>4️⃣</td>
-                <td><strong>Components & Interfaces</strong></td>
-                <td>Requires applications</td>
-            </tr>
-            <tr>
-                <td>5️⃣</td>
-                <td><strong>Deployments & Infrastructure</strong></td>
-                <td>Requires applications and instances</td>
-            </tr>
-        </table>
-
-        <div class="info-box">
-            <strong>💡 CSV Tips:</strong>
-            <ul>
-                <li>Use UTF-8 encoding for special characters</li>
-                <li>First row must be the header with field names</li>
-                <li>Fields marked with * are required</li>
-                <li>Wrap text containing commas in quotes</li>
-            </ul>
-        </div>
-    </div>
-
-    <div class="section" id="topology">
-        <h2>🗺️ 7. Topology View</h2>
-
-        <p>The Topology view provides a visual representation of your entire environment landscape.</p>
-
-        <h3>View Options</h3>
-        <div class="card-grid">
-            <div class="feature-card">
-                <h4><span class="icon">🌳</span> Hierarchical View</h4>
-                <p>Tree structure: Environments → Instances → Applications</p>
-            </div>
-            <div class="feature-card">
-                <h4><span class="icon">📱</span> Applications View</h4>
-                <p>Application-centric view showing deployments</p>
-            </div>
-            <div class="feature-card">
-                <h4><span class="icon">🔗</span> Interfaces View</h4>
-                <p>Interface connections between applications</p>
-            </div>
-            <div class="feature-card">
-                <h4><span class="icon">📋</span> Flat List</h4>
-                <p>Simple tabular list of all entities</p>
-            </div>
-        </div>
-
-        <h3>Statistics Dashboard</h3>
-        <p>Quick overview cards showing:</p>
-        <ul>
-            <li>📊 Total Environments count</li>
-            <li>📊 Total Instances count</li>
-            <li>📊 Total Applications count</li>
-            <li>📊 Total Interfaces count</li>
-        </ul>
-
-        <h3>Search & Filter</h3>
-        <p>Use the search bar to quickly find:</p>
-        <ul>
-            <li>Environment names</li>
-            <li>Instance names</li>
-            <li>Application names</li>
-            <li>Interface names</li>
-        </ul>
-    </div>
-
-    <div class="section" id="additional">
-        <h2>✨ 8. Additional Features</h2>
-
-        <div class="card-grid">
-            <div class="feature-card">
-                <h4><span class="icon">📱</span> Applications</h4>
-                <p>Manage application definitions, components, and track deployments across environments.</p>
-            </div>
-            <div class="feature-card">
-                <h4><span class="icon">🔗</span> Interfaces</h4>
-                <p>Define application interfaces with source/target apps, patterns, and frequencies.</p>
-            </div>
-            <div class="feature-card">
-                <h4><span class="icon">🚀</span> Releases</h4>
-                <p>Track release schedules and associate with applications and bookings.</p>
-            </div>
-            <div class="feature-card">
-                <h4><span class="icon">📊</span> Test Data</h4>
-                <p>Catalog test data sets and track refresh schedules.</p>
-            </div>
-            <div class="feature-card">
-                <h4><span class="icon">👥</span> Groups</h4>
-                <p>Create and manage user groups and team assignments.</p>
-            </div>
-            <div class="feature-card">
-                <h4><span class="icon">🔌</span> Integrations</h4>
-                <p>Connect to external tools like Jira, ServiceNow, etc.</p>
-            </div>
-        </div>
-
-        <h3>Quick Reference - Status Colors</h3>
-        <table>
-            <tr>
-                <th>Color</th>
-                <th>Meaning</th>
-            </tr>
-            <tr>
-                <td><span class="status-badge status-green">Green</span></td>
-                <td>Active, Available, Approved, Success</td>
-            </tr>
-            <tr>
-                <td><span class="status-badge status-yellow">Yellow/Orange</span></td>
-                <td>Pending, Warning, In Progress</td>
-            </tr>
-            <tr>
-                <td><span class="status-badge status-red">Red</span></td>
-                <td>Error, Cancelled, Conflict</td>
-            </tr>
-            <tr>
-                <td><span class="status-badge status-blue">Blue</span></td>
-                <td>Info, Requested</td>
-            </tr>
-            <tr>
-                <td><span class="status-badge status-gray">Gray</span></td>
-                <td>Inactive, Completed, Default</td>
-            </tr>
-        </table>
-
-        <h3>Keyboard Shortcuts</h3>
-        <table>
-            <tr>
-                <th>Shortcut</th>
-                <th>Action</th>
-            </tr>
-            <tr>
-                <td><span class="keyboard-shortcut">/</span></td>
-                <td>Focus search</td>
-            </tr>
-            <tr>
-                <td><span class="keyboard-shortcut">Esc</span></td>
-                <td>Close dialogs</td>
-            </tr>
-            <tr>
-                <td><span class="keyboard-shortcut">Enter</span></td>
-                <td>Submit forms</td>
-            </tr>
-        </table>
-    </div>
-
-    <div class="section" style="text-align: center; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);">
-        <h2>🎉 Ready to Start!</h2>
-        <p style="font-size: 1.1em;">You now have everything you need to effectively use BookMyEnv for managing your test environments.</p>
-        <div style="margin-top: 20px;">
-            <span class="status-badge status-blue" style="font-size: 1em; padding: 10px 20px;">Version 2.0.0</span>
-            <span class="status-badge status-green" style="font-size: 1em; padding: 10px 20px;">December 2025</span>
-        </div>
-        <p style="margin-top: 20px; color: #666;">
-            For additional help, refer to:<br>
-            <code>docs/DATA_SETUP_GUIDE.md</code> | <code>docs/USER_GUIDE.md</code> | <code>docs/QUICK_REFERENCE.md</code>
-        </p>
     </div>
 </body>
 </html>

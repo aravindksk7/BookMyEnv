@@ -67,7 +67,7 @@
 │  │  ┌─────────────────────────────────────────────────────────────────────┐  │  │
 │  │  │                          ROUTES                                      │  │  │
 │  │  │  /auth  /environments  /bookings  /releases  /applications          │  │  │
-│  │  │  /groups  /users  /integrations  /changes  /dashboard               │  │  │
+│  │  │  /groups  /users  /integrations  /changes  /dashboard  /audit      │  │  │
 │  │  └─────────────────────────────────────────────────────────────────────┘  │  │
 │  │                                                                           │  │
 │  │  ┌─────────────────────────────────────────────────────────────────────┐  │  │
@@ -110,6 +110,15 @@
 │  │  │  │  • applications │  │  • rel_envs     │  │  • jira_mapping │     │  │  │
 │  │  │  │                 │  │  • changes      │  │  • gitlab_map   │     │  │  │
 │  │  │  └─────────────────┘  └─────────────────┘  └─────────────────┘     │  │  │
+│  │  │                                                                      │  │  │
+│  │  │  ┌─────────────────┐                                                │  │  │
+│  │  │  │  Audit & Logs   │  ⭐ NEW in v4.2.0                              │  │  │
+│  │  │  │  • audit_events │                                                │  │  │
+│  │  │  │  • audit_report │                                                │  │  │
+│  │  │  │    _templates   │                                                │  │  │
+│  │  │  │  • audit_gen_   │                                                │  │  │
+│  │  │  │    reports      │                                                │  │  │
+│  │  │  └─────────────────┘                                                │  │  │
 │  │  └─────────────────────────────────────────────────────────────────────┘  │  │
 │  │                                                                           │  │
 │  │  Tech: PostgreSQL 15 │ UUID Primary Keys │ JSONB │ Timestamps            │  │

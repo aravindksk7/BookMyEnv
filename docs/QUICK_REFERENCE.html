@@ -3,577 +3,780 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BookMyEnv - Quick Reference Card</title>
+    <title>BookMyEnv - Quick Reference</title>
     <style>
         :root {
             --primary: #1976d2;
-            --primary-dark: #1565c0;
             --success: #4caf50;
             --warning: #ff9800;
             --error: #f44336;
-            --info: #2196f3;
             --gray-50: #fafafa;
             --gray-100: #f5f5f5;
             --gray-200: #eeeeee;
-            --gray-300: #e0e0e0;
-            --gray-600: #757575;
             --gray-800: #424242;
             --gray-900: #212121;
         }
         
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: var(--gray-100);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: white;
             color: var(--gray-900);
-            line-height: 1.6;
-            padding: 20px;
+            line-height: 1.7;
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 900px;
             margin: 0 auto;
+            padding: 40px 20px;
         }
         
-        .header {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            padding: 30px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-            text-align: center;
+        h1 { 
+            color: var(--primary); 
+            border-bottom: 3px solid var(--primary); 
+            padding-bottom: 10px; 
+            margin-bottom: 30px; 
         }
-        
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
+        h2 { 
+            color: var(--gray-800); 
+            margin: 30px 0 15px; 
+            padding-bottom: 8px; 
+            border-bottom: 1px solid var(--gray-200); 
         }
+        h3 { color: var(--gray-800); margin: 20px 0 10px; }
+        h4 { color: var(--gray-800); margin: 15px 0 8px; }
         
-        .header p {
-            opacity: 0.9;
-            font-size: 1.1rem;
-        }
-        
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 20px;
-        }
-        
-        .card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        
-        .card-header {
-            background: var(--primary);
-            color: white;
-            padding: 15px 20px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .card-header.success { background: var(--success); }
-        .card-header.warning { background: var(--warning); }
-        .card-header.info { background: var(--info); }
-        
-        .card-body {
-            padding: 20px;
-        }
+        p { margin: 10px 0; }
         
         table {
             width: 100%;
             border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
         }
         
         th, td {
+            border: 1px solid var(--gray-200);
             padding: 10px 12px;
             text-align: left;
-            border-bottom: 1px solid var(--gray-200);
         }
         
-        th {
-            background: var(--gray-50);
-            font-weight: 600;
-            color: var(--gray-800);
-        }
-        
-        tr:last-child td {
-            border-bottom: none;
-        }
-        
-        tr:hover {
-            background: var(--gray-50);
-        }
+        th { background: var(--gray-100); font-weight: 600; }
+        tr:nth-child(even) { background: var(--gray-50); }
         
         code {
             background: var(--gray-100);
             padding: 2px 6px;
             border-radius: 4px;
             font-family: 'Monaco', 'Consolas', monospace;
-            font-size: 0.9em;
-            color: var(--primary-dark);
+            font-size: 13px;
         }
         
-        .badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-        
-        .badge-success { background: #e8f5e9; color: #2e7d32; }
-        .badge-warning { background: #fff3e0; color: #ef6c00; }
-        .badge-info { background: #e3f2fd; color: #1565c0; }
-        .badge-error { background: #ffebee; color: #c62828; }
-        .badge-gray { background: var(--gray-200); color: var(--gray-600); }
-        
-        .check { color: var(--success); }
-        .cross { color: var(--error); }
-        
-        .url-list {
-            list-style: none;
-        }
-        
-        .url-list li {
-            padding: 10px 0;
-            border-bottom: 1px solid var(--gray-200);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .url-list li:last-child {
-            border-bottom: none;
-        }
-        
-        .steps {
-            counter-reset: step;
-        }
-        
-        .steps li {
-            padding: 8px 0 8px 35px;
-            position: relative;
-            list-style: none;
-        }
-        
-        .steps li::before {
-            counter-increment: step;
-            content: counter(step);
-            position: absolute;
-            left: 0;
-            top: 8px;
-            width: 24px;
-            height: 24px;
-            background: var(--primary);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-        
-        .pre-block {
+        pre {
             background: var(--gray-900);
             color: #f5f5f5;
             padding: 15px;
             border-radius: 8px;
-            font-family: 'Monaco', 'Consolas', monospace;
-            font-size: 0.9rem;
             overflow-x: auto;
+            margin: 15px 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
         }
         
-        .pre-block .comment { color: #6a9955; }
-        .pre-block .command { color: #9cdcfe; }
+        pre code { background: none; padding: 0; color: inherit; }
         
-        .tips {
-            list-style: none;
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
         }
         
-        .tips li {
-            padding: 10px 0 10px 30px;
-            position: relative;
-            border-bottom: 1px solid var(--gray-200);
+        .alert-warning {
+            background: #fff3e0;
+            border-left: 4px solid var(--warning);
         }
         
-        .tips li:last-child {
-            border-bottom: none;
+        .alert-danger {
+            background: #ffebee;
+            border-left: 4px solid var(--error);
         }
         
-        .tips li::before {
-            content: "💡";
-            position: absolute;
-            left: 0;
+        .alert-success {
+            background: #e8f5e9;
+            border-left: 4px solid var(--success);
         }
         
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge-new {
+            background: var(--success);
+            color: white;
+        }
+        
+        ul, ol { margin: 10px 0 10px 25px; }
+        li { margin: 5px 0; }
+        
+        a { color: var(--primary); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        
+        blockquote {
+            border-left: 4px solid var(--primary);
+            padding: 10px 20px;
+            margin: 15px 0;
+            background: var(--gray-50);
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid var(--gray-200);
+            margin: 30px 0;
+        }
+        
+        .new-badge::after {
+            content: "NEW";
+            background: var(--success);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        
+        .version-badge {
+            background: var(--primary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        
+        /* Syntax highlighting classes */
+        .hljs-keyword { color: #c792ea; }
+        .hljs-string { color: #c3e88d; }
+        .hljs-comment { color: #546e7a; }
+        .hljs-number { color: #f78c6c; }
+        
+        /* Footer */
         .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid var(--gray-200);
             text-align: center;
-            padding: 30px;
-            color: var(--gray-600);
-            margin-top: 30px;
-        }
-        
-        @media print {
-            body {
-                background: white;
-                padding: 0;
-            }
-            .card {
-                box-shadow: none;
-                border: 1px solid var(--gray-300);
-                break-inside: avoid;
-            }
+            color: var(--gray-800);
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>📋 BookMyEnv Quick Reference</h1>
-            <p>Your one-page guide to environment booking and management</p>
-        </div>
-        
-        <div class="grid">
-            <!-- Login Credentials -->
-            <div class="card">
-                <div class="card-header">
-                    🔐 Login Credentials
-                </div>
-                <div class="card-body">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Role</th>
-                                <th>Email</th>
-                                <th>Password</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><span class="badge badge-error">Admin</span></td>
-                                <td><code>admin@bme.local</code></td>
-                                <td><code>Admin@123</code></td>
-                            </tr>
-                            <tr>
-                                <td><span class="badge badge-warning">Manager</span></td>
-                                <td><code>envmgr@bme.local</code></td>
-                                <td><code>Manager@123</code></td>
-                            </tr>
-                            <tr>
-                                <td><span class="badge badge-info">Lead</span></td>
-                                <td><code>lead@bme.local</code></td>
-                                <td><code>Lead@123</code></td>
-                            </tr>
-                            <tr>
-                                <td><span class="badge badge-success">Tester</span></td>
-                                <td><code>tester@bme.local</code></td>
-                                <td><code>Tester@123</code></td>
-                            </tr>
-                            <tr>
-                                <td><span class="badge badge-gray">Viewer</span></td>
-                                <td><code>viewer@bme.local</code></td>
-                                <td><code>Viewer@123</code></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <!-- URLs -->
-            <div class="card">
-                <div class="card-header info">
-                    🌐 Service URLs
-                </div>
-                <div class="card-body">
-                    <ul class="url-list">
-                        <li>
-                            <strong>Frontend</strong>
-                            <code>http://localhost:3000</code>
-                        </li>
-                        <li>
-                            <strong>Backend API</strong>
-                            <code>http://localhost:5000</code>
-                        </li>
-                        <li>
-                            <strong>PostgreSQL</strong>
-                            <code>localhost:5432</code>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-            
-            <!-- Quick Actions -->
-            <div class="card">
-                <div class="card-header success">
-                    ⚡ Quick Actions
-                </div>
-                <div class="card-body">
-                    <h4 style="margin-bottom: 10px; color: var(--gray-800);">Create a Booking</h4>
-                    <ol class="steps">
-                        <li>Bookings → + New Booking</li>
-                        <li>Select Test Phase & Dates</li>
-                        <li>Add Environment Instances</li>
-                        <li>Submit</li>
-                    </ol>
-                    
-                    <h4 style="margin: 20px 0 10px; color: var(--gray-800);">Create an Environment</h4>
-                    <ol class="steps">
-                        <li>Environments → + Add Environment</li>
-                        <li>Fill: Name, Category</li>
-                        <li>Create</li>
-                    </ol>
-                </div>
-            </div>
-            
-            <!-- Booking Status -->
-            <div class="card">
-                <div class="card-header warning">
-                    📊 Booking Status Codes
-                </div>
-                <div class="card-body">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Status</th>
-                                <th>Meaning</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><span class="badge badge-info">Requested</span></td>
-                                <td>Awaiting review</td>
-                            </tr>
-                            <tr>
-                                <td><span class="badge badge-warning">PendingApproval</span></td>
-                                <td>Has conflicts</td>
-                            </tr>
-                            <tr>
-                                <td><span class="badge badge-success">Approved</span></td>
-                                <td>Confirmed</td>
-                            </tr>
-                            <tr>
-                                <td><span class="badge badge-success">Active</span></td>
-                                <td>In use</td>
-                            </tr>
-                            <tr>
-                                <td><span class="badge badge-gray">Completed</span></td>
-                                <td>Finished</td>
-                            </tr>
-                            <tr>
-                                <td><span class="badge badge-error">Cancelled</span></td>
-                                <td>Cancelled</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <!-- Role Permissions -->
-            <div class="card">
-                <div class="card-header">
-                    🔑 Role Permissions
-                </div>
-                <div class="card-body">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Action</th>
-                                <th>Admin</th>
-                                <th>Mgr</th>
-                                <th>Lead</th>
-                                <th>Tester</th>
-                                <th>View</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Create Environment</td>
-                                <td class="check">✓</td>
-                                <td class="check">✓</td>
-                                <td class="cross">✗</td>
-                                <td class="cross">✗</td>
-                                <td class="cross">✗</td>
-                            </tr>
-                            <tr>
-                                <td>Create Booking</td>
-                                <td class="check">✓</td>
-                                <td class="check">✓</td>
-                                <td class="check">✓</td>
-                                <td class="check">✓</td>
-                                <td class="cross">✗</td>
-                            </tr>
-                            <tr>
-                                <td>Approve Booking</td>
-                                <td class="check">✓</td>
-                                <td class="check">✓</td>
-                                <td class="cross">✗</td>
-                                <td class="cross">✗</td>
-                                <td class="cross">✗</td>
-                            </tr>
-                            <tr>
-                                <td>Create Release</td>
-                                <td class="check">✓</td>
-                                <td class="cross">✗</td>
-                                <td class="check">✓</td>
-                                <td class="cross">✗</td>
-                                <td class="cross">✗</td>
-                            </tr>
-                            <tr>
-                                <td>Manage Users</td>
-                                <td class="check">✓</td>
-                                <td class="cross">✗</td>
-                                <td class="cross">✗</td>
-                                <td class="cross">✗</td>
-                                <td class="cross">✗</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <!-- Environment Categories -->
-            <div class="card">
-                <div class="card-header info">
-                    🗂️ Environment Categories
-                </div>
-                <div class="card-body">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Category</th>
-                                <th>Use Case</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><span class="badge badge-info">NonProd</span></td>
-                                <td>Development, SIT, Testing</td>
-                            </tr>
-                            <tr>
-                                <td><span class="badge badge-warning">PreProd</span></td>
-                                <td>UAT, Staging, Pre-Production</td>
-                            </tr>
-                            <tr>
-                                <td><span class="badge badge-error">DR</span></td>
-                                <td>Disaster Recovery</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <!-- Test Phases -->
-            <div class="card">
-                <div class="card-header success">
-                    🧪 Test Phases
-                </div>
-                <div class="card-body">
-                    <table>
-                        <tbody>
-                            <tr>
-                                <td><strong>SIT</strong></td>
-                                <td>System Integration Testing</td>
-                            </tr>
-                            <tr>
-                                <td><strong>UAT</strong></td>
-                                <td>User Acceptance Testing</td>
-                            </tr>
-                            <tr>
-                                <td><strong>NFT</strong></td>
-                                <td>Non-Functional Testing</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Performance</strong></td>
-                                <td>Load/Stress Testing</td>
-                            </tr>
-                            <tr>
-                                <td><strong>DRRehearsal</strong></td>
-                                <td>DR Testing</td>
-                            </tr>
-                            <tr>
-                                <td><strong>PenTest</strong></td>
-                                <td>Security Testing</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <!-- API Endpoints -->
-            <div class="card">
-                <div class="card-header">
-                    📡 API Endpoints
-                </div>
-                <div class="card-body">
-                    <div class="pre-block">
-<span class="command">POST</span> /api/auth/login        <span class="comment"># Login</span>
-<span class="command">GET</span>  /api/environments      <span class="comment"># List envs</span>
-<span class="command">GET</span>  /api/bookings          <span class="comment"># List bookings</span>
-<span class="command">POST</span> /api/bookings          <span class="comment"># Create booking</span>
-<span class="command">GET</span>  /api/releases          <span class="comment"># List releases</span>
-<span class="command">GET</span>  /api/applications      <span class="comment"># List apps</span>
-<span class="command">GET</span>  /api/groups            <span class="comment"># List groups</span>
-<span class="command">GET</span>  /api/dashboard/stats   <span class="comment"># Statistics</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Docker Commands -->
-            <div class="card">
-                <div class="card-header warning">
-                    🐳 Docker Commands
-                </div>
-                <div class="card-body">
-                    <div class="pre-block">
-<span class="comment"># Start all services</span>
-docker-compose up -d
+        <h1>BookMyEnv - Quick Reference Card</h1>
+<h2>🔐 Login Credentials</h2>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Email</th>
+<th>Password</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Admin</td>
+<td><a href="mailto:admin@bme.local">admin@bme.local</a></td>
+<td>Admin@123</td>
+</tr>
+<tr>
+<td>Manager</td>
+<td><a href="mailto:envmgr@bme.local">envmgr@bme.local</a></td>
+<td>Admin@123</td>
+</tr>
+<tr>
+<td>Lead</td>
+<td><a href="mailto:lead@bme.local">lead@bme.local</a></td>
+<td>Admin@123</td>
+</tr>
+<tr>
+<td>Tester</td>
+<td><a href="mailto:tester@bme.local">tester@bme.local</a></td>
+<td>Admin@123</td>
+</tr>
+<tr>
+<td>Viewer</td>
+<td><a href="mailto:viewer@bme.local">viewer@bme.local</a></td>
+<td>Admin@123</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>Note</strong>: All demo users share the same password for simplicity. Change in production!</p>
+</blockquote>
+<hr>
+<h2>🌐 URLs</h2>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>URL</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Frontend (HTTPS)</td>
+<td><a href="https://localhost">https://localhost</a></td>
+<td>Main application</td>
+</tr>
+<tr>
+<td>Frontend (HTTP)</td>
+<td><a href="http://localhost:3000">http://localhost:3000</a></td>
+<td>Development only</td>
+</tr>
+<tr>
+<td>Backend API</td>
+<td><a href="https://localhost/api">https://localhost/api</a></td>
+<td>Via Nginx proxy</td>
+</tr>
+<tr>
+<td>Health Check</td>
+<td><a href="https://localhost/health">https://localhost/health</a></td>
+<td>System status</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>🔒 Security Features</h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>HTTPS/TLS</td>
+<td>✅ Enabled (TLS 1.2/1.3)</td>
+</tr>
+<tr>
+<td>Rate Limiting</td>
+<td>✅ 5 login attempts/15min</td>
+</tr>
+<tr>
+<td>Password Policy</td>
+<td>✅ Min 8 chars, mixed case, special</td>
+</tr>
+<tr>
+<td>CORS</td>
+<td>✅ Explicit origins only</td>
+</tr>
+<tr>
+<td>CSP Headers</td>
+<td>✅ Enabled</td>
+</tr>
+<tr>
+<td>HSTS</td>
+<td>✅ Enabled with preload</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>📋 Quick Actions</h2>
+<h3>Create a Booking</h3>
+<ol>
+<li>Bookings → + New Booking</li>
+<li>Select Test Phase &amp; Dates</li>
+<li>Add Environment Instances</li>
+<li>Submit</li>
+</ol>
+<h3>Create an Environment</h3>
+<ol>
+<li>Environments → + Add Environment</li>
+<li>Fill: Name, Category (NonProd/PreProd/DR)</li>
+<li>Create</li>
+</ol>
+<h3>Add Instance to Environment</h3>
+<ol>
+<li>Click Environment → Instances tab</li>
+<li><ul>
+<li>Add Instance</li>
+</ul>
+</li>
+<li>Fill: Name, Status, Capacity</li>
+<li>Create</li>
+</ol>
+<h3>Deploy Application to Instance</h3>
+<ol>
+<li>Applications → View Details</li>
+<li>Deployments tab → Deploy to Environment</li>
+<li>Select Instance, Version, Model</li>
+<li>Deploy</li>
+</ol>
+<h3>Undeploy Application</h3>
+<ol>
+<li>Applications → View Details</li>
+<li>Deployments tab</li>
+<li>Click Undeploy icon on row</li>
+<li>Confirm</li>
+</ol>
+<h3>Resolve Booking Conflict</h3>
+<ol>
+<li>Bookings → Conflicts tab</li>
+<li>Click Resolve icon (gavel)</li>
+<li>Select resolution type</li>
+<li>Add notes → Apply</li>
+</ol>
+<h3>Bulk Upload Data</h3>
+<ol>
+<li>Settings → Data Management</li>
+<li>Go to Bulk Upload</li>
+<li>Select entity tab (9 types available):<ul>
+<li>Environments, Instances, Applications</li>
+<li>Interfaces, Components (App)</li>
+<li>App-Instance Links, Infrastructure</li>
+<li>Interface Endpoints, Component Instances</li>
+</ul>
+</li>
+<li>Download template → Fill → Upload</li>
+</ol>
+<h3>View Audit Trail <span class="badge badge-new">⭐ NEW</span></h3>
+<ol>
+<li>Sidebar → Audit &amp; Compliance</li>
+<li>Use filters: Category, Action, Date Range, Actor</li>
+<li>Click event row for full details</li>
+<li>Export reports using templates</li>
+</ol>
+<h3>Create a Release</h3>
+<ol>
+<li>Releases → + New Release</li>
+<li>Fill: Name, Version, Dates</li>
+<li>Select Environments &amp; Apps</li>
+<li>Create</li>
+</ol>
+<hr>
+<h2>📊 Status Codes</h2>
+<h3>Booking Status</h3>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Color</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Requested</td>
+<td>🔵 Blue</td>
+<td>Awaiting review</td>
+</tr>
+<tr>
+<td>PendingApproval</td>
+<td>🟡 Yellow</td>
+<td>Has conflicts</td>
+</tr>
+<tr>
+<td>Approved</td>
+<td>🟢 Green</td>
+<td>Confirmed</td>
+</tr>
+<tr>
+<td>Active</td>
+<td>🟢 Green</td>
+<td>In use</td>
+</tr>
+<tr>
+<td>Completed</td>
+<td>⚪ Gray</td>
+<td>Finished</td>
+</tr>
+<tr>
+<td>Cancelled</td>
+<td>🔴 Red</td>
+<td>Cancelled</td>
+</tr>
+</tbody></table>
+<h3>Instance Status</h3>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Available</td>
+<td>Ready to book</td>
+</tr>
+<tr>
+<td>Broken</td>
+<td>Has issues, not functional</td>
+</tr>
+<tr>
+<td>Maintenance</td>
+<td>Under maintenance</td>
+</tr>
+<tr>
+<td>Provisioning</td>
+<td>Being set up</td>
+</tr>
+</tbody></table>
+<h3>Release Status</h3>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Planned</td>
+<td>Scheduled</td>
+</tr>
+<tr>
+<td>InProgress</td>
+<td>Deploying</td>
+</tr>
+<tr>
+<td>Completed</td>
+<td>Done</td>
+</tr>
+<tr>
+<td>RolledBack</td>
+<td>Reverted</td>
+</tr>
+</tbody></table>
+<h3>Deployment Status (Application)</h3>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Aligned</td>
+<td>All components match expected versions</td>
+</tr>
+<tr>
+<td>Mixed</td>
+<td>Some components at different versions</td>
+</tr>
+<tr>
+<td>OutOfSync</td>
+<td>Deployment differs from plan</td>
+</tr>
+<tr>
+<td>Broken</td>
+<td>Deployment has issues</td>
+</tr>
+</tbody></table>
+<h3>Component Instance Status</h3>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Deployed</td>
+<td>Successfully deployed</td>
+</tr>
+<tr>
+<td>PartiallyDeployed</td>
+<td>Partial deployment</td>
+</tr>
+<tr>
+<td>RollbackPending</td>
+<td>Rollback in progress</td>
+</tr>
+<tr>
+<td>Failed</td>
+<td>Deployment failed</td>
+</tr>
+</tbody></table>
+<h3>Interface Test Modes</h3>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Live</td>
+<td>Real connection to target</td>
+</tr>
+<tr>
+<td>Virtualised</td>
+<td>Service virtualization</td>
+</tr>
+<tr>
+<td>Stubbed</td>
+<td>Simple mock responses</td>
+</tr>
+<tr>
+<td>Disabled</td>
+<td>Interface turned off</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>🔑 Role Permissions</h2>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th align="center">Admin</th>
+<th align="center">Manager</th>
+<th align="center">Lead</th>
+<th align="center">Tester</th>
+<th align="center">Viewer</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Create Environment</td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">❌</td>
+<td align="center">❌</td>
+<td align="center">❌</td>
+</tr>
+<tr>
+<td>Create Booking</td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">❌</td>
+</tr>
+<tr>
+<td>Approve Booking</td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">❌</td>
+<td align="center">❌</td>
+<td align="center">❌</td>
+</tr>
+<tr>
+<td>Create Release</td>
+<td align="center">✅</td>
+<td align="center">❌</td>
+<td align="center">✅</td>
+<td align="center">❌</td>
+<td align="center">❌</td>
+</tr>
+<tr>
+<td>Manage Users</td>
+<td align="center">✅</td>
+<td align="center">❌</td>
+<td align="center">❌</td>
+<td align="center">❌</td>
+<td align="center">❌</td>
+</tr>
+<tr>
+<td>View Audit Logs</td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">❌</td>
+<td align="center">❌</td>
+</tr>
+<tr>
+<td>Export Audit Reports</td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">❌</td>
+<td align="center">❌</td>
+<td align="center">❌</td>
+</tr>
+<tr>
+<td>View All</td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+<td align="center">✅</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>🗂️ Environment Categories</h2>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Use Case</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>NonProd</strong></td>
+<td>Development, SIT, Testing</td>
+</tr>
+<tr>
+<td><strong>PreProd</strong></td>
+<td>UAT, Staging, Pre-Production</td>
+</tr>
+<tr>
+<td><strong>DR</strong></td>
+<td>Disaster Recovery</td>
+</tr>
+<tr>
+<td><strong>Training</strong></td>
+<td>Training environments</td>
+</tr>
+<tr>
+<td><strong>Sandpit</strong></td>
+<td>Sandbox/experimentation</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>🧪 Test Phases</h2>
+<ul>
+<li><strong>SIT</strong> - System Integration Testing</li>
+<li><strong>UAT</strong> - User Acceptance Testing</li>
+<li><strong>NFT</strong> - Non-Functional Testing</li>
+<li><strong>Performance</strong> - Load/Stress Testing</li>
+<li><strong>DRRehearsal</strong> - DR Testing</li>
+<li><strong>PenTest</strong> - Security Testing</li>
+</ul>
+<hr>
+<h2>📞 API Endpoints</h2>
+<pre><code>POST /api/auth/login              # Login
+GET  /api/environments            # List environments
+GET  /api/environments/:id/apps   # Get apps in environment
+GET  /api/bookings                # List bookings
+POST /api/bookings                # Create booking
+GET  /api/bookings/conflicts      # Get all conflicts
+POST /api/bookings/:id/conflicts/resolve  # Resolve conflict
+GET  /api/releases                # List releases
+GET  /api/applications            # List applications
+GET  /api/applications/:id/instances      # Get app deployments
+POST /api/applications/:id/instances      # Deploy app to instance
+DEL  /api/applications/:id/instances/:iid # Undeploy app
+GET  /api/interfaces              # List interfaces
+GET  /api/interfaces/:id/endpoints        # Get interface endpoints
+GET  /api/groups                  # List groups
+GET  /api/dashboard/stats         # Get statistics
+GET  /health                      # Health check
 
-<span class="comment"># View logs</span>
+# Audit &amp; Compliance Endpoints &lt;span class=&quot;badge badge-new&quot;&gt;⭐ NEW&lt;/span&gt;
+GET  /api/audit/events            # Search audit events
+GET  /api/audit/events/stats      # Get audit statistics
+GET  /api/audit/events/:id        # Get event details
+GET  /api/audit/reports/templates # List report templates
+POST /api/audit/reports/templates # Create report template
+POST /api/audit/reports/generate  # Generate audit report
+GET  /api/audit/reports           # List generated reports
+
+# Bulk Upload Endpoints
+POST /api/bulk-upload/environments        # Upload environments
+POST /api/bulk-upload/instances           # Upload env instances
+POST /api/bulk-upload/applications        # Upload applications
+POST /api/bulk-upload/interfaces          # Upload interfaces
+POST /api/bulk-upload/components          # Upload app components
+POST /api/bulk-upload/app_instances       # Link apps to instances
+POST /api/bulk-upload/infra_components    # Upload infra components
+POST /api/bulk-upload/interface_endpoints # Upload interface endpoints
+POST /api/bulk-upload/component_instances # Upload component instances
+GET  /api/bulk-upload/template/:entity    # Download CSV template
+</code></pre>
+<hr>
+<h2>🛠️ Docker Commands</h2>
+<pre><code class="language-bash"># Start with HTTPS (recommended)
+docker-compose -f docker-compose.https.yml up -d
+
+# Or use the helper script (Windows)
+.\start-https.ps1
+
+# Generate SSL certificates (first time)
+.\generate-ssl.ps1
+
+# View logs
 docker logs tem-backend
 docker logs tem-frontend
+docker logs tem-nginx
 
-<span class="comment"># Restart services</span>
-docker-compose restart
+# Restart services
+docker-compose -f docker-compose.https.yml restart
 
-<span class="comment"># Stop all</span>
-docker-compose down
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Tips -->
-            <div class="card">
-                <div class="card-header success">
-                    💡 Pro Tips
-                </div>
-                <div class="card-body">
-                    <ul class="tips">
-                        <li><strong>Book Early</strong> - Reserve environments in advance</li>
-                        <li><strong>Check Calendar</strong> - Use calendar view for availability</li>
-                        <li><strong>Clear Description</strong> - Help others understand your booking</li>
-                        <li><strong>Update Status</strong> - Keep booking status current</li>
-                        <li><strong>Release On Time</strong> - Free resources when done</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-        
+# Stop all
+docker-compose -f docker-compose.https.yml down
+
+# Development mode (HTTP only)
+docker-compose up -d
+</code></pre>
+<hr>
+<h2>☁️ AWS Deployment</h2>
+<pre><code class="language-bash"># Deploy to AWS using Terraform
+cd terraform
+terraform init
+terraform plan
+terraform apply
+
+# Deploy application code
+.\deploy-aws.ps1   # Windows
+./deploy-aws.sh    # Linux/Mac
+</code></pre>
+<p>See <a href="../terraform/README.md">terraform/README.md</a> for complete AWS deployment guide.</p>
+<hr>
+<h2>🔧 Environment Variables</h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>JWT_SECRET</td>
+<td>JWT signing key</td>
+<td><strong>Required</strong></td>
+</tr>
+<tr>
+<td>POSTGRES_PASSWORD</td>
+<td>Database password</td>
+<td>tem_password</td>
+</tr>
+<tr>
+<td>NODE_ENV</td>
+<td>Environment</td>
+<td>development</td>
+</tr>
+<tr>
+<td>RATE_LIMIT_MAX</td>
+<td>API rate limit</td>
+<td>100/15min</td>
+</tr>
+<tr>
+<td>AUTH_RATE_LIMIT_MAX</td>
+<td>Login rate limit</td>
+<td>5/15min</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>💡 Tips</h2>
+<ol>
+<li><strong>Use HTTPS</strong> - Always use <code>docker-compose.https.yml</code> in production</li>
+<li><strong>Book Early</strong> - Reserve environments in advance</li>
+<li><strong>Check Calendar</strong> - Use calendar view for availability</li>
+<li><strong>Clear Description</strong> - Help others understand your booking</li>
+<li><strong>Update Status</strong> - Keep booking status current</li>
+<li><strong>Release On Time</strong> - Free resources when done</li>
+<li><strong>Change Passwords</strong> - Update demo passwords in production</li>
+<li><strong>Track Deployments</strong> - Keep app deployments up to date</li>
+<li><strong>Resolve Conflicts</strong> - Address booking conflicts promptly</li>
+<li><strong>Use Bulk Upload</strong> - Import large datasets efficiently</li>
+</ol>
+<hr>
+<p><strong>Need Help?</strong> Check the full <a href="USER_GUIDE.md">User Guide</a> or <a href="SECURITY.md">Security Guide</a>.</p>
+<hr>
+<p><strong>BookMyEnv v4.2.0</strong> | January 2025</p>
+
         <div class="footer">
-            <p><strong>Need Help?</strong> Contact your system administrator or check the full User Guide.</p>
-            <p style="margin-top: 10px;">© 2025 BookMyEnv. All rights reserved.</p>
+            <p>BookMyEnv v4.2.0 | January 2025</p>
+            <p>Documentation generated automatically</p>
         </div>
     </div>
 </body>

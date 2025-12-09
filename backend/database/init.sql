@@ -1032,14 +1032,14 @@ INSERT INTO refresh_history (
     change_ticket_ref, execution_status, duration_minutes, notes
 ) VALUES
 (
-    'rh111111-1111-1111-1111-111111111111',
+    'f1111111-1111-1111-1111-111111111111',
     'EnvironmentInstance', 'a1111111-1111-1111-1111-111111111111', 'SIT1',
     NOW() - INTERVAL '15 days', 'MASKED_COPY', 'PROD', 'PROD-SNAPSHOT-2025-11-24',
     'cccccccc-cccc-cccc-cccc-cccccccccccc', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', NOW() - INTERVAL '15 days',
     'CHG-123456', 'SUCCESS', 225, 'Masked PII columns as per data policy v4.'
 ),
 (
-    'rh222222-2222-2222-2222-222222222222',
+    'f2222222-2222-2222-2222-222222222222',
     'EnvironmentInstance', 'a2222222-2222-2222-2222-222222222222', 'SIT2',
     NOW() - INTERVAL '10 days', 'FULL_COPY', 'PROD', 'PROD-SNAPSHOT-2025-11-29',
     'dddddddd-dddd-dddd-dddd-dddddddddddd', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', NOW() - INTERVAL '10 days',
@@ -1056,7 +1056,7 @@ INSERT INTO refresh_intents (
     approved_by_user_id, approved_at, approval_notes
 ) VALUES
 (
-    'ri111111-1111-1111-1111-111111111111',
+    'e1111111-1111-1111-1111-111111111111',
     'EnvironmentInstance', 'a1111111-1111-1111-1111-111111111111', 'SIT1',
     'APPROVED', NOW() + INTERVAL '7 days', NOW() + INTERVAL '7 days' + INTERVAL '4 hours', 'MASKED_COPY',
     'PROD', true, 240,
@@ -1066,7 +1066,7 @@ INSERT INTO refresh_intents (
     'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', NOW() - INTERVAL '1 day', 'Approved for weekend refresh.'
 ),
 (
-    'ri222222-2222-2222-2222-222222222222',
+    'e2222222-2222-2222-2222-222222222222',
     'EnvironmentInstance', 'a3333333-3333-3333-3333-333333333333', 'UAT1',
     'REQUESTED', NOW() + INTERVAL '14 days', NOW() + INTERVAL '14 days' + INTERVAL '6 hours', 'FULL_COPY',
     'PROD', true, 360,
@@ -1093,8 +1093,8 @@ INSERT INTO refresh_booking_conflicts (
     conflict_type, severity, resolution_status
 ) VALUES
 (
-    'rc111111-1111-1111-1111-111111111111',
-    'ri222222-2222-2222-2222-222222222222', 'f0222222-2222-2222-2222-222222222222',
+    'ab111111-1111-1111-1111-111111111111',
+    'e2222222-2222-2222-2222-222222222222', 'f0222222-2222-2222-2222-222222222222',
     'OVERLAP', 'HIGH', 'UNRESOLVED'
 );
 
@@ -1112,5 +1112,451 @@ SET last_refresh_date = NOW() - INTERVAL '10 days',
     last_refresh_source = 'PROD-SNAPSHOT-2025-11-29',
     last_refresh_by = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
 WHERE env_instance_id = 'a2222222-2222-2222-2222-222222222222';
+
+-- =====================================================
+-- v4.2: AUDIT & COMPLIANCE SYSTEM
+-- =====================================================
+
+-- Audit Events - Core table for full CRUD traceability
+CREATE TABLE IF NOT EXISTS audit_events (
+    audit_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    timestamp_utc TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    
+    -- Actor information
+    actor_user_id UUID REFERENCES users(user_id),
+    actor_user_name VARCHAR(255),
+    actor_role VARCHAR(50),
+    
+    -- Entity being audited
+    entity_type VARCHAR(50) NOT NULL CHECK (entity_type IN (
+        'Environment', 'EnvironmentInstance', 'Application', 'Interface', 
+        'Component', 'Booking', 'RefreshIntent', 'RefreshExecution',
+        'User', 'UserGroup', 'Role', 'Permission', 'Configuration', 
+        'Integration', 'Release', 'Change', 'TestData', 'Report'
+    )),
+    entity_id UUID,
+    entity_display_name VARCHAR(500),
+    
+    -- Action details
+    action_type VARCHAR(50) NOT NULL CHECK (action_type IN (
+        'CREATE', 'UPDATE', 'DELETE', 'READ', 'LOGIN', 'LOGOUT',
+        'PERMISSION_CHANGE', 'ROLE_CHANGE', 'STATUS_CHANGE',
+        'REFRESH_EXECUTE', 'REFRESH_APPROVE', 'REFRESH_REJECT',
+        'BOOKING_APPROVE', 'BOOKING_REJECT', 'BOOKING_CANCEL',
+        'CONFLICT_RESOLVE', 'FORCE_APPROVE', 'EXPORT', 'IMPORT',
+        'CONFIG_CHANGE', 'INTEGRATION_SYNC', 'REPORT_GENERATE'
+    )),
+    action_result VARCHAR(20) DEFAULT 'SUCCESS' CHECK (action_result IN (
+        'SUCCESS', 'FAILED', 'UNAUTHORIZED', 'PARTIAL'
+    )),
+    
+    -- Source information
+    source_channel VARCHAR(30) NOT NULL DEFAULT 'WEB_UI' CHECK (source_channel IN (
+        'WEB_UI', 'API', 'BATCH_JOB', 'INTEGRATION_SYSTEM', 'SCHEDULER', 'CLI'
+    )),
+    ip_address INET,
+    user_agent TEXT,
+    client_app VARCHAR(100),
+    api_key_id UUID,
+    
+    -- State snapshots (JSONB for flexibility)
+    before_snapshot JSONB,
+    after_snapshot JSONB,
+    changed_fields TEXT[],
+    
+    -- Compliance & correlation
+    regulatory_tag VARCHAR(50) CHECK (regulatory_tag IN (
+        'SOX_CHANGE', 'AU_APRA_CPS_230', 'GDPR', 'PCI_DSS', 'HIPAA', 
+        'ISO_27001', 'SOC2', 'CUSTOM'
+    )),
+    correlation_id UUID,
+    session_id UUID,
+    
+    -- Additional context
+    comment TEXT,
+    error_message TEXT,
+    metadata JSONB DEFAULT '{}',
+    
+    -- Indexing columns (for performance)
+    event_date DATE GENERATED ALWAYS AS (DATE(timestamp_utc)) STORED
+);
+
+-- Audit Report Templates
+CREATE TABLE IF NOT EXISTS audit_report_templates (
+    template_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT,
+    category VARCHAR(50) CHECK (category IN (
+        'COMPLIANCE', 'SECURITY', 'OPERATIONS', 'INVESTIGATION', 'CUSTOM'
+    )),
+    
+    -- Filter configuration
+    entity_types TEXT[],
+    action_types TEXT[],
+    regulatory_tags TEXT[],
+    include_sensitive BOOLEAN DEFAULT false,
+    
+    -- Query template
+    filter_template JSONB NOT NULL,
+    
+    -- Output configuration
+    output_columns TEXT[],
+    sort_by VARCHAR(50) DEFAULT 'timestamp_utc',
+    sort_order VARCHAR(4) DEFAULT 'DESC',
+    
+    -- Scheduling
+    schedule_cron VARCHAR(100),
+    schedule_enabled BOOLEAN DEFAULT false,
+    email_recipients TEXT[],
+    
+    -- Metadata
+    created_by_user_id UUID REFERENCES users(user_id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    is_system_template BOOLEAN DEFAULT false
+);
+
+-- Audit Report Executions
+CREATE TABLE IF NOT EXISTS audit_report_executions (
+    execution_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    template_id UUID REFERENCES audit_report_templates(template_id),
+    
+    -- Execution details
+    executed_by_user_id UUID REFERENCES users(user_id),
+    executed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    
+    -- Filters used
+    date_from TIMESTAMP WITH TIME ZONE,
+    date_to TIMESTAMP WITH TIME ZONE,
+    filters_applied JSONB,
+    
+    -- Results
+    status VARCHAR(20) DEFAULT 'PENDING' CHECK (status IN (
+        'PENDING', 'RUNNING', 'COMPLETED', 'FAILED'
+    )),
+    records_count INTEGER,
+    file_format VARCHAR(10) CHECK (file_format IN ('PDF', 'CSV', 'XLSX', 'JSON')),
+    file_path VARCHAR(500),
+    file_size_bytes BIGINT,
+    
+    -- Completion
+    completed_at TIMESTAMP WITH TIME ZONE,
+    error_message TEXT,
+    
+    -- Audit the audit (who generated what report)
+    audit_event_id UUID REFERENCES audit_events(audit_id)
+);
+
+-- Saved Audit Filters (user-defined views)
+CREATE TABLE IF NOT EXISTS audit_saved_filters (
+    filter_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    is_shared BOOLEAN DEFAULT false,
+    
+    -- Filter configuration
+    filters JSONB NOT NULL,
+    
+    -- UI preferences
+    visible_columns TEXT[],
+    sort_config JSONB,
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    last_used_at TIMESTAMP WITH TIME ZONE,
+    use_count INTEGER DEFAULT 0
+);
+
+-- Performance indexes for audit_events
+CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_events(timestamp_utc DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_date ON audit_events(event_date DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_events(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_audit_actor ON audit_events(actor_user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_events(action_type);
+CREATE INDEX IF NOT EXISTS idx_audit_correlation ON audit_events(correlation_id) WHERE correlation_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_audit_regulatory ON audit_events(regulatory_tag) WHERE regulatory_tag IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_audit_result ON audit_events(action_result) WHERE action_result != 'SUCCESS';
+CREATE INDEX IF NOT EXISTS idx_audit_source ON audit_events(source_channel);
+
+-- Full-text search index for audit events
+CREATE INDEX IF NOT EXISTS idx_audit_search ON audit_events 
+    USING gin(to_tsvector('english', 
+        COALESCE(entity_display_name, '') || ' ' || 
+        COALESCE(actor_user_name, '') || ' ' ||
+        COALESCE(comment, '')
+    ));
+
+-- Insert default report templates
+INSERT INTO audit_report_templates (
+    template_id, name, description, category,
+    entity_types, action_types, regulatory_tags,
+    filter_template, output_columns, is_system_template
+) VALUES
+(
+    'a0000001-0000-0000-0000-000000000001',
+    'Permission and Role Changes',
+    'All permission and role changes in the selected period',
+    'SECURITY',
+    ARRAY['User', 'UserGroup', 'Role', 'Permission'],
+    ARRAY['PERMISSION_CHANGE', 'ROLE_CHANGE', 'CREATE', 'UPDATE', 'DELETE'],
+    NULL,
+    '{"includeActorDetails": true, "includeBeforeAfter": true}'::jsonb,
+    ARRAY['timestamp_utc', 'actor_user_name', 'action_type', 'entity_display_name', 'changed_fields'],
+    true
+),
+(
+    'a0000002-0000-0000-0000-000000000002',
+    'Environment Configuration Changes',
+    'All environment and instance configuration changes',
+    'OPERATIONS',
+    ARRAY['Environment', 'EnvironmentInstance', 'Configuration'],
+    ARRAY['CREATE', 'UPDATE', 'DELETE', 'CONFIG_CHANGE'],
+    NULL,
+    '{"includeActorDetails": true, "includeBeforeAfter": true}'::jsonb,
+    ARRAY['timestamp_utc', 'actor_user_name', 'entity_type', 'entity_display_name', 'action_type', 'changed_fields'],
+    true
+),
+(
+    'a0000003-0000-0000-0000-000000000003',
+    'Data Refresh Executions and Overrides',
+    'All data refresh executions including force approvals and conflict overrides',
+    'COMPLIANCE',
+    ARRAY['RefreshIntent', 'RefreshExecution'],
+    ARRAY['REFRESH_EXECUTE', 'REFRESH_APPROVE', 'REFRESH_REJECT', 'FORCE_APPROVE', 'CONFLICT_RESOLVE'],
+    NULL,
+    '{"includeActorDetails": true, "includeBeforeAfter": true, "includeConflictDetails": true}'::jsonb,
+    ARRAY['timestamp_utc', 'actor_user_name', 'action_type', 'entity_display_name', 'action_result', 'comment'],
+    true
+),
+(
+    'a0000004-0000-0000-0000-000000000004',
+    'Failed and Unauthorized Access Attempts',
+    'All failed or unauthorized access attempts for security review',
+    'SECURITY',
+    NULL,
+    ARRAY['LOGIN', 'READ', 'UPDATE', 'DELETE'],
+    NULL,
+    '{"actionResult": ["FAILED", "UNAUTHORIZED"]}'::jsonb,
+    ARRAY['timestamp_utc', 'actor_user_name', 'action_type', 'entity_display_name', 'action_result', 'ip_address', 'error_message'],
+    true
+),
+(
+    'a0000005-0000-0000-0000-000000000005',
+    'SOX Compliance Report',
+    'All changes tagged for SOX compliance review',
+    'COMPLIANCE',
+    NULL,
+    NULL,
+    ARRAY['SOX_CHANGE'],
+    '{"includeActorDetails": true, "includeBeforeAfter": true, "includeApprovals": true}'::jsonb,
+    ARRAY['timestamp_utc', 'actor_user_name', 'actor_role', 'entity_type', 'entity_display_name', 'action_type', 'regulatory_tag'],
+    true
+),
+(
+    'a0000006-0000-0000-0000-000000000006',
+    'Booking Lifecycle Report',
+    'Complete booking lifecycle including approvals, cancellations, and conflicts',
+    'OPERATIONS',
+    ARRAY['Booking'],
+    ARRAY['CREATE', 'UPDATE', 'DELETE', 'BOOKING_APPROVE', 'BOOKING_REJECT', 'BOOKING_CANCEL', 'CONFLICT_RESOLVE'],
+    NULL,
+    '{"includeActorDetails": true, "includeBeforeAfter": true}'::jsonb,
+    ARRAY['timestamp_utc', 'actor_user_name', 'entity_display_name', 'action_type', 'action_result'],
+    true
+)
+ON CONFLICT (name) DO NOTHING;
+
+-- Insert sample audit events for demonstration
+INSERT INTO audit_events (
+    audit_id, timestamp_utc, actor_user_id, actor_user_name, actor_role,
+    entity_type, entity_id, entity_display_name, action_type, action_result,
+    source_channel, changed_fields, comment
+) VALUES
+(
+    'ae000001-0000-0000-0000-000000000001',
+    NOW() - INTERVAL '2 hours',
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    'Admin User',
+    'Admin',
+    'Environment',
+    'e1111111-1111-1111-1111-111111111111',
+    'SIT Environment',
+    'UPDATE',
+    'SUCCESS',
+    'WEB_UI',
+    ARRAY['max_concurrent_bookings', 'availability_window'],
+    'Updated booking limits for Q1 testing'
+),
+(
+    'ae000002-0000-0000-0000-000000000002',
+    NOW() - INTERVAL '1 hour',
+    'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+    'Environment Manager',
+    'EnvironmentManager',
+    'RefreshIntent',
+    'e1111111-1111-1111-1111-111111111111',
+    'SIT1 Refresh - Masked Copy',
+    'REFRESH_APPROVE',
+    'SUCCESS',
+    'WEB_UI',
+    NULL,
+    'Approved for scheduled maintenance window'
+),
+(
+    'ae000003-0000-0000-0000-000000000003',
+    NOW() - INTERVAL '30 minutes',
+    'cccccccc-cccc-cccc-cccc-cccccccccccc',
+    'Project Lead',
+    'ProjectLead',
+    'Booking',
+    'f0111111-1111-1111-1111-111111111111',
+    'SIT1 Booking - Release 2.5 Testing',
+    'CREATE',
+    'SUCCESS',
+    'WEB_UI',
+    NULL,
+    'Booking created for release testing'
+);
+
+-- =====================================================
+-- v4.1: REFRESH-BOOKING DEPENDENCY ENHANCEMENTS
+-- =====================================================
+
+-- Add is_critical_booking flag to environment_bookings
+ALTER TABLE environment_bookings 
+ADD COLUMN IF NOT EXISTS is_critical_booking BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS booking_priority VARCHAR(10) DEFAULT 'Normal' 
+    CHECK (booking_priority IN ('Critical', 'High', 'Normal', 'Low'));
+
+-- Add impact_type to refresh_intents  
+ALTER TABLE refresh_intents
+ADD COLUMN IF NOT EXISTS impact_type VARCHAR(30) DEFAULT 'DATA_OVERWRITE'
+    CHECK (impact_type IN ('DATA_OVERWRITE', 'DOWNTIME_REQUIRED', 'READ_ONLY', 'CONFIG_CHANGE', 'SCHEMA_CHANGE')),
+ADD COLUMN IF NOT EXISTS conflict_flag VARCHAR(10) DEFAULT 'NONE'
+    CHECK (conflict_flag IN ('NONE', 'MINOR', 'MAJOR')),
+ADD COLUMN IF NOT EXISTS conflict_summary JSONB DEFAULT '{}',
+ADD COLUMN IF NOT EXISTS impacted_teams UUID[],
+ADD COLUMN IF NOT EXISTS force_approved BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS force_approval_justification TEXT,
+ADD COLUMN IF NOT EXISTS force_approved_by_user_id UUID REFERENCES users(user_id),
+ADD COLUMN IF NOT EXISTS force_approved_at TIMESTAMP WITH TIME ZONE;
+
+-- Add indexes for conflict detection queries
+CREATE INDEX IF NOT EXISTS idx_bookings_conflict_check 
+ON environment_bookings(start_datetime, end_datetime, booking_status)
+WHERE booking_status IN ('Approved', 'Active', 'PendingApproval');
+
+CREATE INDEX IF NOT EXISTS idx_refresh_conflict_check 
+ON refresh_intents(planned_date, planned_end_date, intent_status)
+WHERE intent_status IN ('APPROVED', 'SCHEDULED', 'IN_PROGRESS');
+
+-- Add booking owner notification tracking to conflicts table
+ALTER TABLE refresh_booking_conflicts
+ADD COLUMN IF NOT EXISTS auto_detected BOOLEAN DEFAULT true,
+ADD COLUMN IF NOT EXISTS conflict_detected_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+ADD COLUMN IF NOT EXISTS overlap_start TIMESTAMP WITH TIME ZONE,
+ADD COLUMN IF NOT EXISTS overlap_end TIMESTAMP WITH TIME ZONE,
+ADD COLUMN IF NOT EXISTS overlap_minutes INTEGER,
+ADD COLUMN IF NOT EXISTS booking_is_critical BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS booking_priority VARCHAR(10);
+
+-- Update sample booking to be critical
+UPDATE environment_bookings 
+SET is_critical_booking = true, booking_priority = 'Critical'
+WHERE booking_id = 'f0111111-1111-1111-1111-111111111111';
+
+UPDATE environment_bookings 
+SET is_critical_booking = false, booking_priority = 'Normal'
+WHERE booking_id = 'f0222222-2222-2222-2222-222222222222';
+
+-- Update sample refresh intent with impact type
+UPDATE refresh_intents
+SET impact_type = 'DATA_OVERWRITE',
+    conflict_flag = 'MAJOR',
+    conflict_summary = '{"totalConflicts": 1, "majorConflicts": 1, "minorConflicts": 0, "affectedBookings": ["f0222222-2222-2222-2222-222222222222"]}'::jsonb
+WHERE refresh_intent_id = 'e2222222-2222-2222-2222-222222222222';
+
+-- =====================================================
+-- AUDIT & COMPLIANCE TABLES
+-- =====================================================
+
+-- Audit Events - Full CRUD traceability
+CREATE TABLE IF NOT EXISTS audit_events (
+    audit_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    timestamp_utc TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    actor_user_id UUID REFERENCES users(user_id),
+    actor_username VARCHAR(100),
+    actor_display_name VARCHAR(255),
+    actor_role VARCHAR(30),
+    actor_ip_address VARCHAR(45),
+    actor_user_agent TEXT,
+    entity_type VARCHAR(50) NOT NULL,
+    entity_id VARCHAR(255),
+    entity_name VARCHAR(255),
+    action_type VARCHAR(20) NOT NULL CHECK (action_type IN ('CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'EXPORT', 'IMPORT', 'APPROVE', 'REJECT', 'EXECUTE')),
+    action_description TEXT,
+    before_snapshot JSONB,
+    after_snapshot JSONB,
+    changed_fields JSONB,
+    parent_entity_type VARCHAR(50),
+    parent_entity_id VARCHAR(255),
+    session_id VARCHAR(255),
+    request_id VARCHAR(255),
+    source_system VARCHAR(50) DEFAULT 'BookMyEnv',
+    regulatory_tag VARCHAR(50),
+    data_classification VARCHAR(20) CHECK (data_classification IN ('Public', 'Internal', 'Confidential', 'Restricted')),
+    retention_days INTEGER DEFAULT 2555,
+    is_sensitive BOOLEAN DEFAULT false,
+    additional_context JSONB
+);
+
+-- Indexes for audit_events
+CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_events(timestamp_utc DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_events(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_audit_actor ON audit_events(actor_user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_events(action_type);
+CREATE INDEX IF NOT EXISTS idx_audit_regulatory ON audit_events(regulatory_tag) WHERE regulatory_tag IS NOT NULL;
+
+-- Audit Report Templates
+CREATE TABLE IF NOT EXISTS audit_report_templates (
+    template_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    report_type VARCHAR(50) NOT NULL,
+    filters JSONB,
+    columns JSONB,
+    grouping JSONB,
+    created_by UUID REFERENCES users(user_id),
+    is_system_template BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Generated Audit Reports
+CREATE TABLE IF NOT EXISTS audit_generated_reports (
+    report_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    template_id UUID REFERENCES audit_report_templates(template_id),
+    report_name VARCHAR(255) NOT NULL,
+    generated_by UUID REFERENCES users(user_id),
+    generated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    date_range_start TIMESTAMP WITH TIME ZONE,
+    date_range_end TIMESTAMP WITH TIME ZONE,
+    filters_applied JSONB,
+    total_records INTEGER,
+    file_path VARCHAR(500),
+    file_format VARCHAR(10) CHECK (file_format IN ('CSV', 'PDF', 'JSON', 'XLSX')),
+    status VARCHAR(20) DEFAULT 'COMPLETED' CHECK (status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'))
+);
+
+-- Insert default audit report templates
+INSERT INTO audit_report_templates (template_id, name, description, report_type, filters, columns, is_system_template) VALUES
+('a0000001-0001-0001-0001-000000000001', 'All Activity Report', 'Complete audit trail of all system activities', 'COMPREHENSIVE', '{}', '["timestamp_utc", "actor_username", "entity_type", "action_type", "action_description"]', true),
+('a0000001-0001-0001-0001-000000000002', 'User Activity Report', 'All activities performed by a specific user', 'USER_ACTIVITY', '{"groupBy": "actor_user_id"}', '["timestamp_utc", "entity_type", "action_type", "entity_name", "action_description"]', true),
+('a0000001-0001-0001-0001-000000000003', 'Environment Changes', 'All changes to environment configurations', 'ENTITY_CHANGES', '{"entity_type": "Environment"}', '["timestamp_utc", "actor_username", "action_type", "entity_name", "changed_fields"]', true),
+('a0000001-0001-0001-0001-000000000004', 'Booking Audit Trail', 'Complete history of booking operations', 'ENTITY_CHANGES', '{"entity_type": "Booking"}', '["timestamp_utc", "actor_username", "action_type", "entity_name", "before_snapshot", "after_snapshot"]', true),
+('a0000001-0001-0001-0001-000000000005', 'Security Events', 'Login/logout and access-related events', 'SECURITY', '{"action_type": ["LOGIN", "LOGOUT"]}', '["timestamp_utc", "actor_username", "actor_ip_address", "action_type", "action_description"]', true),
+('a0000001-0001-0001-0001-000000000006', 'Compliance Report', 'Regulatory compliance audit report', 'COMPLIANCE', '{"regulatory_tag": "NOT NULL"}', '["timestamp_utc", "actor_username", "entity_type", "action_type", "regulatory_tag", "data_classification"]', true)
+ON CONFLICT DO NOTHING;
 
 COMMIT;

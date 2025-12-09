@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const auditService = require('../services/auditService');
 
 const releaseController = {
   // Get all releases
@@ -153,6 +154,15 @@ const releaseController = {
         [req.user.user_id, 'CREATE', 'Release', result.rows[0].release_id, name]
       );
 
+      // Audit log
+      await auditService.logCreate(
+        auditService.ENTITY_TYPES.RELEASE,
+        result.rows[0].release_id,
+        name,
+        result.rows[0],
+        req
+      );
+
       res.status(201).json(result.rows[0]);
     } catch (error) {
       console.error('Create release error:', error);
@@ -197,6 +207,16 @@ const releaseController = {
       if (result.rows.length === 0) {
         return res.status(404).json({ error: 'Release not found' });
       }
+
+      // Audit log
+      await auditService.logUpdate(
+        auditService.ENTITY_TYPES.RELEASE,
+        id,
+        result.rows[0].name,
+        null,
+        result.rows[0],
+        req
+      );
 
       res.json(result.rows[0]);
     } catch (error) {

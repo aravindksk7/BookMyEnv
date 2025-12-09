@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const db = require('../config/database');
+const auditService = require('../services/auditService');
 
 // Password validation regex: min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
@@ -67,6 +68,24 @@ const authController = {
         `INSERT INTO activities (user_id, action, entity_type, entity_id, entity_name, details)
          VALUES ($1, $2, $3, $4, $5, $6)`,
         [user.user_id, 'LOGIN', 'User', user.user_id, user.display_name, JSON.stringify({ ip: req.ip })]
+      );
+
+      // Audit logging
+      await auditService.logAction(
+        auditService.ACTION_TYPES.LOGIN,
+        auditService.ENTITY_TYPES.USER,
+        user.user_id,
+        user.display_name,
+        req,
+        {
+          context: {
+            actorUserId: user.user_id,
+            actorUserName: user.display_name,
+            actorRole: user.role,
+            sourceChannel: auditService.SOURCE_CHANNELS.WEB_UI,
+            ipAddress: req.ip
+          }
+        }
       );
 
       res.json({

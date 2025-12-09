@@ -73,7 +73,32 @@ router.post('/intents/:id/cancel', requireRole('Admin', 'EnvironmentManager', 'R
 // Get conflicts for an intent
 router.get('/intents/:id/conflicts', refreshController.getConflicts);
 
-// Resolve a conflict
+// Get detailed conflicts for an intent (enhanced view)
+router.get('/intents/:id/conflicts/detailed', refreshController.getDetailedConflicts);
+
+// Revalidate conflicts for an intent (manual trigger)
+router.post('/intents/:id/conflicts/revalidate', requireRole('Admin', 'EnvironmentManager'), refreshController.revalidateIntentConflicts);
+
+// Resolve a conflict (legacy endpoint)
 router.post('/conflicts/:conflictId/resolve', requireRole('Admin', 'EnvironmentManager'), refreshController.resolveConflict);
+
+// Resolve a conflict (enhanced endpoint)
+router.post('/conflicts/:conflictId/resolve-enhanced', requireRole('Admin', 'EnvironmentManager'), refreshController.resolveConflictEnhanced);
+
+// Bulk resolve conflicts
+router.post('/conflicts/bulk-resolve', requireRole('Admin', 'EnvironmentManager'), refreshController.bulkResolveConflicts);
+
+// Get all unresolved conflicts (for dashboard)
+router.get('/conflicts/unresolved', refreshController.getAllUnresolvedConflicts);
+
+// =====================================================
+// CONFLICT DETECTION API (Preview before creating)
+// =====================================================
+
+// Check conflicts preview (before creating an intent)
+router.post('/conflicts/check', refreshController.checkConflictsPreview);
+
+// Suggest alternative time slots
+router.get('/conflicts/suggest-slots', refreshController.suggestTimeSlots);
 
 module.exports = router;

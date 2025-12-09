@@ -23,6 +23,7 @@
     "@schedule-x/react": "^3.4.0",
     "@schedule-x/theme-default": "^3.4.2",
     "axios": "^1.7.9",
+    "date-fns": "^4.1.0",
     "dayjs": "^1.11.13",
     "next": "^15.1.3",
     "preact": "^10.28.0",

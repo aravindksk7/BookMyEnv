@@ -142,6 +142,108 @@ For development/testing only:
 
 **⚠️ IMPORTANT**: Change all demo passwords in production!
 
+## Audit Logging & Compliance ⭐ NEW
+
+BookMyEnv v4.2.0 introduces comprehensive audit logging for security and compliance requirements.
+
+### Audit Trail Features
+
+| Feature | Description |
+|---------|-------------|
+| **Immutable Logs** | Audit events are append-only with no update/delete operations |
+| **Comprehensive Coverage** | All CRUD operations on environments, bookings, applications, releases, users |
+| **Actor Tracking** | Records user ID, username, and IP address for all actions |
+| **Entity Tracking** | Records entity type, ID, and display name for all changes |
+| **Change Details** | Stores before/after values in JSON format |
+| **Timestamp Precision** | Millisecond-precision timestamps in UTC |
+| **Source System** | Tracks whether action was via UI, API, or system process |
+
+### Audit Event Categories
+
+```javascript
+// Event categories captured
+const AUDIT_CATEGORIES = {
+  AUTHENTICATION: 'authentication',    // Login, logout, token refresh
+  ENVIRONMENT: 'environment',          // Environment CRUD
+  BOOKING: 'booking',                   // Booking operations
+  APPLICATION: 'application',          // Application management
+  RELEASE: 'release',                   // Release scheduling
+  USER: 'user',                         // User management
+  CONFIGURATION: 'configuration',       // System settings
+  BULK_OPERATION: 'bulk_operation'     // Bulk uploads
+};
+```
+
+### Audit Data Retention
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| Retention Period | 90 days | Configurable via environment variable |
+| Auto-Cleanup | Enabled | Scheduled job removes old records |
+| Archive Option | Available | Export before deletion |
+
+Configure retention in environment:
+```bash
+AUDIT_RETENTION_DAYS=90
+AUDIT_AUTO_CLEANUP=true
+```
+
+### Audit Access Controls
+
+Access to audit logs is role-restricted:
+
+| Role | Permissions |
+|------|-------------|
+| Admin | Full access: view, search, export, manage templates |
+| EnvironmentManager | View and search audit events |
+| ProjectLead | View audit events for their projects |
+| Tester | No audit access |
+| Viewer | No audit access |
+
+### Audit API Security
+
+```javascript
+// Audit endpoints are protected with RBAC
+router.get('/audit/events', rbac('audit_read'), getEvents);
+router.get('/audit/reports', rbac('audit_export'), generateReport);
+router.post('/audit/templates', rbac('audit_manage'), createTemplate);
+```
+
+### Audit Data Protection
+
+1. **Encryption at Rest**: Audit data follows same PostgreSQL encryption as other data
+2. **Encryption in Transit**: All API calls use TLS 1.2+
+3. **Access Logging**: Audit access itself is logged
+4. **No PII in Details**: Passwords and sensitive fields are never recorded in change details
+
+### Compliance Report Templates
+
+Pre-configured templates for common compliance needs:
+
+| Template | Description |
+|----------|-------------|
+| User Activity | All actions by a specific user over time period |
+| Environment Changes | All modifications to environments |
+| Access Report | Login/logout activity and session information |
+| Booking History | Complete booking audit trail |
+| Administrative Actions | User management and configuration changes |
+
+### Sample Audit Query
+
+```sql
+-- Find all booking changes by a specific user in last 7 days
+SELECT 
+  action_type,
+  entity_name,
+  action_description,
+  created_at
+FROM audit_events
+WHERE category = 'booking'
+  AND actor_user_id = 'user-uuid'
+  AND created_at > NOW() - INTERVAL '7 days'
+ORDER BY created_at DESC;
+```
+
 ## Security Vulnerabilities Fixed
 
 | Vulnerability | Severity | Fix Applied |
@@ -157,6 +259,7 @@ For development/testing only:
 | Missing CSP header | Medium | Added comprehensive policy |
 | Missing Permissions-Policy | Low | Added to nginx |
 | Low bcrypt rounds | Low | Increased to 12 |
+| No audit logging | Medium | ⭐ Implemented comprehensive audit trail |
 
 ## Reporting Security Issues
 

@@ -41,6 +41,7 @@ import {
   Storage as TestDataIcon,
   AccountTree as TopologyIcon,
   Autorenew as RefreshIcon,
+  Security as AuditIcon,
 } from '@mui/icons-material';
 import { useAuth } from '@/contexts/AuthContext';
 import { dashboardAPI } from '@/lib/api';
@@ -101,6 +102,7 @@ const menuItems = [
   { text: 'Test Data', icon: <TestDataIcon />, path: '/testdata' },
   { text: 'Groups', icon: <GroupIcon />, path: '/groups' },
   { text: 'Integrations', icon: <IntegrationIcon />, path: '/integrations' },
+  { text: 'Audit & Compliance', icon: <AuditIcon />, path: '/audit', roles: ['Admin', 'EnvironmentManager', 'ProjectLead'] },
   { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
 ];
 
@@ -158,7 +160,7 @@ export default function DashboardLayout({
     // Refresh notifications every 30 seconds
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
-  }, [user, lastViewedTime]);
+  }, [user]); // Removed lastViewedTime dependency to prevent re-fetch on mark as read
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -180,12 +182,12 @@ export default function DashboardLayout({
   const handleNotificationClose = () => {
     setNotificationAnchor(null);
     
-    // Clear notifications after viewing and mark as read
+    // Mark all notifications as read by saving current timestamp
     const now = new Date().toISOString();
     localStorage.setItem('notificationsLastViewed', now);
     setLastViewedTime(now);
     setUnreadCount(0);
-    setNotifications([]);
+    // Don't clear notifications array - keep showing them, just mark as read
   };
 
   const handleLogout = () => {
@@ -227,7 +229,14 @@ export default function DashboardLayout({
       </Toolbar>
       <Divider />
       <List>
-        {menuItems.map((item) => (
+        {menuItems
+          .filter((item) => {
+            // If no roles specified, show to everyone
+            if (!('roles' in item) || !item.roles) return true;
+            // Check if user has required role
+            return user && item.roles.includes(user.role);
+          })
+          .map((item) => (
           <ListItem key={item.text} disablePadding>
             <ListItemButton
               selected={pathname === item.path}
@@ -398,6 +407,8 @@ export default function DashboardLayout({
                     }}
                   >
                     <ListItemText
+                      primaryTypographyProps={{ component: 'div' }}
+                      secondaryTypographyProps={{ component: 'div' }}
                       primary={
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                           <Chip 
@@ -406,17 +417,17 @@ export default function DashboardLayout({
                             color={getActionColor(notification.action)}
                             sx={{ height: 20, fontSize: '0.7rem' }}
                           />
-                          <Typography variant="body2" fontWeight={500}>
+                          <Typography variant="body2" component="span" fontWeight={500}>
                             {notification.entity_type}
                           </Typography>
                         </Box>
                       }
                       secondary={
-                        <Box>
-                          <Typography variant="body2" color="text.primary" sx={{ mb: 0.5 }}>
+                        <Box component="span" sx={{ display: 'block' }}>
+                          <Typography variant="body2" component="span" color="text.primary" sx={{ display: 'block', mb: 0.5 }}>
                             {notification.entity_name || 'N/A'}
                           </Typography>
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography variant="caption" component="span" color="text.secondary">
                             {notification.user_name} • {formatTimeAgo(notification.created_at)}
                           </Typography>
                         </Box>

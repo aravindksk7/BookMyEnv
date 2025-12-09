@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const conflictDetectionService = require('../services/conflictDetectionService');
 
 // UUID validation regex
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -433,7 +434,7 @@ const refreshController = {
     }
   },
 
-  // Create new refresh intent
+  // Create new refresh intent (with enhanced conflict detection)
   createIntent: async (req, res) => {
     try {
       const {
@@ -448,6 +449,7 @@ const refreshController = {
         sourceSnapshotName,
         useLatestSnapshot,
         impactScope,
+        impactType = 'DATA_OVERWRITE', // New: impact type for conflict severity
         requiresDowntime,
         estimatedDowntimeMinutes,
         affectedApplications,
@@ -459,7 +461,8 @@ const refreshController = {
         jiraRef,
         servicenowRef,
         notificationGroups,
-        notificationLeadDays
+        notificationLeadDays,
+        skipConflictCheck = false // Allow skipping for drafts
       } = req.body;
 
       // Validation
@@ -479,6 +482,20 @@ const refreshController = {
         return res.status(400).json({ error: 'Reason is required' });
       }
 
+      // Check for booking conflicts BEFORE creating
+      let conflictResult = { hasConflicts: false, conflictFlag: 'NONE', conflicts: [], conflictSummary: {} };
+      
+      if (!skipConflictCheck) {
+        conflictResult = await conflictDetectionService.checkConflictsForRefresh({
+          entityType,
+          entityId,
+          plannedDate,
+          plannedEndDate,
+          impactType,
+          estimatedDowntimeMinutes
+        });
+      }
+
       // Determine initial status
       const initialStatus = requiresApproval ? 'REQUESTED' : 'SCHEDULED';
 
@@ -487,31 +504,40 @@ const refreshController = {
            entity_type, entity_id, entity_name, intent_status,
            planned_date, planned_end_date, refresh_type,
            source_environment_id, source_environment_name, source_snapshot_name, use_latest_snapshot,
-           impact_scope, requires_downtime, estimated_downtime_minutes, affected_applications,
+           impact_scope, impact_type, requires_downtime, estimated_downtime_minutes, affected_applications,
            requested_by_user_id, reason, business_justification,
            requires_approval, change_ticket_ref, release_id, jira_ref, servicenow_ref,
-           notification_groups, notification_lead_days
-         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
+           notification_groups, notification_lead_days,
+           conflict_flag, conflict_summary, impacted_teams
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29)
          RETURNING *`,
         [
           entityType, entityId, entityName, initialStatus,
           plannedDate, plannedEndDate, refreshType,
           sourceEnvironmentId, sourceEnvironmentName, sourceSnapshotName, useLatestSnapshot || false,
-          impactScope, requiresDowntime || false, estimatedDowntimeMinutes, affectedApplications,
+          impactScope, impactType, requiresDowntime || false, estimatedDowntimeMinutes, affectedApplications,
           req.user.user_id, reason, businessJustification,
           requiresApproval, changeTicketRef, releaseId, jiraRef, servicenowRef,
-          notificationGroups, notificationLeadDays || [7, 1]
+          notificationGroups, notificationLeadDays || [7, 1],
+          conflictResult.conflictFlag, JSON.stringify(conflictResult.conflictSummary), 
+          conflictResult.impactedTeams || []
         ]
       );
 
       const newIntent = result.rows[0];
 
-      // Check for booking conflicts
-      await refreshController.checkAndCreateConflicts(newIntent);
+      // Store detected conflicts in database
+      if (conflictResult.conflicts.length > 0) {
+        await conflictDetectionService.storeConflicts(newIntent.refresh_intent_id, conflictResult.conflicts);
+      }
 
       res.status(201).json({ 
         message: 'Refresh intent created successfully',
-        intent: newIntent 
+        intent: newIntent,
+        hasConflicts: conflictResult.hasConflicts,
+        conflictFlag: conflictResult.conflictFlag,
+        conflicts: conflictResult.conflicts,
+        requiresForceApproval: conflictResult.requiresForceApproval
       });
     } catch (error) {
       console.error('Create refresh intent error:', error);
@@ -614,11 +640,11 @@ const refreshController = {
     }
   },
 
-  // Approve refresh intent
+  // Approve refresh intent (with conflict revalidation)
   approveIntent: async (req, res) => {
     try {
       const { id } = req.params;
-      const { approvalNotes } = req.body;
+      const { approvalNotes, forceApprove = false, forceApprovalJustification } = req.body;
 
       if (!isValidUUID(id)) {
         return res.status(400).json({ error: 'Invalid intent ID format' });
@@ -638,21 +664,78 @@ const refreshController = {
         return res.status(400).json({ error: 'Only REQUESTED intents can be approved' });
       }
 
-      const result = await db.query(
-        `UPDATE refresh_intents SET
-           intent_status = 'APPROVED',
-           approved_by_user_id = $1,
-           approved_at = NOW(),
-           approval_notes = $2,
-           updated_at = NOW()
-         WHERE refresh_intent_id = $3
-         RETURNING *`,
-        [req.user.user_id, approvalNotes, id]
-      );
+      // Re-validate conflicts before approval
+      const conflictResult = await conflictDetectionService.revalidateConflicts(id);
+
+      // Check if there are MAJOR conflicts that require force approval
+      if (conflictResult.conflictFlag === 'MAJOR' && !forceApprove) {
+        return res.status(409).json({
+          error: 'Cannot approve: MAJOR booking conflicts detected',
+          conflictFlag: conflictResult.conflictFlag,
+          conflicts: conflictResult.conflicts,
+          requiresForceApproval: true,
+          message: 'This refresh conflicts with critical/active bookings. Use forceApprove=true with justification to override.'
+        });
+      }
+
+      // Require justification for force approval
+      if (forceApprove && conflictResult.conflictFlag === 'MAJOR' && !forceApprovalJustification) {
+        return res.status(400).json({
+          error: 'Force approval requires justification for MAJOR conflicts'
+        });
+      }
+
+      // Build update query based on force approval
+      let updateQuery = `
+        UPDATE refresh_intents SET
+          intent_status = 'APPROVED',
+          approved_by_user_id = $1,
+          approved_at = NOW(),
+          approval_notes = $2,
+          conflict_flag = $3,
+          conflict_summary = $4,
+          updated_at = NOW()
+      `;
+      let params = [
+        req.user.user_id, 
+        approvalNotes, 
+        conflictResult.conflictFlag,
+        JSON.stringify(conflictResult.conflictSummary)
+      ];
+
+      if (forceApprove && conflictResult.conflictFlag === 'MAJOR') {
+        updateQuery = `
+          UPDATE refresh_intents SET
+            intent_status = 'APPROVED',
+            approved_by_user_id = $1,
+            approved_at = NOW(),
+            approval_notes = $2,
+            conflict_flag = $3,
+            conflict_summary = $4,
+            force_approved = true,
+            force_approval_justification = $5,
+            force_approved_by_user_id = $1,
+            force_approved_at = NOW(),
+            updated_at = NOW()
+        `;
+        params.push(forceApprovalJustification);
+      }
+
+      const paramCount = params.length;
+      updateQuery += ` WHERE refresh_intent_id = $${paramCount + 1} RETURNING *`;
+      params.push(id);
+
+      const result = await db.query(updateQuery, params);
+
+      // Notify impacted booking owners
+      const notificationResult = await conflictDetectionService.notifyImpactedBookingOwners(id);
 
       res.json({ 
-        message: 'Refresh intent approved successfully',
-        intent: result.rows[0] 
+        message: forceApprove ? 'Refresh intent force-approved with conflicts' : 'Refresh intent approved successfully',
+        intent: result.rows[0],
+        conflictsNotified: notificationResult.notified,
+        hasConflicts: conflictResult.hasConflicts,
+        forceApproved: forceApprove && conflictResult.conflictFlag === 'MAJOR'
       });
     } catch (error) {
       console.error('Approve refresh intent error:', error);
@@ -1085,15 +1168,23 @@ const refreshController = {
 
       const result = await db.query(query, params);
 
-      // Also get recent history for context
-      const historyResult = await db.query(
-        `SELECT rh.refresh_history_id, rh.entity_type, rh.entity_id, rh.entity_name,
-                rh.refresh_date, rh.refresh_type, rh.execution_status
-         FROM refresh_history rh
-         WHERE rh.refresh_date >= $1 AND rh.refresh_date <= $2
-         ORDER BY rh.refresh_date`,
-        [startDate, endDate]
-      );
+      // Also get recent history for context (with same entity type filter)
+      let historyQuery = `
+        SELECT rh.refresh_history_id, rh.entity_type, rh.entity_id, rh.entity_name,
+               rh.refresh_date, rh.refresh_type, rh.execution_status
+        FROM refresh_history rh
+        WHERE rh.refresh_date >= $1 AND rh.refresh_date <= $2
+      `;
+      const historyParams = [startDate, endDate];
+
+      if (entityType && VALID_ENTITY_TYPES.includes(entityType)) {
+        historyParams.push(entityType);
+        historyQuery += ` AND rh.entity_type = $${historyParams.length}`;
+      }
+
+      historyQuery += ` ORDER BY rh.refresh_date`;
+
+      const historyResult = await db.query(historyQuery, historyParams);
 
       res.json({
         intents: result.rows,
@@ -1165,15 +1256,15 @@ const refreshController = {
 
       res.json({
         summary: {
-          pendingApprovals: parseInt(pendingApprovals.rows[0].count),
-          upcomingRefreshes: parseInt(upcomingRefreshes.rows[0].count),
-          unresolvedConflicts: parseInt(unresolvedConflicts.rows[0].count)
+          pendingApprovals: parseInt(pendingApprovals.rows[0]?.count || 0),
+          upcomingRefreshes: parseInt(upcomingRefreshes.rows[0]?.count || 0),
+          unresolvedConflicts: parseInt(unresolvedConflicts.rows[0]?.count || 0)
         },
         historyStats: {
-          successCount: parseInt(historyStats.rows[0].success_count || 0),
-          failedCount: parseInt(historyStats.rows[0].failed_count || 0),
-          totalCount: parseInt(historyStats.rows[0].total_count || 0),
-          avgDurationMinutes: Math.round(historyStats.rows[0].avg_duration || 0)
+          successCount: parseInt(historyStats.rows[0]?.success_count || 0),
+          failedCount: parseInt(historyStats.rows[0]?.failed_count || 0),
+          totalCount: parseInt(historyStats.rows[0]?.total_count || 0),
+          avgDurationMinutes: Math.round(parseFloat(historyStats.rows[0]?.avg_duration || 0))
         },
         byEntityType: byEntityType.rows,
         byRefreshType: byRefreshType.rows,
@@ -1182,6 +1273,250 @@ const refreshController = {
     } catch (error) {
       console.error('Get statistics error:', error);
       res.status(500).json({ error: 'Failed to fetch statistics' });
+    }
+  },
+
+  // =====================================================
+  // ENHANCED CONFLICT DETECTION API (v4.1)
+  // =====================================================
+
+  /**
+   * Check conflicts for a proposed refresh (pre-creation check)
+   * This allows the UI to show conflicts before actually creating the intent
+   */
+  checkConflictsPreview: async (req, res) => {
+    try {
+      const {
+        entityType,
+        entityId,
+        plannedDate,
+        plannedEndDate,
+        impactType = 'DATA_OVERWRITE',
+        estimatedDowntimeMinutes = 60
+      } = req.body;
+
+      // Validation
+      if (!entityType || !VALID_ENTITY_TYPES.includes(entityType)) {
+        return res.status(400).json({ error: 'Invalid or missing entity type' });
+      }
+      if (!isValidUUID(entityId)) {
+        return res.status(400).json({ error: 'Invalid entity ID format' });
+      }
+      if (!plannedDate) {
+        return res.status(400).json({ error: 'Planned date is required' });
+      }
+
+      const conflictResult = await conflictDetectionService.checkConflictsForRefresh({
+        entityType,
+        entityId,
+        plannedDate,
+        plannedEndDate,
+        impactType,
+        estimatedDowntimeMinutes
+      });
+
+      res.json({
+        ...conflictResult,
+        message: conflictResult.hasConflicts 
+          ? `Found ${conflictResult.conflicts.length} conflicting booking(s)` 
+          : 'No conflicts detected'
+      });
+    } catch (error) {
+      console.error('Check conflicts preview error:', error);
+      res.status(500).json({ error: 'Failed to check conflicts' });
+    }
+  },
+
+  /**
+   * Get all unresolved conflicts (for conflicts dashboard)
+   */
+  getAllUnresolvedConflicts: async (req, res) => {
+    try {
+      const { entityType, severity, groupId } = req.query;
+
+      const conflicts = await conflictDetectionService.getUnresolvedConflicts({
+        entityType,
+        severity,
+        groupId
+      });
+
+      res.json({
+        conflicts,
+        total: conflicts.length
+      });
+    } catch (error) {
+      console.error('Get all unresolved conflicts error:', error);
+      res.status(500).json({ error: 'Failed to fetch unresolved conflicts' });
+    }
+  },
+
+  /**
+   * Suggest alternative time slots for a refresh
+   */
+  suggestTimeSlots: async (req, res) => {
+    try {
+      const { entityType, entityId, durationMinutes, preferredDateRange, impactType } = req.query;
+
+      if (!entityType || !VALID_ENTITY_TYPES.includes(entityType)) {
+        return res.status(400).json({ error: 'Invalid entity type' });
+      }
+      if (!isValidUUID(entityId)) {
+        return res.status(400).json({ error: 'Invalid entity ID format' });
+      }
+
+      const suggestions = await conflictDetectionService.suggestAlternativeSlots({
+        entityType,
+        entityId,
+        durationMinutes: parseInt(durationMinutes) || 60,
+        preferredDateRange: parseInt(preferredDateRange) || 7,
+        impactType: impactType || 'DATA_OVERWRITE'
+      });
+
+      res.json(suggestions);
+    } catch (error) {
+      console.error('Suggest time slots error:', error);
+      res.status(500).json({ error: 'Failed to suggest time slots' });
+    }
+  },
+
+  /**
+   * Revalidate conflicts for an existing intent (manual trigger)
+   */
+  revalidateIntentConflicts: async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!isValidUUID(id)) {
+        return res.status(400).json({ error: 'Invalid intent ID format' });
+      }
+
+      const conflictResult = await conflictDetectionService.revalidateConflicts(id);
+
+      res.json({
+        message: 'Conflicts revalidated',
+        ...conflictResult
+      });
+    } catch (error) {
+      console.error('Revalidate conflicts error:', error);
+      res.status(500).json({ error: 'Failed to revalidate conflicts' });
+    }
+  },
+
+  /**
+   * Get detailed conflict information with booking and user details
+   */
+  getDetailedConflicts: async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!isValidUUID(id)) {
+        return res.status(400).json({ error: 'Invalid intent ID format' });
+      }
+
+      const conflicts = await conflictDetectionService.getConflictDetails(id);
+
+      res.json({
+        conflicts,
+        total: conflicts.length,
+        hasUnresolved: conflicts.some(c => c.resolution_status === 'UNRESOLVED'),
+        hasMajorConflicts: conflicts.some(c => c.severity === 'HIGH')
+      });
+    } catch (error) {
+      console.error('Get detailed conflicts error:', error);
+      res.status(500).json({ error: 'Failed to fetch conflict details' });
+    }
+  },
+
+  /**
+   * Resolve conflict with specific resolution type
+   */
+  resolveConflictEnhanced: async (req, res) => {
+    try {
+      const { conflictId } = req.params;
+      const { resolution, notes } = req.body;
+
+      if (!isValidUUID(conflictId)) {
+        return res.status(400).json({ error: 'Invalid conflict ID format' });
+      }
+
+      const validResolutions = [
+        'ACKNOWLEDGED', 'BOOKING_MOVED', 'REFRESH_MOVED', 
+        'OVERRIDE_APPROVED', 'DISMISSED'
+      ];
+
+      if (!validResolutions.includes(resolution)) {
+        return res.status(400).json({ 
+          error: 'Invalid resolution',
+          validResolutions 
+        });
+      }
+
+      await conflictDetectionService.resolveConflict(
+        conflictId, 
+        resolution, 
+        req.user.user_id, 
+        notes
+      );
+
+      res.json({
+        message: 'Conflict resolved successfully',
+        resolution
+      });
+    } catch (error) {
+      console.error('Resolve conflict enhanced error:', error);
+      res.status(500).json({ error: 'Failed to resolve conflict' });
+    }
+  },
+
+  /**
+   * Bulk resolve multiple conflicts
+   */
+  bulkResolveConflicts: async (req, res) => {
+    try {
+      const { conflictIds, resolution, notes } = req.body;
+
+      if (!Array.isArray(conflictIds) || conflictIds.length === 0) {
+        return res.status(400).json({ error: 'Conflict IDs array is required' });
+      }
+
+      const validResolutions = [
+        'ACKNOWLEDGED', 'BOOKING_MOVED', 'REFRESH_MOVED', 
+        'OVERRIDE_APPROVED', 'DISMISSED'
+      ];
+
+      if (!validResolutions.includes(resolution)) {
+        return res.status(400).json({ error: 'Invalid resolution' });
+      }
+
+      let resolved = 0;
+      let failed = 0;
+
+      for (const conflictId of conflictIds) {
+        if (isValidUUID(conflictId)) {
+          try {
+            await conflictDetectionService.resolveConflict(
+              conflictId, 
+              resolution, 
+              req.user.user_id, 
+              notes
+            );
+            resolved++;
+          } catch {
+            failed++;
+          }
+        } else {
+          failed++;
+        }
+      }
+
+      res.json({
+        message: `Resolved ${resolved} conflict(s)`,
+        resolved,
+        failed
+      });
+    } catch (error) {
+      console.error('Bulk resolve conflicts error:', error);
+      res.status(500).json({ error: 'Failed to bulk resolve conflicts' });
     }
   }
 };

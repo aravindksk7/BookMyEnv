@@ -1,4 +1,6 @@
 const db = require('../config/database');
+const conflictDetectionService = require('../services/conflictDetectionService');
+const auditService = require('../services/auditService');
 
 // UUID validation regex - allow any hex characters in version field
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -141,21 +143,54 @@ const bookingController = {
     }
   },
 
-  // Create booking
+  // Create booking (with refresh awareness)
   create: async (req, res) => {
     try {
       const { 
         booking_type, project_id, test_phase, title, description,
         start_datetime, end_datetime, owning_group_id, linked_release_id,
-        resources, applications
+        resources, applications,
+        is_critical_booking = false,
+        booking_priority = 'Normal',
+        acknowledgeRefreshConflicts = false // User acknowledges refresh conflicts
       } = req.body;
 
       if (!test_phase || !start_datetime || !end_datetime) {
         return res.status(400).json({ error: 'Test phase, start and end datetime are required' });
       }
 
-      // Check for conflicts
+      // Check for booking conflicts (existing bookings)
       const conflicts = await checkConflicts(resources, start_datetime, end_datetime);
+      
+      // NEW: Check for scheduled/approved refresh conflicts
+      let refreshConflicts = { hasConflicts: false, refreshConflicts: [] };
+      if (resources && resources.length > 0) {
+        // Get environment instance IDs from resources
+        const envInstanceIds = resources
+          .filter(r => r.resource_type === 'EnvironmentInstance' || r.source_env_instance_id)
+          .map(r => r.resource_type === 'EnvironmentInstance' ? r.resource_ref_id : r.source_env_instance_id)
+          .filter(id => id);
+
+        if (envInstanceIds.length > 0) {
+          refreshConflicts = await conflictDetectionService.checkRefreshesForBooking({
+            startDatetime: start_datetime,
+            endDatetime: end_datetime,
+            environmentInstanceIds: envInstanceIds
+          });
+        }
+      }
+
+      // Warn user about refresh conflicts if not acknowledged
+      if (refreshConflicts.hasDestructiveRefresh && !acknowledgeRefreshConflicts) {
+        return res.status(409).json({
+          error: 'Booking overlaps with scheduled refresh',
+          message: 'There are scheduled refreshes that may affect your booking. Please review and acknowledge.',
+          refreshConflicts: refreshConflicts.refreshConflicts,
+          warningLevel: refreshConflicts.warningLevel,
+          suggestedAction: refreshConflicts.suggestedAction,
+          requiresAcknowledgement: true
+        });
+      }
       
       const conflict_status = conflicts.length > 0 ? 'PotentialConflict' : 'None';
       const booking_status = conflict_status === 'PotentialConflict' ? 'PendingApproval' : 'Requested';
@@ -164,12 +199,14 @@ const bookingController = {
       const result = await db.query(
         `INSERT INTO environment_bookings 
          (booking_type, project_id, test_phase, title, description, start_datetime, end_datetime, 
-          booking_status, conflict_status, requested_by_user_id, owning_group_id, linked_release_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+          booking_status, conflict_status, requested_by_user_id, owning_group_id, linked_release_id,
+          is_critical_booking, booking_priority)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
          RETURNING *`,
         [booking_type || 'SingleEnv', project_id, test_phase, title, description, 
          start_datetime, end_datetime, booking_status, conflict_status, 
-         req.user.user_id, owning_group_id || req.user.default_group_id, linked_release_id]
+         req.user.user_id, owning_group_id || req.user.default_group_id, linked_release_id,
+         is_critical_booking, booking_priority]
       );
 
       const booking = result.rows[0];
@@ -212,12 +249,27 @@ const bookingController = {
         [req.user.user_id, 'CREATE', 'EnvironmentBooking', booking.booking_id, title]
       );
 
+      // Audit log
+      await auditService.logCreate(
+        auditService.ENTITY_TYPES.BOOKING,
+        booking.booking_id,
+        title,
+        booking,
+        req
+      );
+
       // Create notification for approvers if needed
       if (booking_status === 'PendingApproval') {
         await createApprovalNotifications(booking);
       }
 
-      res.status(201).json({ ...booking, conflicts });
+      res.status(201).json({ 
+        ...booking, 
+        conflicts,
+        refreshConflicts: refreshConflicts.refreshConflicts,
+        hasRefreshConflicts: refreshConflicts.hasConflicts,
+        refreshWarningLevel: refreshConflicts.warningLevel
+      });
     } catch (error) {
       console.error('Create booking error:', error);
       res.status(500).json({ error: 'Failed to create booking' });
@@ -255,6 +307,16 @@ const bookingController = {
          WHERE booking_id = $6
          RETURNING *`,
         [title, description, start_datetime, end_datetime, test_phase, id]
+      );
+
+      // Audit log
+      await auditService.logUpdate(
+        auditService.ENTITY_TYPES.BOOKING,
+        id,
+        result.rows[0].title,
+        existing.rows[0],
+        result.rows[0],
+        req
       );
 
       res.json(result.rows[0]);
@@ -343,6 +405,16 @@ const bookingController = {
          JSON.stringify({ new_status: booking_status })]
       );
 
+      // Audit log for status change
+      await auditService.logAction(
+        booking_status === 'Approved' ? 'APPROVE' : 'UPDATE',
+        auditService.ENTITY_TYPES.BOOKING,
+        id,
+        booking.title,
+        req,
+        { comment: `Status changed to ${booking_status}` }
+      );
+
       res.json(booking);
     } catch (error) {
       console.error('Update booking status error:', error);
@@ -370,6 +442,15 @@ const bookingController = {
       }
 
       await db.query('DELETE FROM environment_bookings WHERE booking_id = $1', [id]);
+
+      // Audit log
+      await auditService.logDelete(
+        auditService.ENTITY_TYPES.BOOKING,
+        id,
+        existing.rows[0].title,
+        existing.rows[0],
+        req
+      );
 
       res.json({ message: 'Booking deleted successfully' });
     } catch (error) {
@@ -966,6 +1047,107 @@ const bookingController = {
     } catch (error) {
       console.error('Get conflicting bookings error:', error);
       res.status(500).json({ error: 'Failed to fetch conflicting bookings' });
+    }
+  },
+
+  // =====================================================
+  // REFRESH AWARENESS ENDPOINTS (v4.1)
+  // =====================================================
+
+  /**
+   * Check for scheduled refreshes that overlap with a proposed booking window
+   * This allows the UI to warn users before they create a booking
+   */
+  checkRefreshConflicts: async (req, res) => {
+    try {
+      const { startDatetime, endDatetime, environmentInstanceIds } = req.body;
+
+      if (!startDatetime || !endDatetime) {
+        return res.status(400).json({ error: 'Start and end datetime are required' });
+      }
+
+      if (!environmentInstanceIds || !Array.isArray(environmentInstanceIds) || environmentInstanceIds.length === 0) {
+        return res.status(400).json({ error: 'At least one environment instance ID is required' });
+      }
+
+      const result = await conflictDetectionService.checkRefreshesForBooking({
+        startDatetime,
+        endDatetime,
+        environmentInstanceIds
+      });
+
+      res.json({
+        ...result,
+        message: result.hasConflicts 
+          ? `Found ${result.refreshConflicts.length} scheduled refresh(es) that may affect your booking`
+          : 'No refresh conflicts detected'
+      });
+    } catch (error) {
+      console.error('Check refresh conflicts for booking error:', error);
+      res.status(500).json({ error: 'Failed to check refresh conflicts' });
+    }
+  },
+
+  /**
+   * Get upcoming refreshes that may affect a specific booking
+   */
+  getRefreshesForBooking: async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!isValidUUID(id)) {
+        return res.status(400).json({ error: 'Invalid booking ID format' });
+      }
+
+      // Get the booking details
+      const bookingResult = await db.query(
+        'SELECT * FROM environment_bookings WHERE booking_id = $1',
+        [id]
+      );
+
+      if (bookingResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+
+      const booking = bookingResult.rows[0];
+
+      // Get environment instances for this booking
+      const resourcesResult = await db.query(
+        `SELECT DISTINCT COALESCE(br.source_env_instance_id, br.resource_ref_id) as env_instance_id
+         FROM booking_resources br
+         WHERE br.booking_id = $1 
+         AND (br.resource_type = 'EnvironmentInstance' OR br.source_env_instance_id IS NOT NULL)`,
+        [id]
+      );
+
+      const envInstanceIds = resourcesResult.rows
+        .map(r => r.env_instance_id)
+        .filter(id => id);
+
+      if (envInstanceIds.length === 0) {
+        return res.json({ 
+          refreshes: [],
+          hasConflicts: false,
+          message: 'No environment instances found for this booking'
+        });
+      }
+
+      // Check for refresh conflicts
+      const result = await conflictDetectionService.checkRefreshesForBooking({
+        startDatetime: booking.start_datetime,
+        endDatetime: booking.end_datetime,
+        environmentInstanceIds: envInstanceIds
+      });
+
+      res.json({
+        bookingId: id,
+        bookingStart: booking.start_datetime,
+        bookingEnd: booking.end_datetime,
+        ...result
+      });
+    } catch (error) {
+      console.error('Get refreshes for booking error:', error);
+      res.status(500).json({ error: 'Failed to fetch refreshes for booking' });
     }
   }
 };

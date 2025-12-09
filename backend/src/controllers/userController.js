@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const db = require('../config/database');
+const auditService = require('../services/auditService');
 
 // Security constants
 const BCRYPT_ROUNDS = 12;
@@ -146,6 +147,15 @@ const userController = {
         [req.user.user_id, 'CREATE', 'User', result.rows[0].user_id, display_name]
       );
 
+      // Audit log
+      await auditService.logCreate(
+        auditService.ENTITY_TYPES.USER,
+        result.rows[0].user_id,
+        display_name,
+        { ...result.rows[0], password_hash: '[REDACTED]' },
+        req
+      );
+
       res.status(201).json(result.rows[0]);
     } catch (error) {
       console.error('Create user error:', error);
@@ -181,6 +191,16 @@ const userController = {
         `INSERT INTO activities (user_id, action, entity_type, entity_id, entity_name)
          VALUES ($1, $2, $3, $4, $5)`,
         [req.user.user_id, 'UPDATE', 'User', id, result.rows[0].display_name]
+      );
+
+      // Audit log
+      await auditService.logUpdate(
+        auditService.ENTITY_TYPES.USER,
+        id,
+        result.rows[0].display_name,
+        null,
+        result.rows[0],
+        req
       );
 
       res.json(result.rows[0]);

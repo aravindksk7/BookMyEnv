@@ -7,968 +7,2639 @@
     <style>
         :root {
             --primary: #1976d2;
-            --primary-dark: #1565c0;
-            --primary-light: #42a5f5;
             --success: #4caf50;
             --warning: #ff9800;
             --error: #f44336;
-            --info: #2196f3;
             --gray-50: #fafafa;
             --gray-100: #f5f5f5;
             --gray-200: #eeeeee;
-            --gray-300: #e0e0e0;
-            --gray-400: #bdbdbd;
-            --gray-500: #9e9e9e;
-            --gray-600: #757575;
-            --gray-700: #616161;
             --gray-800: #424242;
             --gray-900: #212121;
         }
         
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: white;
             color: var(--gray-900);
             line-height: 1.7;
         }
         
-        /* Navigation */
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 280px;
-            background: var(--gray-900);
-            color: white;
-            padding: 20px 0;
-            overflow-y: auto;
-            z-index: 100;
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
         }
         
-        .sidebar-header {
-            padding: 0 20px 20px;
-            border-bottom: 1px solid var(--gray-700);
-            margin-bottom: 20px;
+        h1 { 
+            color: var(--primary); 
+            border-bottom: 3px solid var(--primary); 
+            padding-bottom: 10px; 
+            margin-bottom: 30px; 
         }
-        
-        .sidebar-header h2 {
-            font-size: 1.3rem;
-            color: white;
+        h2 { 
+            color: var(--gray-800); 
+            margin: 30px 0 15px; 
+            padding-bottom: 8px; 
+            border-bottom: 1px solid var(--gray-200); 
         }
+        h3 { color: var(--gray-800); margin: 20px 0 10px; }
+        h4 { color: var(--gray-800); margin: 15px 0 8px; }
         
-        .sidebar-header p {
-            font-size: 0.85rem;
-            color: var(--gray-400);
-            margin-top: 5px;
-        }
+        p { margin: 10px 0; }
         
-        .nav-section {
-            padding: 0 15px;
-            margin-bottom: 10px;
-        }
-        
-        .nav-section-title {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            color: var(--gray-500);
-            padding: 10px 5px 5px;
-            letter-spacing: 0.5px;
-        }
-        
-        .nav-link {
-            display: block;
-            padding: 8px 15px;
-            color: var(--gray-300);
-            text-decoration: none;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-        }
-        
-        .nav-link:hover {
-            background: var(--gray-800);
-            color: white;
-        }
-        
-        .nav-link.active {
-            background: var(--primary);
-            color: white;
-        }
-        
-        /* Main Content */
-        .main-content {
-            margin-left: 280px;
-            padding: 40px 60px;
-            max-width: 1000px;
-        }
-        
-        /* Header */
-        .page-header {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            padding: 60px;
-            margin: -40px -60px 40px;
-            border-radius: 0 0 20px 20px;
-        }
-        
-        .page-header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 15px;
-        }
-        
-        .page-header p {
-            font-size: 1.2rem;
-            opacity: 0.9;
-        }
-        
-        /* Typography */
-        h1, h2, h3, h4, h5, h6 {
-            color: var(--gray-900);
-            margin-top: 2rem;
-            margin-bottom: 1rem;
-        }
-        
-        h2 {
-            font-size: 1.8rem;
-            padding-bottom: 10px;
-            border-bottom: 2px solid var(--primary);
-        }
-        
-        h3 {
-            font-size: 1.4rem;
-            color: var(--gray-800);
-        }
-        
-        h4 {
-            font-size: 1.15rem;
-            color: var(--gray-700);
-        }
-        
-        p {
-            margin-bottom: 1rem;
-            color: var(--gray-700);
-        }
-        
-        /* Section */
-        .section {
-            margin-bottom: 3rem;
-            scroll-margin-top: 20px;
-        }
-        
-        /* Tables */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 1.5rem 0;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin: 15px 0;
+            font-size: 14px;
         }
         
         th, td {
-            padding: 12px 16px;
+            border: 1px solid var(--gray-200);
+            padding: 10px 12px;
             text-align: left;
-            border-bottom: 1px solid var(--gray-200);
         }
         
-        th {
-            background: var(--gray-100);
-            font-weight: 600;
-            color: var(--gray-800);
-        }
+        th { background: var(--gray-100); font-weight: 600; }
+        tr:nth-child(even) { background: var(--gray-50); }
         
-        tr:last-child td {
-            border-bottom: none;
-        }
-        
-        tr:hover {
-            background: var(--gray-50);
-        }
-        
-        /* Code */
         code {
             background: var(--gray-100);
-            padding: 2px 8px;
+            padding: 2px 6px;
             border-radius: 4px;
-            font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
-            font-size: 0.9em;
-            color: var(--primary-dark);
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 13px;
         }
         
         pre {
             background: var(--gray-900);
             color: #f5f5f5;
-            padding: 20px;
+            padding: 15px;
             border-radius: 8px;
             overflow-x: auto;
-            margin: 1.5rem 0;
-            font-family: 'Monaco', 'Consolas', monospace;
-            font-size: 0.9rem;
-            line-height: 1.5;
+            margin: 15px 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
         }
         
-        /* Lists */
-        ul, ol {
-            margin: 1rem 0 1rem 1.5rem;
-        }
+        pre code { background: none; padding: 0; color: inherit; }
         
-        li {
-            margin-bottom: 0.5rem;
-            color: var(--gray-700);
-        }
-        
-        /* Badges */
-        .badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-        
-        .badge-primary { background: #e3f2fd; color: #1565c0; }
-        .badge-success { background: #e8f5e9; color: #2e7d32; }
-        .badge-warning { background: #fff3e0; color: #ef6c00; }
-        .badge-error { background: #ffebee; color: #c62828; }
-        .badge-info { background: #e1f5fe; color: #0277bd; }
-        .badge-gray { background: var(--gray-200); color: var(--gray-600); }
-        
-        /* Cards */
-        .card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin: 1.5rem 0;
-            overflow: hidden;
-        }
-        
-        .card-header {
-            background: var(--gray-100);
-            padding: 15px 20px;
-            font-weight: 600;
-            color: var(--gray-800);
-            border-bottom: 1px solid var(--gray-200);
-        }
-        
-        .card-body {
-            padding: 20px;
-        }
-        
-        /* Info boxes */
-        .info-box {
-            padding: 16px 20px;
+        .alert {
+            padding: 15px;
             border-radius: 8px;
-            margin: 1.5rem 0;
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
+            margin: 15px 0;
         }
         
-        .info-box.tip {
-            background: #e8f5e9;
-            border-left: 4px solid var(--success);
-        }
-        
-        .info-box.warning {
+        .alert-warning {
             background: #fff3e0;
             border-left: 4px solid var(--warning);
         }
         
-        .info-box.info {
-            background: #e3f2fd;
-            border-left: 4px solid var(--info);
-        }
-        
-        .info-box.danger {
+        .alert-danger {
             background: #ffebee;
             border-left: 4px solid var(--error);
         }
         
-        .info-box-icon {
-            font-size: 1.5rem;
+        .alert-success {
+            background: #e8f5e9;
+            border-left: 4px solid var(--success);
         }
         
-        .info-box-content {
-            flex: 1;
-        }
-        
-        .info-box-title {
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
             font-weight: 600;
-            margin-bottom: 5px;
         }
         
-        /* Steps */
-        .steps {
-            counter-reset: step;
-            list-style: none;
-            margin-left: 0;
+        .badge-new {
+            background: var(--success);
+            color: white;
         }
         
-        .steps li {
-            padding: 15px 0 15px 50px;
-            position: relative;
-            border-left: 2px solid var(--gray-300);
-            margin-left: 15px;
+        ul, ol { margin: 10px 0 10px 25px; }
+        li { margin: 5px 0; }
+        
+        a { color: var(--primary); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        
+        blockquote {
+            border-left: 4px solid var(--primary);
+            padding: 10px 20px;
+            margin: 15px 0;
+            background: var(--gray-50);
         }
         
-        .steps li:last-child {
-            border-left: 2px solid transparent;
+        hr {
+            border: none;
+            border-top: 1px solid var(--gray-200);
+            margin: 30px 0;
         }
         
-        .steps li::before {
-            counter-increment: step;
-            content: counter(step);
-            position: absolute;
-            left: -16px;
-            top: 12px;
-            width: 30px;
-            height: 30px;
+        .new-badge::after {
+            content: "NEW";
+            background: var(--success);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        
+        .version-badge {
             background: var(--primary);
             color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 0.9rem;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            margin-left: 10px;
         }
         
-        /* Screenshots placeholder */
-        .screenshot {
-            background: var(--gray-100);
-            border: 2px dashed var(--gray-300);
-            border-radius: 8px;
-            padding: 40px;
-            text-align: center;
-            color: var(--gray-500);
-            margin: 1.5rem 0;
-        }
+        /* Syntax highlighting classes */
+        .hljs-keyword { color: #c792ea; }
+        .hljs-string { color: #c3e88d; }
+        .hljs-comment { color: #546e7a; }
+        .hljs-number { color: #f78c6c; }
         
         /* Footer */
         .footer {
-            margin-top: 60px;
-            padding: 30px 0;
+            margin-top: 50px;
+            padding-top: 20px;
             border-top: 1px solid var(--gray-200);
             text-align: center;
-            color: var(--gray-500);
-        }
-        
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .sidebar {
-                display: none;
-            }
-            .main-content {
-                margin-left: 0;
-                padding: 20px;
-            }
-            .page-header {
-                margin: -20px -20px 20px;
-                padding: 40px 20px;
-            }
-        }
-        
-        @media print {
-            .sidebar {
-                display: none;
-            }
-            .main-content {
-                margin-left: 0;
-            }
-            .page-header {
-                background: white;
-                color: black;
-            }
+            color: var(--gray-800);
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
-    <!-- Sidebar Navigation -->
-    <nav class="sidebar">
-        <div class="sidebar-header">
-            <h2>📘 BookMyEnv</h2>
-            <p>User Guide</p>
-        </div>
-        
-        <div class="nav-section">
-            <div class="nav-section-title">Getting Started</div>
-            <a href="#getting-started" class="nav-link">Introduction</a>
-            <a href="#login" class="nav-link">Login</a>
-            <a href="#navigation" class="nav-link">Navigation</a>
-        </div>
-        
-        <div class="nav-section">
-            <div class="nav-section-title">Features</div>
-            <a href="#dashboard" class="nav-link">Dashboard</a>
-            <a href="#environments" class="nav-link">Environments</a>
-            <a href="#bookings" class="nav-link">Bookings</a>
-            <a href="#releases" class="nav-link">Releases</a>
-            <a href="#applications" class="nav-link">Applications</a>
-            <a href="#groups" class="nav-link">Groups</a>
-            <a href="#monitoring" class="nav-link">Monitoring</a>
-            <a href="#integrations" class="nav-link">Integrations</a>
-            <a href="#settings" class="nav-link">Settings</a>
-        </div>
-        
-        <div class="nav-section">
-            <div class="nav-section-title">Reference</div>
-            <a href="#roles" class="nav-link">User Roles</a>
-            <a href="#best-practices" class="nav-link">Best Practices</a>
-            <a href="#troubleshooting" class="nav-link">Troubleshooting</a>
-        </div>
-    </nav>
-    
-    <!-- Main Content -->
-    <main class="main-content">
-        <div class="page-header">
-            <h1>BookMyEnv User Guide</h1>
-            <p>Complete guide to using the Environment Booking and Management System</p>
-        </div>
-        
-        <!-- Getting Started -->
-        <section id="getting-started" class="section">
-            <h2>Getting Started</h2>
-            
-            <p>BookMyEnv (BME) is a comprehensive environment booking and management system designed to help teams coordinate their use of test environments, track releases, and manage applications.</p>
-            
-            <h3>Accessing the Application</h3>
-            <ol class="steps">
-                <li>Open your web browser and navigate to: <code>http://localhost:3000</code> (or your deployed URL)</li>
-                <li>You will be redirected to the login page</li>
-            </ol>
-        </section>
-        
-        <!-- Login -->
-        <section id="login" class="section">
-            <h3>Login</h3>
-            
-            <ol class="steps">
-                <li>Enter your <strong>Email</strong> (e.g., <code>admin@bme.local</code>)</li>
-                <li>Enter your <strong>Password</strong> (e.g., <code>Admin@123</code>)</li>
-                <li>Click <strong>Sign In</strong></li>
-            </ol>
-            
-            <h4>Demo Accounts</h4>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Role</th>
-                        <th>Email</th>
-                        <th>Password</th>
-                        <th>Access Level</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><span class="badge badge-error">Admin</span></td>
-                        <td><code>admin@bme.local</code></td>
-                        <td><code>Admin@123</code></td>
-                        <td>Full system access</td>
-                    </tr>
-                    <tr>
-                        <td><span class="badge badge-warning">Environment Manager</span></td>
-                        <td><code>envmgr@bme.local</code></td>
-                        <td><code>Manager@123</code></td>
-                        <td>Manage environments & approve bookings</td>
-                    </tr>
-                    <tr>
-                        <td><span class="badge badge-info">Project Lead</span></td>
-                        <td><code>lead@bme.local</code></td>
-                        <td><code>Lead@123</code></td>
-                        <td>Create bookings & manage releases</td>
-                    </tr>
-                    <tr>
-                        <td><span class="badge badge-success">Tester</span></td>
-                        <td><code>tester@bme.local</code></td>
-                        <td><code>Tester@123</code></td>
-                        <td>Create bookings & view resources</td>
-                    </tr>
-                    <tr>
-                        <td><span class="badge badge-gray">Viewer</span></td>
-                        <td><code>viewer@bme.local</code></td>
-                        <td><code>Viewer@123</code></td>
-                        <td>Read-only access</td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
-        
-        <!-- Navigation -->
-        <section id="navigation" class="section">
-            <h3>Navigation</h3>
-            
-            <p>After logging in, you'll see the main navigation sidebar on the left with:</p>
-            
-            <ul>
-                <li><strong>Dashboard</strong> - Overview and statistics</li>
-                <li><strong>Monitoring</strong> - Real-time environment health</li>
-                <li><strong>Environments</strong> - Manage environments and instances</li>
-                <li><strong>Bookings</strong> - Book and manage environment reservations</li>
-                <li><strong>Releases</strong> - Plan and track releases</li>
-                <li><strong>Applications</strong> - Manage applications and components</li>
-                <li><strong>Groups</strong> - User groups management</li>
-                <li><strong>Integrations</strong> - External tool connections</li>
-                <li><strong>Settings</strong> - User profile and system settings</li>
-            </ul>
-        </section>
-        
-        <!-- Dashboard -->
-        <section id="dashboard" class="section">
-            <h2>Dashboard Overview</h2>
-            
-            <p>The Dashboard provides a quick summary of system status:</p>
-            
-            <h3>Statistics Cards</h3>
-            <ul>
-                <li><strong>Environments</strong> - Total number of environments in the system</li>
-                <li><strong>Total Instances</strong> - Count of all environment instances</li>
-                <li><strong>Available Instances</strong> - Instances currently available for booking</li>
-                <li><strong>Active Bookings</strong> - Currently active environment reservations</li>
-                <li><strong>In-Progress Releases</strong> - Releases currently being deployed</li>
-                <li><strong>Applications</strong> - Total applications managed</li>
-            </ul>
-            
-            <h3>Instance Availability</h3>
-            <p>Visual indicator showing the percentage of available vs. total instances.</p>
-            
-            <h3>Recent Activity</h3>
-            <p>Live feed of recent actions in the system including environment creations/updates, booking requests and approvals, release status changes, and user actions.</p>
-        </section>
-        
-        <!-- Environments -->
-        <section id="environments" class="section">
-            <h2>Environments Management</h2>
-            
-            <h3>Viewing Environments</h3>
-            <ol class="steps">
-                <li>Click <strong>Environments</strong> in the sidebar</li>
-                <li>View the list of all environments with Name, Category, Lifecycle Stage, Owner Team, and Instance Count</li>
-            </ol>
-            
-            <h3>Creating an Environment</h3>
-            <ol class="steps">
-                <li>Click the <strong>+ Add Environment</strong> button</li>
-                <li>Fill in the required fields:
-                    <ul>
-                        <li><strong>Name</strong> - Unique environment name (e.g., "SIT Environment 1")</li>
-                        <li><strong>Category</strong> - Select: NonProd, PreProd, or DR</li>
-                        <li><strong>Description</strong> - Brief description of the environment</li>
-                        <li><strong>Lifecycle Stage</strong> - Active, Provisioning, Decommissioned</li>
-                        <li><strong>Owner Team</strong> - Team responsible for the environment</li>
-                        <li><strong>Support Group</strong> - Support contact group</li>
-                        <li><strong>Data Sensitivity</strong> - NonProdDummy, MaskedProd, ProdClone, LiveProd</li>
-                    </ul>
-                </li>
-                <li>Click <strong>Create</strong></li>
-            </ol>
-            
-            <h3>Managing Environment Instances</h3>
-            <p>Each environment can have multiple instances (actual deployments):</p>
-            
-            <h4>Creating an Instance</h4>
-            <ol class="steps">
-                <li>Click on an environment row to view details</li>
-                <li>Go to the <strong>Instances</strong> tab</li>
-                <li>Click <strong>+ Add Instance</strong></li>
-                <li>Fill in: Name, Operational Status, Availability Window, Capacity, Primary Location, Bookable</li>
-                <li>Click <strong>Create</strong></li>
-            </ol>
-            
-            <div class="info-box tip">
-                <span class="info-box-icon">💡</span>
-                <div class="info-box-content">
-                    <div class="info-box-title">Tip</div>
-                    Keep instance status updated to help others know availability at a glance.
-                </div>
-            </div>
-        </section>
-        
-        <!-- Bookings -->
-        <section id="bookings" class="section">
-            <h2>Bookings Management</h2>
-            
-            <h3>Viewing Bookings</h3>
-            <ol class="steps">
-                <li>Click <strong>Bookings</strong> in the sidebar</li>
-                <li>Choose view mode: <strong>Table View</strong> (list format) or <strong>Calendar View</strong> (monthly visualization)</li>
-            </ol>
-            
-            <h3>Creating a Booking</h3>
-            <ol class="steps">
-                <li>Click <strong>+ New Booking</strong></li>
-                <li>Fill in the booking details:
-                    <ul>
-                        <li><strong>Booking Type</strong> - SingleEnv (one environment) or MultiEnvE2E (multiple)</li>
-                        <li><strong>Test Phase</strong> - Select the testing phase</li>
-                        <li><strong>Title</strong> - Descriptive booking title</li>
-                        <li><strong>Description</strong> - Detailed purpose of the booking</li>
-                        <li><strong>Start/End Date/Time</strong> - When the booking begins and ends</li>
-                    </ul>
-                </li>
-                <li>Select environment instances to book</li>
-                <li>Click <strong>Create</strong></li>
-            </ol>
-            
-            <h3>Booking Statuses</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Status</th>
-                        <th>Description</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><span class="badge badge-info">Requested</span></td>
-                        <td>Initial state, awaiting review</td>
-                    </tr>
-                    <tr>
-                        <td><span class="badge badge-warning">PendingApproval</span></td>
-                        <td>Conflicts detected, needs approval</td>
-                    </tr>
-                    <tr>
-                        <td><span class="badge badge-success">Approved</span></td>
-                        <td>Approved and confirmed</td>
-                    </tr>
-                    <tr>
-                        <td><span class="badge badge-success">Active</span></td>
-                        <td>Currently in use</td>
-                    </tr>
-                    <tr>
-                        <td><span class="badge badge-gray">Completed</span></td>
-                        <td>Booking period ended</td>
-                    </tr>
-                    <tr>
-                        <td><span class="badge badge-error">Cancelled</span></td>
-                        <td>Booking was cancelled</td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <div class="info-box warning">
-                <span class="info-box-icon">⚠️</span>
-                <div class="info-box-content">
-                    <div class="info-box-title">Conflict Detection</div>
-                    The system automatically detects scheduling conflicts. Bookings with conflicts go to "PendingApproval" status.
-                </div>
-            </div>
-        </section>
-        
-        <!-- Releases -->
-        <section id="releases" class="section">
-            <h2>Releases Management</h2>
-            
-            <h3>Creating a Release</h3>
-            <ol class="steps">
-                <li>Click <strong>+ New Release</strong></li>
-                <li>Fill in: Name, Description, Version, Release Type, Planned Start/End</li>
-                <li>Select Target Environments and Applications</li>
-                <li>Click <strong>Create</strong></li>
-            </ol>
-            
-            <h3>Release Statuses</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Status</th>
-                        <th>Description</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><span class="badge badge-info">Planned</span></td>
-                        <td>Scheduled but not started</td>
-                    </tr>
-                    <tr>
-                        <td><span class="badge badge-warning">InProgress</span></td>
-                        <td>Currently being deployed</td>
-                    </tr>
-                    <tr>
-                        <td><span class="badge badge-success">Completed</span></td>
-                        <td>Successfully deployed</td>
-                    </tr>
-                    <tr>
-                        <td><span class="badge badge-error">RolledBack</span></td>
-                        <td>Deployment was reversed</td>
-                    </tr>
-                    <tr>
-                        <td><span class="badge badge-gray">Cancelled</span></td>
-                        <td>Release was cancelled</td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
-        
-        <!-- Applications -->
-        <section id="applications" class="section">
-            <h2>Applications Management</h2>
-            
-            <h3>Creating an Application</h3>
-            <ol class="steps">
-                <li>Click <strong>+ Add Application</strong></li>
-                <li>Fill in: Name, Description, Business Domain, Criticality, Data Sensitivity, Owner Team, Test Owner</li>
-                <li>Click <strong>Create</strong></li>
-            </ol>
-            
-            <h3>Managing Components</h3>
-            <p>Applications can have components (services, modules). To add a component:</p>
-            <ol class="steps">
-                <li>Select an application</li>
-                <li>Go to <strong>Components</strong> tab</li>
-                <li>Click <strong>+ Add Component</strong></li>
-                <li>Fill in: Name, Component Type, Source Repo, Build Pipeline ID, Runtime Platform, Owner Team</li>
-                <li>Click <strong>Create</strong></li>
-            </ol>
-        </section>
-        
-        <!-- Groups -->
-        <section id="groups" class="section">
-            <h2>Groups Management</h2>
-            
-            <h3>Creating a Group</h3>
-            <ol class="steps">
-                <li>Click <strong>+ Add Group</strong></li>
-                <li>Fill in: Name, Description, Group Type</li>
-                <li>Click <strong>Create</strong></li>
-            </ol>
-            
-            <h3>Managing Members</h3>
-            <ol class="steps">
-                <li>Select a group</li>
-                <li>Go to <strong>Members</strong> tab</li>
-                <li>Click <strong>+ Add Member</strong></li>
-                <li>Select users to add</li>
-                <li>Click <strong>Add</strong></li>
-            </ol>
-        </section>
-        
-        <!-- Monitoring -->
-        <section id="monitoring" class="section">
-            <h2>Monitoring</h2>
-            
-            <p>The Monitoring page provides real-time system health including:</p>
-            
-            <ul>
-                <li><strong>Environment Statistics</strong> - Total environments and instances</li>
-                <li><strong>Breakdown by Category</strong> - NonProd, PreProd, DR</li>
-                <li><strong>Instance Availability Status</strong> - Available, In Use, Maintenance, Offline</li>
-                <li><strong>Infrastructure Components</strong> - View components deployed across environments</li>
-            </ul>
-        </section>
-        
-        <!-- Integrations -->
-        <section id="integrations" class="section">
-            <h2>Integrations</h2>
-            
-            <h3>Supported Integrations</h3>
-            <ul>
-                <li><strong>Jira</strong> - Issue tracking and project management</li>
-                <li><strong>GitLab</strong> - Source control and CI/CD</li>
-                <li><strong>ServiceNow</strong> - Change management and CMDB</li>
-            </ul>
-            
-            <h3>Configuring an Integration (Admin only)</h3>
-            <ol class="steps">
-                <li>Click <strong>Integrations</strong> in the sidebar</li>
-                <li>Click <strong>+ Add Integration</strong></li>
-                <li>Select the tool type and fill in connection details</li>
-                <li>Click <strong>Test Connection</strong> to verify</li>
-                <li>Click <strong>Save</strong></li>
-            </ol>
-        </section>
-        
-        <!-- Settings -->
-        <section id="settings" class="section">
-            <h2>Settings & Administration</h2>
-            
-            <h3>Profile Tab</h3>
-            <ul>
-                <li>View and update your profile information</li>
-                <li>Change display name</li>
-                <li>Update time zone</li>
-            </ul>
-            
-            <h3>Notifications Tab</h3>
-            <ul>
-                <li>Configure notification preferences</li>
-                <li>Enable/disable email notifications</li>
-            </ul>
-            
-            <h3>User Management (Admin only)</h3>
-            <ul>
-                <li>View all users</li>
-                <li>Create new users</li>
-                <li>Edit user roles</li>
-                <li>Activate/deactivate accounts</li>
-                <li>Reset passwords</li>
-            </ul>
-            
-            <h3>SSO Configuration (Admin only)</h3>
-            <ul>
-                <li>Configure identity providers (Azure AD, Okta, etc.)</li>
-                <li>Set up SAML/OIDC authentication</li>
-                <li>Map SSO groups to BME roles</li>
-            </ul>
-        </section>
-        
-        <!-- Roles -->
-        <section id="roles" class="section">
-            <h2>User Roles & Permissions</h2>
-            
-            <table>
-                <thead>
-                    <tr>
-                        <th>Action</th>
-                        <th>Admin</th>
-                        <th>EnvManager</th>
-                        <th>ProjectLead</th>
-                        <th>Tester</th>
-                        <th>Viewer</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Create/Edit Environments</td>
-                        <td style="color: var(--success);">✓</td>
-                        <td style="color: var(--success);">✓</td>
-                        <td style="color: var(--error);">✗</td>
-                        <td style="color: var(--error);">✗</td>
-                        <td style="color: var(--error);">✗</td>
-                    </tr>
-                    <tr>
-                        <td>Create Bookings</td>
-                        <td style="color: var(--success);">✓</td>
-                        <td style="color: var(--success);">✓</td>
-                        <td style="color: var(--success);">✓</td>
-                        <td style="color: var(--success);">✓</td>
-                        <td style="color: var(--error);">✗</td>
-                    </tr>
-                    <tr>
-                        <td>Approve Bookings</td>
-                        <td style="color: var(--success);">✓</td>
-                        <td style="color: var(--success);">✓</td>
-                        <td style="color: var(--error);">✗</td>
-                        <td style="color: var(--error);">✗</td>
-                        <td style="color: var(--error);">✗</td>
-                    </tr>
-                    <tr>
-                        <td>Create Releases</td>
-                        <td style="color: var(--success);">✓</td>
-                        <td style="color: var(--error);">✗</td>
-                        <td style="color: var(--success);">✓</td>
-                        <td style="color: var(--error);">✗</td>
-                        <td style="color: var(--error);">✗</td>
-                    </tr>
-                    <tr>
-                        <td>Manage Users</td>
-                        <td style="color: var(--success);">✓</td>
-                        <td style="color: var(--error);">✗</td>
-                        <td style="color: var(--error);">✗</td>
-                        <td style="color: var(--error);">✗</td>
-                        <td style="color: var(--error);">✗</td>
-                    </tr>
-                    <tr>
-                        <td>View All Resources</td>
-                        <td style="color: var(--success);">✓</td>
-                        <td style="color: var(--success);">✓</td>
-                        <td style="color: var(--success);">✓</td>
-                        <td style="color: var(--success);">✓</td>
-                        <td style="color: var(--success);">✓</td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
-        
-        <!-- Best Practices -->
-        <section id="best-practices" class="section">
-            <h2>Best Practices</h2>
-            
-            <h3>Booking Best Practices</h3>
-            <div class="card">
-                <div class="card-body">
-                    <ol>
-                        <li><strong>Book in Advance</strong> - Reserve environments early for critical testing</li>
-                        <li><strong>Accurate Timeframes</strong> - Set realistic start/end times</li>
-                        <li><strong>Descriptive Titles</strong> - Use clear, descriptive booking names</li>
-                        <li><strong>Check Conflicts</strong> - Review conflicts before submitting</li>
-                        <li><strong>Release on Time</strong> - Complete bookings promptly to free resources</li>
-                    </ol>
-                </div>
-            </div>
-            
-            <h3>Environment Management</h3>
-            <div class="card">
-                <div class="card-body">
-                    <ol>
-                        <li><strong>Keep Status Updated</strong> - Mark instances accurately (Available, Maintenance, etc.)</li>
-                        <li><strong>Document Changes</strong> - Add descriptions when updating environments</li>
-                        <li><strong>Regular Cleanup</strong> - Remove obsolete instances and environments</li>
-                        <li><strong>Capacity Planning</strong> - Monitor instance utilization</li>
-                    </ol>
-                </div>
-            </div>
-        </section>
-        
-        <!-- Troubleshooting -->
-        <section id="troubleshooting" class="section">
-            <h2>Troubleshooting</h2>
-            
-            <h3>Common Issues</h3>
-            
-            <div class="card">
-                <div class="card-header">Login Failed</div>
-                <div class="card-body">
-                    <ul>
-                        <li>Verify email and password</li>
-                        <li>Check if account is active</li>
-                        <li>Clear browser cache and cookies</li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="card">
-                <div class="card-header">Booking Conflicts</div>
-                <div class="card-body">
-                    <ul>
-                        <li>Check the calendar view for overlapping bookings</li>
-                        <li>Contact the conflicting booking owner</li>
-                        <li>Request approval if conflict is acceptable</li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="card">
-                <div class="card-header">Environment Not Available</div>
-                <div class="card-body">
-                    <ul>
-                        <li>Check operational status</li>
-                        <li>Verify booking end time hasn't expired</li>
-                        <li>Contact environment owner</li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="info-box info">
-                <span class="info-box-icon">ℹ️</span>
-                <div class="info-box-content">
-                    <div class="info-box-title">Getting Help</div>
-                    If you continue to experience issues, contact your system administrator or submit a support ticket.
-                </div>
-            </div>
-        </section>
-        
+    <div class="container">
+        <h1>BookMyEnv (BME) - User Guide</h1>
+<p>A comprehensive guide to using the BookMyEnv environment booking and management system.</p>
+<p><strong>Version:</strong> 4.2.0<br><strong>Last Updated:</strong> December 2025</p>
+<hr>
+<h2>Table of Contents</h2>
+<ol>
+<li><a href="#getting-started">Getting Started</a></li>
+<li><a href="#dashboard-overview">Dashboard Overview</a></li>
+<li><a href="#environments-management">Environments Management</a></li>
+<li><a href="#environment-instance-lifecycle">Environment Instance Lifecycle</a></li>
+<li><a href="#bookings-management">Bookings Management</a></li>
+<li><a href="#conflict-detection--resolution">Conflict Detection &amp; Resolution</a></li>
+<li><a href="#refresh-lifecycle-management"><strong>Refresh Lifecycle Management</strong></a> ⭐ v4.0</li>
+<li><a href="#booking-refresh-dependency"><strong>Booking-Refresh Dependency</strong></a> ⭐ v4.0</li>
+<li><a href="#releases-management">Releases Management</a></li>
+<li><a href="#applications-management">Applications Management</a></li>
+<li><a href="#application-deployments">Application Deployments</a></li>
+<li><a href="#interfaces--endpoints">Interfaces &amp; Endpoints</a></li>
+<li><a href="#components--instances">Components &amp; Instances</a></li>
+<li><a href="#groups-management">Groups Management</a></li>
+<li><a href="#bulk-data-upload">Bulk Data Upload</a></li>
+<li><a href="#monitoring">Monitoring</a></li>
+<li><a href="#integrations">Integrations</a></li>
+<li><a href="#audit--compliance"><strong>Audit &amp; Compliance</strong></a> ⭐ v4.2 NEW</li>
+<li><a href="#settings--administration">Settings &amp; Administration</a></li>
+<li><a href="#user-roles--permissions">User Roles &amp; Permissions</a></li>
+<li><a href="#best-practices">Best Practices</a></li>
+<li><a href="#troubleshooting">Troubleshooting</a></li>
+</ol>
+<blockquote>
+<p><strong>📘 Related Documentation</strong>: For detailed lifecycle diagrams and state transitions, see the <a href="LIFECYCLE_GUIDE.md">Lifecycle Guide</a>.</p>
+</blockquote>
+<hr>
+<h2>Getting Started</h2>
+<h3>Accessing the Application</h3>
+<ol>
+<li>Open your web browser and navigate to: <strong><a href="https://localhost">https://localhost</a></strong> (or your deployed URL)</li>
+<li>Accept the self-signed certificate warning (development only)</li>
+<li>You will be redirected to the login page</li>
+</ol>
+<blockquote>
+<p><strong>Note</strong>: For production, use proper SSL certificates from Let&#39;s Encrypt or a commercial CA.</p>
+</blockquote>
+<h3>Login</h3>
+<ol>
+<li>Enter your <strong>Email</strong> (e.g., <code>admin@bme.local</code>)</li>
+<li>Enter your <strong>Password</strong> (e.g., <code>Admin@123</code>)</li>
+<li>Click <strong>Sign In</strong></li>
+</ol>
+<blockquote>
+<p><strong>Security</strong>: After 5 failed login attempts, you&#39;ll be temporarily blocked for 15 minutes.</p>
+</blockquote>
+<h4>Demo Accounts</h4>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Email</th>
+<th>Password</th>
+<th>Access Level</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Admin</td>
+<td><a href="mailto:admin@bme.local">admin@bme.local</a></td>
+<td>Admin@123</td>
+<td>Full system access</td>
+</tr>
+<tr>
+<td>Environment Manager</td>
+<td><a href="mailto:envmgr@bme.local">envmgr@bme.local</a></td>
+<td>Admin@123</td>
+<td>Manage environments &amp; approve bookings</td>
+</tr>
+<tr>
+<td>Project Lead</td>
+<td><a href="mailto:lead@bme.local">lead@bme.local</a></td>
+<td>Admin@123</td>
+<td>Create bookings &amp; manage releases</td>
+</tr>
+<tr>
+<td>Tester</td>
+<td><a href="mailto:tester@bme.local">tester@bme.local</a></td>
+<td>Admin@123</td>
+<td>Create bookings &amp; view resources</td>
+</tr>
+<tr>
+<td>Viewer</td>
+<td><a href="mailto:viewer@bme.local">viewer@bme.local</a></td>
+<td>Admin@123</td>
+<td>Read-only access</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>Production Note</strong>: Change all demo passwords immediately in production environments!</p>
+</blockquote>
+<h3>Navigation</h3>
+<p>After logging in, you&#39;ll see the main navigation sidebar on the left with:</p>
+<ul>
+<li><strong>Dashboard</strong> - Overview and statistics</li>
+<li><strong>Monitoring</strong> - Real-time environment health</li>
+<li><strong>Environments</strong> - Manage environments and instances</li>
+<li><strong>Bookings</strong> - Book and manage environment reservations</li>
+<li><strong>Releases</strong> - Plan and track releases</li>
+<li><strong>Applications</strong> - Manage applications and components</li>
+<li><strong>Groups</strong> - User groups management</li>
+<li><strong>Integrations</strong> - External tool connections</li>
+<li><strong>Settings</strong> - User profile and system settings</li>
+</ul>
+<hr>
+<h2>Dashboard Overview</h2>
+<p>The Dashboard provides a quick summary of system status:</p>
+<h3>Statistics Cards</h3>
+<ul>
+<li><strong>Environments</strong> - Total number of environments in the system</li>
+<li><strong>Total Instances</strong> - Count of all environment instances</li>
+<li><strong>Available Instances</strong> - Instances currently available for booking</li>
+<li><strong>Active Bookings</strong> - Currently active environment reservations</li>
+<li><strong>In-Progress Releases</strong> - Releases currently being deployed</li>
+<li><strong>Applications</strong> - Total applications managed</li>
+</ul>
+<h3>Instance Availability</h3>
+<p>Visual indicator showing the percentage of available vs. total instances.</p>
+<h3>Recent Activity</h3>
+<p>Live feed of recent actions in the system:</p>
+<ul>
+<li>Environment creations/updates</li>
+<li>Booking requests and approvals</li>
+<li>Release status changes</li>
+<li>User actions</li>
+</ul>
+<hr>
+<h2>Environments Management</h2>
+<h3>Understanding Environment Lifecycle</h3>
+<p>Environments progress through four lifecycle stages:</p>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Description</th>
+<th>Bookings Allowed</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Planned</strong></td>
+<td>Environment is being designed and set up</td>
+<td>❌ No</td>
+</tr>
+<tr>
+<td><strong>Active</strong></td>
+<td>Fully operational and available</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td><strong>Retiring</strong></td>
+<td>Being phased out, existing bookings only</td>
+<td>⚠️ Existing only</td>
+</tr>
+<tr>
+<td><strong>Decommissioned</strong></td>
+<td>No longer in use, archived</td>
+<td>❌ No</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>📘 See Also</strong>: <a href="LIFECYCLE_GUIDE.md#environment-lifecycle">Environment Lifecycle Details</a> for complete state transition diagrams.</p>
+</blockquote>
+<h3>Viewing Environments</h3>
+<ol>
+<li>Click <strong>Environments</strong> in the sidebar</li>
+<li>View the list of all environments with:<ul>
+<li>Name</li>
+<li>Category (NonProd, PreProd, DR, Training, Sandpit)</li>
+<li>Lifecycle Stage (with visual indicator)</li>
+<li>Owner Team</li>
+<li>Instance Count</li>
+</ul>
+</li>
+</ol>
+<h3>Environment Categories</h3>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Purpose</th>
+<th>Typical Use</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>NonProd</strong></td>
+<td>Development and testing</td>
+<td>DEV, SIT, Integration</td>
+</tr>
+<tr>
+<td><strong>PreProd</strong></td>
+<td>Final pre-production testing</td>
+<td>UAT, Staging</td>
+</tr>
+<tr>
+<td><strong>DR</strong></td>
+<td>Disaster recovery</td>
+<td>DR Failover, Business Continuity</td>
+</tr>
+<tr>
+<td><strong>Training</strong></td>
+<td>User training</td>
+<td>Training, Demos</td>
+</tr>
+<tr>
+<td><strong>Sandpit</strong></td>
+<td>Experimentation</td>
+<td>POCs, Innovation</td>
+</tr>
+</tbody></table>
+<h3>Creating an Environment</h3>
+<ol>
+<li>Click the <strong>+ Add Environment</strong> button</li>
+<li>Fill in the required fields:<ul>
+<li><strong>Name</strong> - Unique environment name (e.g., &quot;SIT Environment 1&quot;)</li>
+<li><strong>Category</strong> - Select: NonProd, PreProd, DR, Training, or Sandpit</li>
+<li><strong>Description</strong> - Brief description of the environment</li>
+<li><strong>Lifecycle Stage</strong> - Planned (initial), Active (ready for use)</li>
+<li><strong>Owner Team</strong> - Team responsible for the environment</li>
+<li><strong>Support Group</strong> - Support contact group</li>
+<li><strong>Data Sensitivity</strong> - NonProdDummy, PII, PCI, Confidential</li>
+<li><strong>Usage Policies</strong> - Guidelines for environment usage</li>
+</ul>
+</li>
+<li>Click <strong>Create</strong></li>
+</ol>
+<h3>Transitioning Environment Lifecycle</h3>
+<p><strong>To Activate an Environment (Planned → Active):</strong></p>
+<ol>
+<li>Ensure at least one instance is in Available status</li>
+<li>Verify all required applications are deployed</li>
+<li>Change Lifecycle Stage to &quot;Active&quot;</li>
+</ol>
+<p><strong>To Retire an Environment (Active → Retiring):</strong></p>
+<ol>
+<li>Notify all active users with minimum 2-week notice</li>
+<li>Ensure no critical bookings are affected</li>
+<li>Change Lifecycle Stage to &quot;Retiring&quot;</li>
+<li>Complete or cancel remaining bookings</li>
+</ol>
+<p><strong>To Decommission (Retiring → Decommissioned):</strong></p>
+<ol>
+<li>Ensure all bookings are completed or cancelled</li>
+<li>Archive any required data</li>
+<li>Change Lifecycle Stage to &quot;Decommissioned&quot;</li>
+</ol>
+<hr>
+<h2>Environment Instance Lifecycle</h2>
+<h3>Understanding Instance Status</h3>
+<p>Instances have two status dimensions:</p>
+<p><strong>Operational Status</strong> (physical state):</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Meaning</th>
+<th>Can Book?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Provisioning</strong></td>
+<td>Being set up</td>
+<td>❌ No</td>
+</tr>
+<tr>
+<td><strong>Available</strong></td>
+<td>Ready for use</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td><strong>Maintenance</strong></td>
+<td>Scheduled maintenance</td>
+<td>❌ No</td>
+</tr>
+<tr>
+<td><strong>Broken</strong></td>
+<td>Has critical issues</td>
+<td>❌ No</td>
+</tr>
+</tbody></table>
+<p><strong>Booking Status</strong> (reservation state):</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Meaning</th>
+<th>Can Book?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Available</strong></td>
+<td>No active bookings</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td><strong>PartiallyBooked</strong></td>
+<td>Has bookings but capacity remains</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td><strong>FullyBooked</strong></td>
+<td>At maximum capacity</td>
+<td>❌ No</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>📘 See Also</strong>: <a href="LIFECYCLE_GUIDE.md#environment-instance-lifecycle">Instance Lifecycle Details</a> for complete state transitions.</p>
+</blockquote>
+<h3>Managing Environment Instances</h3>
+<p>Each environment can have multiple instances (actual deployments):</p>
+<h4>Creating an Instance</h4>
+<ol>
+<li>Click on an environment row to view details</li>
+<li>Go to the <strong>Instances</strong> tab</li>
+<li>Click <strong>+ Add Instance</strong></li>
+<li>Fill in:<ul>
+<li><strong>Name</strong> - Instance name (e.g., &quot;SIT-Instance-A&quot;)</li>
+<li><strong>Operational Status</strong> - Provisioning (initial), Available (ready)</li>
+<li><strong>Availability Window</strong> - 24x7, BusinessHours, Weekdays</li>
+<li><strong>Capacity</strong> - Max concurrent bookings allowed</li>
+<li><strong>Primary Location</strong> - Data center/region</li>
+<li><strong>Bookable</strong> - Whether it can be reserved</li>
+</ul>
+</li>
+<li>Click <strong>Create</strong></li>
+</ol>
+<h4>Instance Status Transitions</h4>
+<pre><code>Provisioning → Available → Maintenance → Available
+                    ↓           ↓
+                 Broken  ←───────┘
+                    ↓
+                Available (after repair)
+</code></pre>
+<h4>Instance Actions</h4>
+<ul>
+<li><strong>Edit</strong> - Modify instance properties</li>
+<li><strong>Change Status</strong> - Update operational status</li>
+<li><strong>Delete</strong> - Remove instance (if no active bookings)</li>
+<li><strong>View Details</strong> - See full configuration including deployed applications</li>
+</ul>
+<h3>Linking Applications to Instances</h3>
+<ol>
+<li>In the environment detail view, go to <strong>Applications</strong> tab</li>
+<li>Click <strong>+ Link Application</strong></li>
+<li>Select the application to link</li>
+<li>Configure:<ul>
+<li><strong>Deployment Model</strong> - Monolith, Microservices, SaaS, COTS</li>
+<li><strong>Version</strong> - Application version deployed</li>
+<li><strong>Deployment Status</strong> - Aligned, Mixed, OutOfSync, Broken</li>
+</ul>
+</li>
+<li>Click <strong>Link</strong></li>
+</ol>
+<hr>
+<h2>Bookings Management</h2>
+<h3>Viewing Bookings</h3>
+<ol>
+<li>Click <strong>Bookings</strong> in the sidebar</li>
+<li>Choose view mode:<ul>
+<li><strong>Table View</strong> - List format with filtering</li>
+<li><strong>Calendar View</strong> - Monthly calendar visualization</li>
+</ul>
+</li>
+</ol>
+<h3>Filtering Bookings</h3>
+<p>Use the filter options:</p>
+<ul>
+<li><strong>Search</strong> - Search by title or description</li>
+<li><strong>Test Phase</strong> - SIT, UAT, NFT, Performance, etc.</li>
+<li><strong>Status</strong> - Requested, Approved, Active, Completed, Cancelled</li>
+<li><strong>Environment</strong> - Filter by specific environment</li>
+</ul>
+<h3>Creating a Booking</h3>
+<ol>
+<li><p>Click <strong>+ New Booking</strong></p>
+</li>
+<li><p>Fill in the booking details:</p>
+<p><strong>Basic Information:</strong></p>
+<ul>
+<li><strong>Booking Type</strong> - SingleEnv (one environment) or MultiEnvE2E (multiple)</li>
+<li><strong>Test Phase</strong> - Select the testing phase</li>
+<li><strong>Title</strong> - Descriptive booking title</li>
+<li><strong>Description</strong> - Detailed purpose of the booking</li>
+</ul>
+<p><strong>Schedule:</strong></p>
+<ul>
+<li><strong>Start Date/Time</strong> - When the booking begins</li>
+<li><strong>End Date/Time</strong> - When the booking ends</li>
+</ul>
+<p><strong>Resources:</strong></p>
+<ul>
+<li>Select environment instances to book</li>
+<li>Assign logical roles (SystemUnderTest, UpstreamDependency, etc.)</li>
+</ul>
+</li>
+<li><p>Click <strong>Create</strong></p>
+</li>
+</ol>
+<h3>Booking Statuses</h3>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Requested</td>
+<td>Initial state, awaiting review</td>
+</tr>
+<tr>
+<td>PendingApproval</td>
+<td>Conflicts detected, needs approval</td>
+</tr>
+<tr>
+<td>Approved</td>
+<td>Approved and confirmed</td>
+</tr>
+<tr>
+<td>Active</td>
+<td>Currently in use</td>
+</tr>
+<tr>
+<td>Completed</td>
+<td>Booking period ended</td>
+</tr>
+<tr>
+<td>Cancelled</td>
+<td>Booking was cancelled</td>
+</tr>
+</tbody></table>
+<h3>Conflict Detection</h3>
+<p>The system automatically detects scheduling conflicts:</p>
+<ul>
+<li><strong>Overlapping bookings</strong> on the same instance</li>
+<li><strong>Potential conflicts</strong> are flagged for review</li>
+<li>Bookings with conflicts go to &quot;PendingApproval&quot; status</li>
+</ul>
+<h3>Approving/Rejecting Bookings</h3>
+<p>(Environment Manager or Admin only)</p>
+<ol>
+<li>Find the booking in &quot;PendingApproval&quot; status</li>
+<li>Click to view details</li>
+<li>Review conflict information</li>
+<li>Click <strong>Approve</strong> or <strong>Reject</strong></li>
+</ol>
+<h3>Calendar View</h3>
+<p>The calendar provides a visual timeline:</p>
+<ul>
+<li>Navigate months with <strong>&lt; &gt;</strong> arrows</li>
+<li>Click on a day to see bookings</li>
+<li>Color-coded by status:<ul>
+<li>🟢 Green - Active</li>
+<li>🟡 Yellow - Pending</li>
+<li>🔵 Blue - Approved</li>
+<li>⚪ Gray - Completed</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2>Conflict Detection &amp; Resolution</h2>
+<h3>How Conflicts Are Detected</h3>
+<p>The system automatically detects conflicts when:</p>
+<ul>
+<li>Multiple bookings request the same environment instance</li>
+<li>Booking time periods overlap</li>
+<li>Resource availability changes during a booking period</li>
+</ul>
+<h3>Conflict Status Types</h3>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>None</strong></td>
+<td>No conflicts detected</td>
+</tr>
+<tr>
+<td><strong>PotentialConflict</strong></td>
+<td>Overlapping booking detected, needs review</td>
+</tr>
+<tr>
+<td><strong>ConflictConfirmed</strong></td>
+<td>Conflict verified and pending resolution</td>
+</tr>
+<tr>
+<td><strong>Resolved</strong></td>
+<td>Conflict has been addressed</td>
+</tr>
+</tbody></table>
+<h3>Viewing Conflicts</h3>
+<ol>
+<li>Go to <strong>Bookings</strong> page</li>
+<li>Click the <strong>Conflicts</strong> tab to see all bookings with unresolved conflicts</li>
+<li>Or click <strong>View Details</strong> on any booking with a conflict indicator (⚠️)</li>
+</ol>
+<h3>Resolving Conflicts</h3>
+<ol>
+<li>Find a booking with conflicts and click the <strong>Resolve</strong> button (gavel icon)</li>
+<li>Review the conflict details:<ul>
+<li>Current booking summary</li>
+<li>Overlapping bookings count</li>
+<li>Affected resources</li>
+</ul>
+</li>
+<li>Select a resolution method:</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Resolution Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Accept Overlap</strong></td>
+<td>Both bookings share the resource (coordinate usage)</td>
+</tr>
+<tr>
+<td><strong>Mark as Resolved</strong></td>
+<td>Manually mark resolved without changes</td>
+</tr>
+<tr>
+<td><strong>Remove Resource</strong></td>
+<td>Remove the conflicting resource from this booking</td>
+</tr>
+<tr>
+<td><strong>Adjust Timing</strong></td>
+<td>Modify booking start/end times to avoid overlap</td>
+</tr>
+<tr>
+<td><strong>Reject Booking</strong></td>
+<td>Cancel this booking due to the conflict</td>
+</tr>
+</tbody></table>
+<ol start="4">
+<li>Add resolution notes explaining your decision</li>
+<li>Click <strong>Apply Resolution</strong></li>
+</ol>
+<h3>Conflict Prevention</h3>
+<ul>
+<li>Use the <strong>Calendar View</strong> to check availability before booking</li>
+<li>Review conflict warnings when creating a new booking</li>
+<li>Consider booking during off-peak times</li>
+<li>Communicate with other teams about shared resources</li>
+</ul>
+<hr>
+<h2>Refresh Lifecycle Management</h2>
+<blockquote>
+<p><strong>Version 4.0 Feature</strong>: Comprehensive refresh planning, approval workflow, and booking conflict detection.</p>
+</blockquote>
+<h3>Overview</h3>
+<p><strong>Refresh Lifecycle Management</strong> enables teams to:</p>
+<ul>
+<li>Track historical refresh activities with full audit trails</li>
+<li>Plan future refreshes with approval workflows</li>
+<li>Detect and manage conflicts with active bookings</li>
+<li>Receive notifications before scheduled refreshes</li>
+<li>Maintain data lineage and compliance records</li>
+</ul>
+<h3>Accessing Refresh Management</h3>
+<ol>
+<li>Click <strong>Refresh</strong> in the sidebar navigation</li>
+<li>Two views are available:<ul>
+<li><strong>Calendar View</strong> - Visual timeline of planned and historical refreshes</li>
+<li><strong>Approvals View</strong> - Pending refresh requests requiring approval</li>
+</ul>
+</li>
+</ol>
+<h3>Understanding Refresh Types</h3>
+<table>
+<thead>
+<tr>
+<th>Refresh Type</th>
+<th>Description</th>
+<th>Impact Level</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>FULL_COPY</strong></td>
+<td>Complete environment/database copy</td>
+<td>🔴 High - All data overwritten</td>
+</tr>
+<tr>
+<td><strong>MASKED_COPY</strong></td>
+<td>PII/PCI masked data copy</td>
+<td>🔴 High - All data overwritten with masking</td>
+</tr>
+<tr>
+<td><strong>PARTIAL_COPY</strong></td>
+<td>Selective data copy</td>
+<td>🟡 Medium - Selected data overwritten</td>
+</tr>
+<tr>
+<td><strong>DATA_ONLY</strong></td>
+<td>Data refresh without schema changes</td>
+<td>🟡 Medium - Data changes, schema intact</td>
+</tr>
+<tr>
+<td><strong>SCHEMA_SYNC</strong></td>
+<td>Schema synchronization only</td>
+<td>🟡 Medium - Schema changes, data intact</td>
+</tr>
+<tr>
+<td><strong>CONFIG_ONLY</strong></td>
+<td>Configuration refresh</td>
+<td>🟢 Low - Configs only</td>
+</tr>
+<tr>
+<td><strong>GOLDEN_COPY</strong></td>
+<td>Restore from golden baseline</td>
+<td>🔴 High - Full restore</td>
+</tr>
+<tr>
+<td><strong>POINT_IN_TIME</strong></td>
+<td>Point-in-time recovery</td>
+<td>🔴 High - Full restore to point</td>
+</tr>
+</tbody></table>
+<h3>Impact Types</h3>
+<p>When creating a refresh intent, you must specify the <strong>Impact Type</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Impact Type</th>
+<th>Meaning</th>
+<th>Conflict Severity</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>DATA_OVERWRITE</strong></td>
+<td>All data will be overwritten</td>
+<td>🔴 MAJOR if critical bookings exist</td>
+</tr>
+<tr>
+<td><strong>DOWNTIME_REQUIRED</strong></td>
+<td>Environment unavailable during refresh</td>
+<td>🔴 MAJOR for all active bookings</td>
+</tr>
+<tr>
+<td><strong>SCHEMA_CHANGE</strong></td>
+<td>Database schema will be modified</td>
+<td>🟡 MEDIUM - May break tests</td>
+</tr>
+<tr>
+<td><strong>CONFIG_CHANGE</strong></td>
+<td>Configuration changes only</td>
+<td>🟢 LOW - Minimal impact</td>
+</tr>
+<tr>
+<td><strong>READ_ONLY</strong></td>
+<td>Non-destructive read operation</td>
+<td>🟢 NONE - Safe operation</td>
+</tr>
+</tbody></table>
+<h3>Refresh Calendar View</h3>
+<p>The <strong>Refresh Calendar</strong> provides a unified timeline showing:</p>
+<pre><code>┌─────────────────────────────────────────────────────────────────────────────┐
+│  December 2025                                    [&lt; Previous]  [Next &gt;]   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  Sun    Mon    Tue    Wed    Thu    Fri    Sat                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   1      2      3      4      5      6      7                               │
+│         🟡     ✓                    ⏳                                      │
+│       UAT1    SIT1                 SIT2                                     │
+│      Pending  Done               Scheduled                                  │
+│                                                                             │
+│   8      9     10     11     12     13     14                               │
+│         🔵                  ⚠️                                              │
+│        PROD              UAT1 (!)                                           │
+│       Approved          Has Conflicts                                       │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Legend:
+  🟡 REQUESTED - Awaiting approval
+  🔵 APPROVED - Ready for execution
+  ⏳ SCHEDULED - Confirmed schedule
+  🔄 IN_PROGRESS - Currently executing
+  ✓  COMPLETED - Successfully finished
+  ❌ FAILED - Execution failed
+  ⚠️ Has Conflicts - Booking conflicts detected
+</code></pre>
+<h3>Creating a Refresh Intent</h3>
+<h4>Step-by-Step Workflow</h4>
+<ol>
+<li><p><strong>Navigate to Refresh Calendar</strong></p>
+<ul>
+<li>Click <strong>Refresh</strong> → <strong>Calendar</strong> in sidebar</li>
+</ul>
+</li>
+<li><p><strong>Click &quot;New Refresh Intent&quot;</strong></p>
+<ul>
+<li>Or click directly on a calendar date</li>
+</ul>
+</li>
+<li><p><strong>Select Entity to Refresh</strong></p>
+<ul>
+<li><strong>Entity Type</strong>: Environment, EnvironmentInstance, Application, etc.</li>
+<li><strong>Entity</strong>: Select specific entity from dropdown</li>
+</ul>
+</li>
+<li><p><strong>Configure Refresh Details</strong></p>
+<pre><code>┌─────────────────────────────────────────────────────────┐
+│ New Refresh Intent                                       │
+├─────────────────────────────────────────────────────────┤
+│ Entity Type:    [Environment Instance    ▼]             │
+│ Entity:         [SIT1 - Core Banking     ▼]             │
+│                                                          │
+│ Refresh Type:   [MASKED_COPY             ▼]             │
+│ Source Env:     [Production              ]              │
+│                                                          │
+│ Impact Type:    [DATA_OVERWRITE          ▼]  ⚠️         │
+│                 ⚠️ This will overwrite existing data    │
+│                                                          │
+│ Planned Date:   [2025-12-15] [09:00]                    │
+│ End Date:       [2025-12-15] [13:00]                    │
+│                                                          │
+│ □ Requires Downtime                                      │
+│   Estimated: [240] minutes                               │
+│                                                          │
+│ Reason:         [Quarterly data refresh for R2025.1]    │
+│ Justification:  [Required for release testing baseline] │
+└─────────────────────────────────────────────────────────┘
+</code></pre>
+</li>
+<li><p><strong>Review Booking Conflicts</strong> (Automatic Check)</p>
+<ul>
+<li>System automatically checks for conflicting bookings</li>
+<li>Conflict panel appears showing any affected bookings</li>
+</ul>
+</li>
+<li><p><strong>Acknowledge Conflicts (if MAJOR)</strong></p>
+<ul>
+<li>If MAJOR conflicts exist, you must acknowledge before proceeding</li>
+<li>Check the acknowledgement box</li>
+</ul>
+</li>
+<li><p><strong>Submit for Approval</strong></p>
+<ul>
+<li>Click <strong>Create</strong> to submit the refresh intent</li>
+</ul>
+</li>
+</ol>
+<h3>Refresh Intent Statuses</h3>
+<pre><code>DRAFT ──► REQUESTED ──► APPROVED ──► SCHEDULED ──► IN_PROGRESS ──► COMPLETED
+              │             │                           │
+              ▼             ▼                           ▼
+           REJECTED     CANCELLED                    FAILED
+                                                       │
+                                                       ▼
+                                                   ROLLED_BACK
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Description</th>
+<th>Who Can Transition</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>DRAFT</strong></td>
+<td>Created but not submitted</td>
+<td>Creator</td>
+</tr>
+<tr>
+<td><strong>REQUESTED</strong></td>
+<td>Submitted for approval</td>
+<td>Creator → Approver</td>
+</tr>
+<tr>
+<td><strong>APPROVED</strong></td>
+<td>Approved, awaiting schedule</td>
+<td>Approver</td>
+</tr>
+<tr>
+<td><strong>SCHEDULED</strong></td>
+<td>Confirmed for execution</td>
+<td>Admin/EnvMgr</td>
+</tr>
+<tr>
+<td><strong>IN_PROGRESS</strong></td>
+<td>Currently executing</td>
+<td>System/Operator</td>
+</tr>
+<tr>
+<td><strong>COMPLETED</strong></td>
+<td>Successfully finished</td>
+<td>System/Operator</td>
+</tr>
+<tr>
+<td><strong>FAILED</strong></td>
+<td>Execution failed</td>
+<td>System</td>
+</tr>
+<tr>
+<td><strong>CANCELLED</strong></td>
+<td>Cancelled before execution</td>
+<td>Approver/Creator</td>
+</tr>
+<tr>
+<td><strong>ROLLED_BACK</strong></td>
+<td>Reverted after failure</td>
+<td>System/Operator</td>
+</tr>
+</tbody></table>
+<h3>Approving Refresh Intents</h3>
+<blockquote>
+<p><strong>Required Role</strong>: Admin or Environment Manager</p>
+</blockquote>
+<ol>
+<li><p><strong>Navigate to Approvals</strong></p>
+<ul>
+<li>Click <strong>Refresh</strong> → <strong>Approvals</strong> in sidebar</li>
+</ul>
+</li>
+<li><p><strong>Review Pending Intents</strong></p>
+<ul>
+<li>View all intents with status &quot;REQUESTED&quot;</li>
+<li>Statistics cards show approval metrics</li>
+</ul>
+</li>
+<li><p><strong>Review Intent Details</strong></p>
+<ul>
+<li>Click on an intent to see full details:<ul>
+<li>Entity being refreshed</li>
+<li>Refresh type and source</li>
+<li>Planned timing</li>
+<li><strong>Booking conflicts</strong> (if any)</li>
+<li>Requester information</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>Check Conflict Panel</strong></p>
+<pre><code>┌─────────────────────────────────────────────────────────┐
+│ ⚠️ BOOKING CONFLICTS DETECTED                           │
+├─────────────────────────────────────────────────────────┤
+│ Found 2 conflicting bookings:                           │
+│                                                          │
+│ ┌─────────────────────────────────────────────────────┐ │
+│ │ 🔴 HIGH SEVERITY         CRITICAL                   │ │
+│ │ UAT Regression Testing                               │ │
+│ │ 📅 Dec 15, 9:00 AM - Dec 17, 5:00 PM               │ │
+│ │ ⏱️ Overlap: 240 minutes                             │ │
+│ │ 👤 John Smith (Testing Team)                        │ │
+│ │ 🧪 Phase: UAT                                       │ │
+│ └─────────────────────────────────────────────────────┘ │
+│                                                          │
+│ ┌─────────────────────────────────────────────────────┐ │
+│ │ 🟡 MEDIUM SEVERITY                                  │ │
+│ │ Performance Testing                                  │ │
+│ │ 📅 Dec 15, 2:00 PM - Dec 15, 6:00 PM               │ │
+│ │ ⏱️ Overlap: 120 minutes                             │ │
+│ │ 👤 Jane Doe (Performance Team)                      │ │
+│ └─────────────────────────────────────────────────────┘ │
+│                                                          │
+│ ⚠️ This refresh requires FORCE APPROVAL due to MAJOR   │
+│    conflicts with critical bookings.                    │
+└─────────────────────────────────────────────────────────┘
+</code></pre>
+</li>
+<li><p><strong>Make Approval Decision</strong></p>
+<ul>
+<li><strong>Approve</strong>: Click ✓ Approve (add approval notes)</li>
+<li><strong>Reject</strong>: Click ✗ Reject (provide rejection reason)</li>
+<li><strong>Force Approve</strong>: For MAJOR conflicts, force approval requires justification</li>
+</ul>
+</li>
+</ol>
+<h3>Tracking Refresh History</h3>
+<p>The <strong>Refresh History</strong> tab shows completed refreshes:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Entity</td>
+<td>What was refreshed</td>
+</tr>
+<tr>
+<td>Date</td>
+<td>When the refresh occurred</td>
+</tr>
+<tr>
+<td>Type</td>
+<td>FULL_COPY, MASKED_COPY, etc.</td>
+</tr>
+<tr>
+<td>Source</td>
+<td>Where data came from</td>
+</tr>
+<tr>
+<td>Duration</td>
+<td>How long it took</td>
+</tr>
+<tr>
+<td>Status</td>
+<td>SUCCESS, FAILED, ROLLED_BACK</td>
+</tr>
+<tr>
+<td>Executed By</td>
+<td>Who performed the refresh</td>
+</tr>
+<tr>
+<td>Notes</td>
+<td>Execution notes</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Booking-Refresh Dependency</h2>
+<blockquote>
+<p><strong>Critical Feature</strong>: Understanding and managing the relationship between bookings and planned refreshes.</p>
+</blockquote>
+<h3>Why This Matters</h3>
+<p>When a refresh occurs during an active booking:</p>
+<ul>
+<li><strong>Data Loss Risk</strong>: Test data created during the booking may be overwritten</li>
+<li><strong>Test Cycle Disruption</strong>: Active testing may be interrupted</li>
+<li><strong>Data Inconsistency</strong>: Partial refresh during tests causes unpredictable results</li>
+<li><strong>Loss of Trust</strong>: Teams lose confidence in the test environment system</li>
+</ul>
+<h3>The Dependency Model</h3>
+<pre><code>┌─────────────────────────────────────────────────────────────────────────────┐
+│              BOOKING-REFRESH DEPENDENCY DETECTION                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   BOOKING                        REFRESH INTENT                             │
+│   ════════                       ══════════════                             │
+│   ┌─────────────┐               ┌─────────────┐                            │
+│   │  Dec 10-15  │←────OVERLAP──→│  Dec 12     │                            │
+│   │  UAT Testing│   DETECTED    │  DATA COPY  │                            │
+│   │  SIT1       │               │  SIT1       │                            │
+│   │  🟡 Active  │               │  🟡 Planned │                            │
+│   └─────────────┘               └─────────────┘                            │
+│         │                              │                                    │
+│         ▼                              ▼                                    │
+│   ┌─────────────────────────────────────────────┐                          │
+│   │         CONFLICT DETECTION ENGINE            │                          │
+│   │  • Check time overlap                        │                          │
+│   │  • Evaluate impact type                      │                          │
+│   │  • Assess booking criticality               │                          │
+│   │  • Calculate conflict severity              │                          │
+│   └─────────────────────────────────────────────┘                          │
+│                      │                                                      │
+│                      ▼                                                      │
+│   ┌─────────────────────────────────────────────┐                          │
+│   │              CONFLICT RESULT                 │                          │
+│   │  Severity: MAJOR                            │                          │
+│   │  Flag: Requires Force Approval              │                          │
+│   │  Affected Teams: [Testing Team]             │                          │
+│   │  Overlap: 72 hours                          │                          │
+│   └─────────────────────────────────────────────┘                          │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3>Conflict Severity Calculation</h3>
+<p>The system calculates conflict severity based on multiple factors:</p>
+<pre><code>┌─────────────────────────────────────────────────────────────────────────────┐
+│                    CONFLICT SEVERITY MATRIX                                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│                         REFRESH IMPACT TYPE                                 │
+│                   ┌─────────────┬─────────────┬─────────────┐              │
+│                   │ DATA_OVER-  │ DOWNTIME_   │ READ_ONLY / │              │
+│                   │ WRITE       │ REQUIRED    │ CONFIG_ONLY │              │
+│  BOOKING    ┌─────┼─────────────┼─────────────┼─────────────┤              │
+│  PRIORITY   │CRIT │ 🔴 MAJOR   │ 🔴 MAJOR   │ 🟡 MEDIUM  │              │
+│             │     │ Force Req   │ Force Req   │ Warning     │              │
+│             ├─────┼─────────────┼─────────────┼─────────────┤              │
+│             │HIGH │ 🔴 MAJOR   │ 🟡 MEDIUM  │ 🟢 LOW     │              │
+│             │     │ Force Req   │ Review Req  │ Info Only   │              │
+│             ├─────┼─────────────┼─────────────┼─────────────┤              │
+│             │NORM │ 🟡 MEDIUM  │ 🟡 MEDIUM  │ 🟢 NONE    │              │
+│             │     │ Review Req  │ Review Req  │ No Impact   │              │
+│             ├─────┼─────────────┼─────────────┼─────────────┤              │
+│             │LOW  │ 🟡 MEDIUM  │ 🟢 LOW     │ 🟢 NONE    │              │
+│             │     │ Review Req  │ Info Only   │ No Impact   │              │
+│             └─────┴─────────────┴─────────────┴─────────────┘              │
+│                                                                             │
+│  Additional Factors:                                                        │
+│  • Test Phase (UAT/Performance = Higher severity)                          │
+│  • Booking Status (Active &gt; Approved &gt; Requested)                          │
+│  • Overlap Duration (Longer = Higher severity)                             │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3>Conflict Detection Workflow</h3>
+<h4>When Creating a Refresh Intent</h4>
+<pre><code>┌─────────────────────────────────────────────────────────────────────────────┐
+│                 REFRESH INTENT CREATION WORKFLOW                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  START: User creates refresh intent                                         │
+│    │                                                                        │
+│    ▼                                                                        │
+│  ┌─────────────────────────────────┐                                       │
+│  │ 1. User enters refresh details  │                                       │
+│  │    • Entity selection           │                                       │
+│  │    • Date/time range            │                                       │
+│  │    • Impact type                │                                       │
+│  └────────────────┬────────────────┘                                       │
+│                   │                                                         │
+│                   ▼                                                         │
+│  ┌─────────────────────────────────┐                                       │
+│  │ 2. AUTOMATIC CONFLICT CHECK     │  ← Triggered on form changes         │
+│  │    Query: Find all bookings     │                                       │
+│  │    WHERE entity matches AND     │                                       │
+│  │    time periods overlap         │                                       │
+│  └────────────────┬────────────────┘                                       │
+│                   │                                                         │
+│         ┌─────────┴─────────┐                                              │
+│         ▼                   ▼                                              │
+│  ┌─────────────┐     ┌─────────────┐                                       │
+│  │ No Conflicts│     │  Conflicts  │                                       │
+│  │   Found     │     │   Found     │                                       │
+│  └──────┬──────┘     └──────┬──────┘                                       │
+│         │                   │                                               │
+│         ▼                   ▼                                               │
+│  ┌─────────────┐     ┌─────────────────────────────────┐                   │
+│  │ Show green  │     │ 3. Display Conflict Panel      │                   │
+│  │ &quot;No conflicts│    │    • List affected bookings    │                   │
+│  │  detected&quot;  │     │    • Show severity badges      │                   │
+│  └──────┬──────┘     │    • Overlap details           │                   │
+│         │            │    • Affected team info        │                   │
+│         │            └────────────────┬───────────────┘                   │
+│         │                             │                                    │
+│         │            ┌────────────────┴───────────────┐                   │
+│         │            ▼                                ▼                    │
+│         │     ┌─────────────┐              ┌─────────────┐                │
+│         │     │ MINOR Flag  │              │ MAJOR Flag  │                │
+│         │     │ • Warning   │              │ • Must ack  │                │
+│         │     │ • Can submit│              │ • Force req │                │
+│         │     └──────┬──────┘              └──────┬──────┘                │
+│         │            │                            │                        │
+│         │            ▼                            ▼                        │
+│         │     ┌─────────────┐              ┌─────────────────┐            │
+│         │     │ Submit with │              │ 4. User must    │            │
+│         │     │ warning     │              │    acknowledge  │            │
+│         │     │ status      │              │    conflicts    │            │
+│         │     └──────┬──────┘              └────────┬────────┘            │
+│         │            │                              │                      │
+│         └────────────┼──────────────────────────────┘                      │
+│                      │                                                      │
+│                      ▼                                                      │
+│  ┌─────────────────────────────────────────────────────────────┐          │
+│  │ 5. Intent Created with Conflict Metadata                    │          │
+│  │    • conflict_flag: MAJOR/MINOR/NONE                        │          │
+│  │    • conflict_summary: JSON with details                    │          │
+│  │    • impacted_teams: Array of affected groups               │          │
+│  └─────────────────────────────────────────────────────────────┘          │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h4>When Creating a Booking</h4>
+<pre><code>┌─────────────────────────────────────────────────────────────────────────────┐
+│                    BOOKING CREATION WORKFLOW                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  START: User creates new booking                                            │
+│    │                                                                        │
+│    ▼                                                                        │
+│  ┌─────────────────────────────────┐                                       │
+│  │ 1. User enters booking details  │                                       │
+│  │    • Environment selection      │                                       │
+│  │    • Date/time range            │                                       │
+│  │    • Test phase                 │                                       │
+│  └────────────────┬────────────────┘                                       │
+│                   │                                                         │
+│                   ▼                                                         │
+│  ┌─────────────────────────────────┐                                       │
+│  │ 2. CHECK FOR PLANNED REFRESHES  │  ← Automatic on submission           │
+│  │    Query: Find all refresh      │                                       │
+│  │    intents WHERE entity matches │                                       │
+│  │    AND status IN (APPROVED,     │                                       │
+│  │    SCHEDULED, IN_PROGRESS)      │                                       │
+│  │    AND time periods overlap     │                                       │
+│  └────────────────┬────────────────┘                                       │
+│                   │                                                         │
+│         ┌─────────┴─────────┐                                              │
+│         ▼                   ▼                                              │
+│  ┌─────────────┐     ┌─────────────────────────────────┐                   │
+│  │ No Planned  │     │  Planned Refreshes Found       │                   │
+│  │  Refreshes  │     │                                 │                   │
+│  └──────┬──────┘     └────────────────┬───────────────┘                   │
+│         │                             │                                    │
+│         ▼                             ▼                                    │
+│  ┌─────────────┐     ┌─────────────────────────────────┐                   │
+│  │ Booking     │     │ 3. REFRESH WARNING DISPLAYED    │                   │
+│  │ created     │     │                                 │                   │
+│  │ normally    │     │ ⚠️ REFRESH WARNING              │                   │
+│  └─────────────┘     │ A data refresh is scheduled    │                   │
+│                      │ during your booking period:     │                   │
+│                      │                                 │                   │
+│                      │ 📅 Dec 15, 2025 (MASKED_COPY)  │                   │
+│                      │ ⏱️ ~4 hours downtime expected  │                   │
+│                      │ 💾 All test data will be lost  │                   │
+│                      │                                 │                   │
+│                      │ Consider:                       │                   │
+│                      │ • Adjusting booking dates       │                   │
+│                      │ • Coordinating with refresh team│                   │
+│                      │                                 │                   │
+│                      │ [Proceed Anyway] [Adjust Dates] │                   │
+│                      └────────────────┬───────────────┘                   │
+│                                       │                                    │
+│                                       ▼                                    │
+│                      ┌─────────────────────────────────┐                   │
+│                      │ 4. Booking created with         │                   │
+│                      │    refresh_warnings in response │                   │
+│                      └─────────────────────────────────┘                   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3>Conflict Resolution Options</h3>
+<p>When conflicts are detected, teams have several resolution paths:</p>
+<h4>Option 1: Reschedule the Refresh</h4>
+<pre><code>┌─────────────────────────────────────────────────────────────────┐
+│ RESOLUTION: Reschedule Refresh                                  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│ Original Plan:  Dec 12-14   ███████░░░░░░░░░░░░░░              │
+│ Booking:        Dec 10-17   ████████████████████████           │
+│                                   ▲                             │
+│                                   │ CONFLICT                    │
+│                                   │                             │
+│ Use &quot;Suggest Alternative Slots&quot; feature:                        │
+│                                                                 │
+│ ┌─────────────────────────────────────────────────────────────┐│
+│ │ 💡 SUGGESTED ALTERNATIVE TIME SLOTS                         ││
+│ │                                                             ││
+│ │ ✅ Dec 18-20  No booking conflicts                          ││
+│ │    Score: 100% - Optimal choice                             ││
+│ │                                                             ││
+│ │ ⚠️ Dec 8-10   Minor conflict (low priority booking)         ││
+│ │    Score: 75% - Acceptable                                  ││
+│ │                                                             ││
+│ │ ⚠️ Dec 22-24  Holiday period (reduced support)              ││
+│ │    Score: 60% - Use with caution                            ││
+│ │                                                             ││
+│ │ [Apply Slot 1] [Apply Slot 2] [Keep Original]               ││
+│ └─────────────────────────────────────────────────────────────┘│
+│                                                                 │
+│ New Plan:       Dec 18-20   ░░░░░░░░░░░░░░░░░░░░███████        │
+│ Booking:        Dec 10-17   ████████████████████████           │
+│                             NO CONFLICT ✓                       │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h4>Option 2: Adjust the Booking</h4>
+<pre><code>┌─────────────────────────────────────────────────────────────────┐
+│ RESOLUTION: Adjust Booking                                      │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│ User contacts booking owner to negotiate:                       │
+│                                                                 │
+│ • Shorten booking to end before refresh                         │
+│ • Split booking around refresh window                           │
+│ • Accept data loss and re-create test data after refresh        │
+│                                                                 │
+│ Before: Dec 10 ████████████████████████ Dec 17                 │
+│ After:  Dec 10 ███████████ Dec 12  Dec 14 █████████ Dec 17     │
+│                           ▲          ▲                          │
+│                           └──REFRESH─┘                          │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h4>Option 3: Force Approve (Admin Only)</h4>
+<pre><code>┌─────────────────────────────────────────────────────────────────┐
+│ RESOLUTION: Force Approve Refresh                               │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│ ⚠️ WARNING: Force approval overrides booking conflicts         │
+│                                                                 │
+│ When to use:                                                    │
+│ • Critical production data sync required                        │
+│ • Security patch that cannot wait                               │
+│ • Compliance/audit requirement with deadline                    │
+│ • Booking owner has acknowledged impact                         │
+│                                                                 │
+│ Requirements:                                                   │
+│ • Admin or Environment Manager role                             │
+│ • Written justification required                                │
+│ • Affected teams notified automatically                         │
+│ • Audit trail created                                           │
+│                                                                 │
+│ ┌─────────────────────────────────────────────────────────────┐│
+│ │ Force Approval Justification (required):                    ││
+│ │ ┌─────────────────────────────────────────────────────────┐ ││
+│ │ │ Critical security patch CVE-2025-1234 must be applied   │ ││
+│ │ │ within 48 hours per security policy. Booking owner      │ ││
+│ │ │ (John Smith) notified and acknowledged via JIRA-5678.   │ ││
+│ │ └─────────────────────────────────────────────────────────┘ ││
+│ │                                                             ││
+│ │ □ I confirm all affected teams have been notified           ││
+│ │ □ I accept responsibility for any test data loss            ││
+│ │                                                             ││
+│ │ [Cancel] [Force Approve Refresh]                            ││
+│ └─────────────────────────────────────────────────────────────┘│
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3>Notification Flow</h3>
+<pre><code>┌─────────────────────────────────────────────────────────────────────────────┐
+│                    CONFLICT NOTIFICATION FLOW                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌─────────────────┐                                                       │
+│  │ Refresh Intent  │                                                       │
+│  │ Created with    │                                                       │
+│  │ MAJOR Conflict  │                                                       │
+│  └────────┬────────┘                                                       │
+│           │                                                                 │
+│           ▼                                                                 │
+│  ┌─────────────────────────────────────────────────────────────┐           │
+│  │                NOTIFICATION SYSTEM                          │           │
+│  └─────────────────────────────────────────────────────────────┘           │
+│           │                                                                 │
+│     ┌─────┴─────┬───────────┬───────────┬────────────┐                     │
+│     ▼           ▼           ▼           ▼            ▼                     │
+│  ┌──────┐  ┌──────┐   ┌──────┐   ┌──────┐   ┌──────────┐                  │
+│  │ 📧   │  │ 💬   │   │ 🔔   │   │ 📱   │   │ 🔗       │                  │
+│  │Email │  │Teams │   │In-App│   │Slack │   │Webhook   │                  │
+│  └──┬───┘  └──┬───┘   └──┬───┘   └──┬───┘   └────┬─────┘                  │
+│     │         │          │          │            │                         │
+│     ▼         ▼          ▼          ▼            ▼                         │
+│  ┌───────────────────────────────────────────────────────────┐             │
+│  │ RECIPIENTS                                                │             │
+│  │ • Booking owners (affected bookings)                      │             │
+│  │ • Environment managers                                    │             │
+│  │ • Owning groups of affected bookings                      │             │
+│  │ • Refresh requester                                       │             │
+│  │ • Configured notification groups                          │             │
+│  └───────────────────────────────────────────────────────────┘             │
+│                                                                             │
+│  NOTIFICATION TIMING:                                                       │
+│  ┌───────────────────────────────────────────────────────────┐             │
+│  │ • Immediate: When conflict detected                       │             │
+│  │ • 7 days before: Reminder notification                    │             │
+│  │ • 1 day before: Final warning                             │             │
+│  │ • 1 hour before: Last chance alert                        │             │
+│  │ • On execution: &quot;Refresh started&quot; notification            │             │
+│  │ • On completion: &quot;Refresh completed&quot; notification         │             │
+│  └───────────────────────────────────────────────────────────┘             │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3>Best Practices for Booking-Refresh Coordination</h3>
+<h4>For Testers (Booking Owners)</h4>
+<ol>
+<li><p><strong>Check for Planned Refreshes Before Booking</strong></p>
+<ul>
+<li>Review refresh calendar before creating bookings</li>
+<li>Look for scheduled refreshes in your target environment</li>
+</ul>
+</li>
+<li><p><strong>Mark Critical Bookings</strong></p>
+<ul>
+<li>Set <code>is_critical_booking = true</code> for important test cycles</li>
+<li>Set appropriate priority (Critical, High, Normal, Low)</li>
+<li>This ensures higher severity when conflicts arise</li>
+</ul>
+</li>
+<li><p><strong>Monitor Notifications</strong></p>
+<ul>
+<li>Enable all notification channels</li>
+<li>Respond promptly to conflict alerts</li>
+<li>Negotiate with refresh owners when needed</li>
+</ul>
+</li>
+<li><p><strong>Plan Around Refresh Cycles</strong></p>
+<ul>
+<li>Know your environment&#39;s typical refresh schedule</li>
+<li>Avoid booking during maintenance windows</li>
+<li>Build test data backup strategies</li>
+</ul>
+</li>
+</ol>
+<h4>For Environment Managers (Refresh Owners)</h4>
+<ol>
+<li><p><strong>Schedule Refreshes Strategically</strong></p>
+<ul>
+<li>Use the &quot;Suggest Alternative Slots&quot; feature</li>
+<li>Prefer weekends or off-hours for major refreshes</li>
+<li>Consider quarterly refresh cycles</li>
+</ul>
+</li>
+<li><p><strong>Communicate Early</strong></p>
+<ul>
+<li>Submit refresh intents with adequate lead time</li>
+<li>Provide detailed justification</li>
+<li>Notify affected teams proactively</li>
+</ul>
+</li>
+<li><p><strong>Use Appropriate Impact Types</strong></p>
+<ul>
+<li>Don&#39;t over-classify (use READ_ONLY when appropriate)</li>
+<li>Accurately estimate downtime</li>
+<li>Be specific about what data will be affected</li>
+</ul>
+</li>
+<li><p><strong>Handle Conflicts Gracefully</strong></p>
+<ul>
+<li>Work with booking owners to find mutually acceptable times</li>
+<li>Force approve only when truly necessary</li>
+<li>Document all conflict resolutions</li>
+</ul>
+</li>
+</ol>
+<h3>Viewing All Unresolved Conflicts</h3>
+<p>Navigate to <strong>Refresh</strong> → <strong>Conflicts</strong> to see a dashboard of all unresolved conflicts:</p>
+<pre><code>┌─────────────────────────────────────────────────────────────────────────────┐
+│  UNRESOLVED CONFLICTS DASHBOARD                              [Export CSV]  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  Summary: 5 unresolved conflicts across 3 refresh intents                   │
+│                                                                             │
+│  ┌───────────────────────────────────────────────────────────────────────┐ │
+│  │ Refresh     │ Entity   │ Conflicts │ Severity │ Status    │ Actions  │ │
+│  ├─────────────┼──────────┼───────────┼──────────┼───────────┼──────────┤ │
+│  │ Dec 15 Prod │ SIT1     │ 3         │ 🔴 MAJOR │ REQUESTED │ [View]   │ │
+│  │ Dec 18 UAT  │ UAT1     │ 1         │ 🟡 MEDIUM│ APPROVED  │ [View]   │ │
+│  │ Dec 20 NFT  │ PERF1    │ 1         │ 🟢 LOW   │ SCHEDULED │ [View]   │ │
+│  └───────────────────────────────────────────────────────────────────────┘ │
+│                                                                             │
+│  Filter: [All Severities ▼] [All Statuses ▼] [All Entities ▼]              │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<hr>
+<h2>Releases Management</h2>
+<h3>Viewing Releases</h3>
+<ol>
+<li>Click <strong>Releases</strong> in the sidebar</li>
+<li>View releases with status indicators</li>
+</ol>
+<h3>Creating a Release</h3>
+<ol>
+<li>Click <strong>+ New Release</strong></li>
+<li>Fill in:<ul>
+<li><strong>Name</strong> - Release identifier (e.g., &quot;v2.5.0&quot;)</li>
+<li><strong>Description</strong> - Release notes/description</li>
+<li><strong>Version</strong> - Semantic version number</li>
+<li><strong>Release Type</strong> - Major, Minor, Patch, Hotfix</li>
+<li><strong>Planned Start/End</strong> - Deployment window</li>
+<li><strong>Target Environments</strong> - Select target environments</li>
+<li><strong>Applications</strong> - Applications included in release</li>
+</ul>
+</li>
+<li>Click <strong>Create</strong></li>
+</ol>
+<h3>Release Statuses</h3>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Planned</td>
+<td>Scheduled but not started</td>
+</tr>
+<tr>
+<td>InProgress</td>
+<td>Currently being deployed</td>
+</tr>
+<tr>
+<td>Completed</td>
+<td>Successfully deployed</td>
+</tr>
+<tr>
+<td>RolledBack</td>
+<td>Deployment was reversed</td>
+</tr>
+<tr>
+<td>Cancelled</td>
+<td>Release was cancelled</td>
+</tr>
+</tbody></table>
+<h3>Release Workflow</h3>
+<ol>
+<li><strong>Planned</strong> → Create release with schedule</li>
+<li><strong>InProgress</strong> → Begin deployment</li>
+<li><strong>Completed</strong> → Mark successful deployment</li>
+<li>(Optional) <strong>RolledBack</strong> → If issues occur</li>
+</ol>
+<hr>
+<h2>Applications Management</h2>
+<h3>Viewing Applications</h3>
+<ol>
+<li>Click <strong>Applications</strong> in the sidebar</li>
+<li>View applications list with:<ul>
+<li>Name</li>
+<li>Business Domain</li>
+<li>Criticality</li>
+<li>Owner Team</li>
+<li>Component Count</li>
+</ul>
+</li>
+</ol>
+<h3>Creating an Application</h3>
+<ol>
+<li>Click <strong>+ Add Application</strong></li>
+<li>Fill in:<ul>
+<li><strong>Name</strong> - Application name</li>
+<li><strong>Description</strong> - What the application does</li>
+<li><strong>Business Domain</strong> - Domain category</li>
+<li><strong>Criticality</strong> - Critical, High, Medium, Low</li>
+<li><strong>Data Sensitivity</strong> - Data classification</li>
+<li><strong>Owner Team</strong> - Responsible team</li>
+<li><strong>Test Owner</strong> - QA/Test lead</li>
+</ul>
+</li>
+<li>Click <strong>Create</strong></li>
+</ol>
+<h3>Managing Components</h3>
+<p>Applications have components (services, modules):</p>
+<h4>Adding a Component</h4>
+<ol>
+<li>Select an application</li>
+<li>Go to <strong>Components</strong> tab</li>
+<li>Click <strong>+ Add Component</strong></li>
+<li>Fill in:<ul>
+<li><strong>Name</strong> - Component name</li>
+<li><strong>Component Type</strong> - Microservice, API, UI, Database, MessageQueue, etc.</li>
+<li><strong>Source Repo</strong> - Git repository URL</li>
+<li><strong>Build Pipeline ID</strong> - CI/CD pipeline reference</li>
+<li><strong>Runtime Platform</strong> - Container, VM, Serverless, etc.</li>
+<li><strong>Owner Team</strong> - Component owner</li>
+</ul>
+</li>
+<li>Click <strong>Create</strong></li>
+</ol>
+<hr>
+<h2>Application Deployments</h2>
+<h3>Overview</h3>
+<p>Application Deployments track the relationship between applications and environment instances. This helps teams understand:</p>
+<ul>
+<li>Where each application is deployed</li>
+<li>What version is running in each environment</li>
+<li>The deployment model and status</li>
+</ul>
+<h3>Viewing Deployments (Application View)</h3>
+<ol>
+<li>Click <strong>Applications</strong> in the sidebar</li>
+<li>Select an application and click <strong>View Details</strong></li>
+<li>Go to the <strong>Deployments</strong> tab</li>
+<li>View all environment instances where the application is deployed</li>
+</ol>
+<h3>Deploying an Application</h3>
+<ol>
+<li>Open the application&#39;s detail view</li>
+<li>Go to <strong>Deployments</strong> tab</li>
+<li>Click <strong>Deploy to Environment</strong></li>
+<li>Fill in the deployment form:<ul>
+<li><strong>Environment Instance</strong> (required): Select the target instance</li>
+<li><strong>Version</strong>: Enter the version being deployed (e.g., &quot;2.5.0&quot;)</li>
+<li><strong>Deployment Model</strong>: Select the architecture type</li>
+<li><strong>Deployment Status</strong>: Select the current status</li>
+</ul>
+</li>
+<li>Click <strong>Deploy</strong></li>
+</ol>
+<h3>Deployment Models</h3>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Description</th>
+<th>Use Case</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Monolith</strong></td>
+<td>Single deployable unit</td>
+<td>Traditional applications</td>
+</tr>
+<tr>
+<td><strong>Microservices</strong></td>
+<td>Distributed services</td>
+<td>Cloud-native apps</td>
+</tr>
+<tr>
+<td><strong>SaaS</strong></td>
+<td>Software as a Service</td>
+<td>Third-party hosted</td>
+</tr>
+<tr>
+<td><strong>COTS</strong></td>
+<td>Commercial Off-The-Shelf</td>
+<td>Vendor products</td>
+</tr>
+</tbody></table>
+<h3>Deployment Statuses</h3>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Description</th>
+<th>Action Needed</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Aligned</strong></td>
+<td>All components match expected versions</td>
+<td>None</td>
+</tr>
+<tr>
+<td><strong>Mixed</strong></td>
+<td>Some components at different versions</td>
+<td>Review</td>
+</tr>
+<tr>
+<td><strong>OutOfSync</strong></td>
+<td>Deployment differs from plan</td>
+<td>Investigate</td>
+</tr>
+<tr>
+<td><strong>Broken</strong></td>
+<td>Deployment has issues</td>
+<td>Immediate action</td>
+</tr>
+</tbody></table>
+<h3>Editing a Deployment</h3>
+<ol>
+<li>In the Deployments tab, find the deployment row</li>
+<li>Click the <strong>Edit</strong> icon</li>
+<li>Update version, model, or status as needed</li>
+<li>Click <strong>Update</strong></li>
+</ol>
+<h3>Undeploying an Application</h3>
+<ol>
+<li>In the Deployments tab, find the deployment row</li>
+<li>Click the <strong>Undeploy</strong> icon</li>
+<li>Confirm the action in the dialog</li>
+<li>The deployment record is removed</li>
+</ol>
+<h3>Managing Deployments from Environments</h3>
+<p>You can also manage deployments from the Environment side:</p>
+<ol>
+<li>Go to <strong>Environments</strong> page</li>
+<li>Click <strong>View Details</strong> on an environment</li>
+<li>Go to the <strong>Applications</strong> tab</li>
+<li>View all applications deployed to this environment</li>
+<li>Click <strong>Link Application</strong> to add a new deployment</li>
+<li>Edit or unlink existing deployments</li>
+</ol>
+<h3>Deployment Best Practices</h3>
+<ol>
+<li><strong>Keep versions updated</strong> - Update the version field when deploying new releases</li>
+<li><strong>Monitor status</strong> - Check for OutOfSync or Broken deployments regularly</li>
+<li><strong>Document models</strong> - Use consistent deployment models across environments</li>
+<li><strong>Review before booking</strong> - Check deployments when planning test bookings</li>
+</ol>
+<hr>
+<h2>Interfaces &amp; Endpoints</h2>
+<h3>Understanding Interfaces</h3>
+<p>Interfaces define communication contracts between applications or with external systems. Each interface can have multiple endpoints configured per environment instance.</p>
+<blockquote>
+<p><strong>📘 See Also</strong>: <a href="LIFECYCLE_GUIDE.md#interface-lifecycle">Interface Lifecycle Details</a> for complete lifecycle documentation.</p>
+</blockquote>
+<h3>Interface Properties</h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Name</strong></td>
+<td>Unique identifier for the interface</td>
+</tr>
+<tr>
+<td><strong>Direction</strong></td>
+<td>Inbound, Outbound, or Bidirectional</td>
+</tr>
+<tr>
+<td><strong>Pattern</strong></td>
+<td>REST, SOAP, MQ, Kafka, FileDrop, etc.</td>
+</tr>
+<tr>
+<td><strong>Frequency</strong></td>
+<td>RealTime, NearRealTime, or Batch</td>
+</tr>
+<tr>
+<td><strong>Source Application</strong></td>
+<td>Where data originates</td>
+</tr>
+<tr>
+<td><strong>Target Application</strong></td>
+<td>Where data goes (or External Party)</td>
+</tr>
+<tr>
+<td><strong>SLA</strong></td>
+<td>Service level agreement</td>
+</tr>
+</tbody></table>
+<h3>Viewing Interfaces</h3>
+<ol>
+<li>Click <strong>Environments</strong> → select an environment → <strong>Interfaces</strong> tab</li>
+<li>Or view from Application details → <strong>Interfaces</strong> tab</li>
+<li>See all interfaces with their configurations</li>
+</ol>
+<h3>Interface Endpoint Configuration</h3>
+<p>Each interface has endpoints configured per environment instance with different test modes:</p>
+<table>
+<thead>
+<tr>
+<th>Test Mode</th>
+<th>Description</th>
+<th>When to Use</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Live</strong></td>
+<td>Real connection to target system</td>
+<td>Production-like testing, E2E</td>
+</tr>
+<tr>
+<td><strong>Virtualised</strong></td>
+<td>Service virtualization (Parasoft, WireMock)</td>
+<td>Controlled testing in SIT</td>
+</tr>
+<tr>
+<td><strong>Stubbed</strong></td>
+<td>Simple mock responses</td>
+<td>Development, unit testing</td>
+</tr>
+<tr>
+<td><strong>Disabled</strong></td>
+<td>Interface turned off</td>
+<td>Isolated component testing</td>
+</tr>
+</tbody></table>
+<h3>Configuring Interface Endpoints</h3>
+<ol>
+<li>Navigate to Environment Instance details</li>
+<li>Go to <strong>Interfaces</strong> tab</li>
+<li>For each interface, configure:<ul>
+<li><strong>Endpoint URL</strong> - Connection string/URL</li>
+<li><strong>Test Mode</strong> - Live, Virtualised, Stubbed, or Disabled</li>
+<li><strong>Enabled</strong> - Whether endpoint is active</li>
+</ul>
+</li>
+</ol>
+<h3>Interface Endpoint Promotion Strategy</h3>
+<p>As you move through environments, promote interface modes:</p>
+<pre><code>Development (Stubbed) → SIT (Virtualised) → UAT (Live/Virtualised) → PreProd (Live)
+</code></pre>
+<hr>
+<h2>Components &amp; Instances</h2>
+<h3>Understanding Component Instances</h3>
+<p>Component Instances track the deployment of individual application components (microservices, APIs, UIs) to specific environment instances.</p>
+<blockquote>
+<p><strong>📘 See Also</strong>: <a href="LIFECYCLE_GUIDE.md#component-instance-lifecycle">Component Instance Lifecycle</a> for detailed status transitions.</p>
+</blockquote>
+<h3>Component Instance Status</h3>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Description</th>
+<th>Alert Level</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Deployed</strong></td>
+<td>Successfully running</td>
+<td>✅ None</td>
+</tr>
+<tr>
+<td><strong>PartiallyDeployed</strong></td>
+<td>Some replicas running</td>
+<td>⚠️ Warning</td>
+</tr>
+<tr>
+<td><strong>RollbackPending</strong></td>
+<td>Rolling back to previous version</td>
+<td>⚠️ Info</td>
+</tr>
+<tr>
+<td><strong>Failed</strong></td>
+<td>Deployment failed</td>
+<td>❌ Critical</td>
+</tr>
+</tbody></table>
+<h3>Managing Component Instances</h3>
+<ol>
+<li>Navigate to Application → <strong>Components</strong> tab</li>
+<li>Select a component</li>
+<li>View instances across environments</li>
+<li>For each instance, see:<ul>
+<li>Environment Instance name</li>
+<li>Deployed version</li>
+<li>Deployment status</li>
+<li>Last deployed date</li>
+</ul>
+</li>
+</ol>
+<h3>Deploying Component Instances</h3>
+<ol>
+<li>From Application → Components → select component</li>
+<li>Click <strong>Deploy to Instance</strong></li>
+<li>Select target Environment Instance</li>
+<li>Enter version number</li>
+<li>Click <strong>Deploy</strong></li>
+</ol>
+<h3>Version Tracking Across Environments</h3>
+<p>Component instances allow you to track versions across your environment landscape:</p>
+<pre><code>Example: payment-api versions
+
+┌─────────────────────────────────────────────┐
+│ Instance      │ Version  │ Status          │
+├───────────────┼──────────┼─────────────────┤
+│ DEV-1         │ 2.3.0    │ Deployed        │
+│ SIT-1         │ 2.2.0    │ Deployed        │
+│ UAT-1         │ 2.1.0    │ Deployed        │
+│ PreProd-1     │ 2.0.0    │ Deployed        │
+└─────────────────────────────────────────────┘
+</code></pre>
+<h3>Component Instance Best Practices</h3>
+<ol>
+<li><strong>Version Consistency</strong> - Keep track of version differences across environments</li>
+<li><strong>Status Monitoring</strong> - Address PartiallyDeployed or Failed statuses promptly</li>
+<li><strong>Deployment Records</strong> - Update last_deployed_date when deploying</li>
+<li><strong>Rollback Planning</strong> - Know which version to rollback to if needed</li>
+</ol>
+<hr>
+<h2>Groups Management</h2>
+<h3>Viewing Groups</h3>
+<ol>
+<li>Click <strong>Groups</strong> in the sidebar</li>
+<li>View teams/groups in the system</li>
+</ol>
+<h3>Creating a Group</h3>
+<ol>
+<li>Click <strong>+ Add Group</strong></li>
+<li>Fill in:<ul>
+<li><strong>Name</strong> - Group name (e.g., &quot;QA Team&quot;)</li>
+<li><strong>Description</strong> - Group purpose</li>
+<li><strong>Group Type</strong> - Team, Project, Department</li>
+</ul>
+</li>
+<li>Click <strong>Create</strong></li>
+</ol>
+<h3>Managing Members</h3>
+<ol>
+<li>Select a group</li>
+<li>Go to <strong>Members</strong> tab</li>
+<li>Click <strong>+ Add Member</strong></li>
+<li>Select users to add</li>
+<li>Click <strong>Add</strong></li>
+</ol>
+<hr>
+<h2>Bulk Data Upload</h2>
+<h3>Accessing Bulk Upload</h3>
+<ol>
+<li>Navigate to <strong>Settings</strong> (gear icon in sidebar)</li>
+<li>Click the <strong>Data Management</strong> tab</li>
+<li>Click <strong>Go to Bulk Upload</strong></li>
+</ol>
+<h3>Supported Entity Types</h3>
+<table>
+<thead>
+<tr>
+<th>Entity</th>
+<th>Tab Name</th>
+<th>Required Fields</th>
+<th>Key Optional Fields</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Environments</strong></td>
+<td>Environments</td>
+<td>name</td>
+<td>environment_category, lifecycle_stage, owner_team</td>
+</tr>
+<tr>
+<td><strong>Instances</strong></td>
+<td>Instances</td>
+<td>environment_name, name</td>
+<td>operational_status, availability_window, capacity, bookable</td>
+</tr>
+<tr>
+<td><strong>Applications</strong></td>
+<td>Applications</td>
+<td>name</td>
+<td>business_domain, criticality, owner_team, test_owner</td>
+</tr>
+<tr>
+<td><strong>Interfaces</strong></td>
+<td>Interfaces</td>
+<td>name</td>
+<td>direction, pattern, frequency, source/target_application_name</td>
+</tr>
+<tr>
+<td><strong>Components</strong></td>
+<td>Components</td>
+<td>application_name, name</td>
+<td>component_type, source_repo, runtime_platform</td>
+</tr>
+<tr>
+<td><strong>App Deployments</strong></td>
+<td>App Instances</td>
+<td>application_name, instance_name</td>
+<td>deployment_model, version, deployment_status</td>
+</tr>
+<tr>
+<td><strong>Infrastructure</strong></td>
+<td>Infrastructure</td>
+<td>instance_name, name</td>
+<td>component_type, hostname, ip_address</td>
+</tr>
+<tr>
+<td><strong>Interface Endpoints</strong></td>
+<td>Interface Endpoints</td>
+<td>interface_name, instance_name</td>
+<td>endpoint, test_mode, enabled</td>
+</tr>
+<tr>
+<td><strong>Component Instances</strong></td>
+<td>Component Instances</td>
+<td>application_name, component_name, instance_name</td>
+<td>version, deployment_status</td>
+</tr>
+</tbody></table>
+<h3>New: Interface Endpoints Upload</h3>
+<p>Configure how interfaces behave in different environment instances:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Valid Values</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>interface_name</code></td>
+<td>Name of existing interface</td>
+<td>Must match exactly</td>
+</tr>
+<tr>
+<td><code>instance_name</code></td>
+<td>Target environment instance</td>
+<td>Must match exactly</td>
+</tr>
+<tr>
+<td><code>endpoint</code></td>
+<td>URL or connection string</td>
+<td>Any valid URL</td>
+</tr>
+<tr>
+<td><code>test_mode</code></td>
+<td>How interface operates</td>
+<td><code>Live</code>, <code>Virtualised</code>, <code>Stubbed</code>, <code>Disabled</code></td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>Is endpoint active</td>
+<td><code>true</code>, <code>false</code></td>
+</tr>
+</tbody></table>
+<p><strong>Example Use Case:</strong> In SIT, connect to real internal APIs (<code>Live</code>), but use WireMock stubs (<code>Stubbed</code>) for external vendor APIs.</p>
+<h3>New: Component Instances Upload</h3>
+<p>Track individual component deployments per instance:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Valid Values</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>application_name</code></td>
+<td>Parent application name</td>
+<td>Must match exactly</td>
+</tr>
+<tr>
+<td><code>component_name</code></td>
+<td>Component name</td>
+<td>Must exist under application</td>
+</tr>
+<tr>
+<td><code>instance_name</code></td>
+<td>Environment instance</td>
+<td>Must match exactly</td>
+</tr>
+<tr>
+<td><code>version</code></td>
+<td>Deployed version</td>
+<td>e.g., &quot;2.1.0&quot;, &quot;2.1.0-SNAPSHOT&quot;</td>
+</tr>
+<tr>
+<td><code>deployment_status</code></td>
+<td>Current state</td>
+<td><code>Deployed</code>, <code>PartiallyDeployed</code>, <code>RollbackPending</code>, <code>Failed</code></td>
+</tr>
+</tbody></table>
+<p><strong>Example Use Case:</strong> Track that <code>payment-api v2.1.0</code> is in SIT while <code>payment-api v2.0.0</code> is in UAT.</p>
+<h3>Upload Process</h3>
+<ol>
+<li>Select the entity type tab (Environments, Instances, Applications, etc.)</li>
+<li>Click <strong>Download Template</strong> to get a sample CSV file</li>
+<li>Fill in your data following the template format</li>
+<li>Click <strong>Upload CSV</strong> and select your file</li>
+<li>Review the results:<ul>
+<li>✅ Success count</li>
+<li>❌ Error details with line numbers</li>
+</ul>
+</li>
+</ol>
+<h3>Recommended Upload Order</h3>
+<p>For best results, upload data in this sequence:</p>
+<ol>
+<li><strong>Environments</strong> - Base environment definitions</li>
+<li><strong>Applications</strong> - Application definitions</li>
+<li><strong>Instances</strong> - Environment instances (requires environments)</li>
+<li><strong>Interfaces</strong> - Interface definitions (can reference applications)</li>
+<li><strong>Components</strong> - Application components (requires applications)</li>
+<li><strong>App Deployments</strong> - Links apps to instances (requires both)</li>
+<li><strong>Infrastructure</strong> - Infrastructure components (requires instances)</li>
+<li><strong>Interface Endpoints</strong> - Interface per-instance config (requires interfaces + instances)</li>
+<li><strong>Component Instances</strong> - Component per-instance deployment (requires components + instances)</li>
+</ol>
+<h3>CSV Format Guidelines</h3>
+<ul>
+<li>Use <strong>UTF-8 encoding</strong></li>
+<li>First row must contain <strong>header names</strong></li>
+<li>Use <strong>commas</strong> as delimiters</li>
+<li>Wrap text containing commas in <strong>double quotes</strong></li>
+<li>Leave optional fields <strong>empty</strong> if not needed</li>
+<li>Date format: <strong>YYYY-MM-DD</strong> or <strong>ISO 8601</strong></li>
+<li>Boolean values: <strong>true</strong> or <strong>false</strong> (lowercase)</li>
+</ul>
+<h3>Error Handling</h3>
+<p>If upload fails:</p>
+<ul>
+<li>Check the error message for the specific row number</li>
+<li>Verify field names match exactly (case-sensitive)</li>
+<li>Ensure referenced entities exist (e.g., environment before instance)</li>
+<li>Check enum values match exactly (e.g., <code>Live</code> not <code>live</code>)</li>
+<li>Check for duplicate names where unique is required</li>
+</ul>
+<hr>
+<h2>Monitoring</h2>
+<p>The Monitoring page provides real-time system health:</p>
+<h3>Environment Statistics</h3>
+<ul>
+<li>Total environments and instances</li>
+<li>Breakdown by category (NonProd, PreProd, DR)</li>
+<li>Instance availability status</li>
+</ul>
+<h3>Health Indicators</h3>
+<ul>
+<li><strong>Available</strong> - Ready for use</li>
+<li><strong>In Use</strong> - Currently booked</li>
+<li><strong>Maintenance</strong> - Under maintenance</li>
+<li><strong>Offline</strong> - Not operational</li>
+</ul>
+<h3>Infrastructure Components</h3>
+<p>View infrastructure components deployed across environments.</p>
+<hr>
+<h2>Integrations</h2>
+<h3>Supported Integrations</h3>
+<ul>
+<li><strong>Jira</strong> - Issue tracking and project management</li>
+<li><strong>GitLab</strong> - Source control and CI/CD</li>
+<li><strong>ServiceNow</strong> - Change management and CMDB</li>
+</ul>
+<h3>Configuring an Integration</h3>
+<p>(Admin only)</p>
+<ol>
+<li>Click <strong>Integrations</strong> in the sidebar</li>
+<li>Click <strong>+ Add Integration</strong></li>
+<li>Select the tool type</li>
+<li>Fill in connection details:<ul>
+<li><strong>Name</strong> - Integration identifier</li>
+<li><strong>Base URL</strong> - Tool API endpoint</li>
+<li><strong>API Token</strong> - Authentication token</li>
+</ul>
+</li>
+<li>Click <strong>Test Connection</strong> to verify</li>
+<li>Click <strong>Save</strong></li>
+</ol>
+<hr>
+<h2>Audit &amp; Compliance</h2>
+<blockquote>
+<p><strong>⭐ New in v4.2</strong> - Comprehensive audit logging and compliance reporting</p>
+</blockquote>
+<p>The Audit &amp; Compliance module provides full CRUD traceability across the system, enabling organizations to meet regulatory requirements and maintain operational visibility.</p>
+<h3>Accessing Audit &amp; Compliance</h3>
+<ol>
+<li>Click <strong>Audit &amp; Compliance</strong> in the sidebar</li>
+<li>Available to: <strong>Admin</strong>, <strong>EnvironmentManager</strong>, <strong>ProjectLead</strong> roles</li>
+</ol>
+<h3>Audit Events Tab</h3>
+<h4>Statistics Dashboard</h4>
+<p>The top of the page displays key metrics:</p>
+<table>
+<thead>
+<tr>
+<th>Card</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Events Today</strong></td>
+<td>Audit events recorded in the last 24 hours</td>
+</tr>
+<tr>
+<td><strong>Events (7 Days)</strong></td>
+<td>Total events in the past week</td>
+</tr>
+<tr>
+<td><strong>Events (30 Days)</strong></td>
+<td>Total events in the past month</td>
+</tr>
+<tr>
+<td><strong>Top Entity Types</strong></td>
+<td>Most frequently modified entity types</td>
+</tr>
+<tr>
+<td><strong>Top Actors</strong></td>
+<td>Users with the most activity</td>
+</tr>
+</tbody></table>
+<h4>Filtering Events</h4>
+<p>Use the filter panel to narrow down audit events:</p>
+<ul>
+<li><strong>Date Range</strong> - Select from presets (Today, Last 7 Days, Last 30 Days) or custom range</li>
+<li><strong>Entity Type</strong> - Filter by entity (Environment, Booking, Application, Release, User, etc.)</li>
+<li><strong>Action Type</strong> - Filter by action (CREATE, UPDATE, DELETE, LOGIN, APPROVE, etc.)</li>
+<li><strong>Actor</strong> - Filter by user who performed the action</li>
+<li><strong>Regulatory Tag</strong> - Filter by compliance tag (SOX, GDPR, PCI-DSS, etc.)</li>
+<li><strong>Search</strong> - Full-text search across entity names and descriptions</li>
+</ul>
+<h4>Viewing Event Details</h4>
+<ol>
+<li>Click on any row in the events table</li>
+<li>A detail drawer opens on the right showing:<ul>
+<li><strong>Event Summary</strong> - Timestamp, actor, action type</li>
+<li><strong>Entity Information</strong> - Type, ID, name</li>
+<li><strong>Before/After Snapshots</strong> - Full state comparison</li>
+<li><strong>Changed Fields</strong> - Highlighted modified fields</li>
+<li><strong>Context</strong> - IP address, user agent, session info</li>
+</ul>
+</li>
+</ol>
+<h3>Reports Tab</h3>
+<h4>Pre-built Report Templates</h4>
+<table>
+<thead>
+<tr>
+<th>Template</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>All Activity Report</strong></td>
+<td>Complete audit trail of all system activities</td>
+</tr>
+<tr>
+<td><strong>User Activity Report</strong></td>
+<td>All activities performed by a specific user</td>
+</tr>
+<tr>
+<td><strong>Environment Changes</strong></td>
+<td>All changes to environment configurations</td>
+</tr>
+<tr>
+<td><strong>Booking Audit Trail</strong></td>
+<td>Complete history of booking operations</td>
+</tr>
+<tr>
+<td><strong>Security Events</strong></td>
+<td>Login/logout and access-related events</td>
+</tr>
+<tr>
+<td><strong>Compliance Report</strong></td>
+<td>Regulatory compliance audit report</td>
+</tr>
+</tbody></table>
+<h4>Generating a Report</h4>
+<ol>
+<li>Switch to the <strong>Reports</strong> tab</li>
+<li>Select a report template</li>
+<li>Choose the date range</li>
+<li>Click <strong>Generate Report</strong></li>
+<li>Export as CSV or JSON</li>
+</ol>
+<h3>Tracked Events</h3>
+<p>The audit system automatically tracks:</p>
+<table>
+<thead>
+<tr>
+<th>Entity</th>
+<th>Actions Tracked</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Environment</strong></td>
+<td>Create, Update, Delete</td>
+</tr>
+<tr>
+<td><strong>Booking</strong></td>
+<td>Create, Update, Status Change, Delete</td>
+</tr>
+<tr>
+<td><strong>Application</strong></td>
+<td>Create, Update, Delete</td>
+</tr>
+<tr>
+<td><strong>Release</strong></td>
+<td>Create, Update, Status Change</td>
+</tr>
+<tr>
+<td><strong>User</strong></td>
+<td>Create, Update, Role Change</td>
+</tr>
+<tr>
+<td><strong>Authentication</strong></td>
+<td>Login, Logout, Failed Attempts</td>
+</tr>
+<tr>
+<td><strong>Refresh Intent</strong></td>
+<td>Create, Approve, Reject, Execute</td>
+</tr>
+</tbody></table>
+<h3>Data Retention</h3>
+<ul>
+<li>Default retention: <strong>7 years</strong> (2555 days)</li>
+<li>Configurable per regulatory requirement</li>
+<li>Automatic archival available for older events</li>
+</ul>
+<hr>
+<h2>Settings &amp; Administration</h2>
+<h3>Accessing Settings</h3>
+<p>Click <strong>Settings</strong> in the sidebar or click your avatar → <strong>Settings</strong></p>
+<h3>Profile Tab</h3>
+<ul>
+<li>View and update your profile information</li>
+<li>Change display name</li>
+<li>Update time zone</li>
+</ul>
+<h3>Notifications Tab</h3>
+<ul>
+<li>Configure notification preferences</li>
+<li>Enable/disable email notifications</li>
+<li>Set notification frequency</li>
+</ul>
+<h3>User Management (Admin only)</h3>
+<ul>
+<li>View all users</li>
+<li>Create new users</li>
+<li>Edit user roles</li>
+<li>Activate/deactivate accounts</li>
+<li>Reset passwords</li>
+</ul>
+<h3>SSO Configuration (Admin only)</h3>
+<ul>
+<li>Configure identity providers (Azure AD, Okta, etc.)</li>
+<li>Set up SAML/OIDC authentication</li>
+<li>Map SSO groups to BME roles</li>
+</ul>
+<hr>
+<h2>User Roles &amp; Permissions</h2>
+<h3>Role Hierarchy</h3>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Environments</th>
+<th>Bookings</th>
+<th>Releases</th>
+<th>Users</th>
+<th>Settings</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Admin</td>
+<td>Full</td>
+<td>Full</td>
+<td>Full</td>
+<td>Full</td>
+<td>Full</td>
+</tr>
+<tr>
+<td>EnvironmentManager</td>
+<td>Full</td>
+<td>Approve</td>
+<td>View</td>
+<td>View</td>
+<td>Limited</td>
+</tr>
+<tr>
+<td>ProjectLead</td>
+<td>View</td>
+<td>Create</td>
+<td>Full</td>
+<td>View</td>
+<td>Limited</td>
+</tr>
+<tr>
+<td>Tester</td>
+<td>View</td>
+<td>Create</td>
+<td>View</td>
+<td>-</td>
+<td>Profile</td>
+</tr>
+<tr>
+<td>Viewer</td>
+<td>View</td>
+<td>View</td>
+<td>View</td>
+<td>-</td>
+<td>Profile</td>
+</tr>
+</tbody></table>
+<h3>Detailed Permissions</h3>
+<p><strong>Admin</strong></p>
+<ul>
+<li>All permissions</li>
+<li>User management</li>
+<li>System configuration</li>
+<li>SSO setup</li>
+</ul>
+<p><strong>Environment Manager</strong></p>
+<ul>
+<li>Create/edit/delete environments</li>
+<li>Approve/reject bookings</li>
+<li>Manage instances</li>
+<li>View all resources</li>
+</ul>
+<p><strong>Project Lead</strong></p>
+<ul>
+<li>Create bookings</li>
+<li>Manage releases</li>
+<li>View all environments</li>
+<li>Manage applications</li>
+</ul>
+<p><strong>Tester</strong></p>
+<ul>
+<li>Create bookings</li>
+<li>View environments</li>
+<li>View releases</li>
+<li>View applications</li>
+</ul>
+<p><strong>Viewer</strong></p>
+<ul>
+<li>Read-only access to all resources</li>
+</ul>
+<hr>
+<h2>Best Practices</h2>
+<h3>Booking Best Practices</h3>
+<ol>
+<li><strong>Book in Advance</strong> - Reserve environments early for critical testing</li>
+<li><strong>Accurate Timeframes</strong> - Set realistic start/end times</li>
+<li><strong>Descriptive Titles</strong> - Use clear, descriptive booking names</li>
+<li><strong>Check Conflicts</strong> - Review conflicts before submitting</li>
+<li><strong>Release on Time</strong> - Complete bookings promptly to free resources</li>
+<li><strong>Check Refresh Calendar</strong> - Review planned refreshes before booking ⭐</li>
+<li><strong>Mark Critical Bookings</strong> - Set priority for important test cycles ⭐</li>
+<li><strong>Enable Notifications</strong> - Stay informed about refresh activities ⭐</li>
+</ol>
+<h3>Refresh Management Best Practices <span class="badge badge-new">⭐ NEW</span></h3>
+<ol>
+<li><strong>Plan Refreshes Early</strong> - Submit refresh intents at least 7 days in advance</li>
+<li><strong>Use Correct Impact Types</strong> - Accurately classify data impact</li>
+<li><strong>Consider Booking Calendar</strong> - Check for active bookings before scheduling</li>
+<li><strong>Use Alternative Slots</strong> - Leverage the &quot;Suggest Slots&quot; feature</li>
+<li><strong>Coordinate with Teams</strong> - Communicate with booking owners proactively</li>
+<li><strong>Document Thoroughly</strong> - Provide clear business justification</li>
+<li><strong>Schedule Off-Hours</strong> - Prefer weekends/nights for disruptive refreshes</li>
+<li><strong>Notify in Advance</strong> - Configure proper notification lead times</li>
+</ol>
+<h3>Environment Management</h3>
+<ol>
+<li><strong>Keep Status Updated</strong> - Mark instances accurately (Available, Maintenance, etc.)</li>
+<li><strong>Document Changes</strong> - Add descriptions when updating environments</li>
+<li><strong>Regular Cleanup</strong> - Remove obsolete instances and environments</li>
+<li><strong>Capacity Planning</strong> - Monitor instance utilization</li>
+<li><strong>Establish Refresh Cycles</strong> - Define regular refresh schedules ⭐</li>
+<li><strong>Track Data Lineage</strong> - Document refresh sources ⭐</li>
+</ol>
+<h3>Release Management</h3>
+<ol>
+<li><strong>Plan Ahead</strong> - Create releases with adequate lead time</li>
+<li><strong>Link Applications</strong> - Associate all affected applications</li>
+<li><strong>Target Environments</strong> - Specify all deployment targets</li>
+<li><strong>Update Status</strong> - Keep release status current</li>
+<li><strong>Align with Refresh Schedule</strong> - Consider refresh timing when planning releases ⭐</li>
+</ol>
+<hr>
+<h2>Troubleshooting</h2>
+<h3>Common Issues</h3>
+<h4>Login Failed</h4>
+<ul>
+<li>Verify email and password</li>
+<li>Check if account is active</li>
+<li>Clear browser cache and cookies</li>
+</ul>
+<h4>Booking Conflicts</h4>
+<ul>
+<li>Check the calendar view for overlapping bookings</li>
+<li>Contact the conflicting booking owner</li>
+<li>Request approval if conflict is acceptable</li>
+</ul>
+<h4>Environment Not Available</h4>
+<ul>
+<li>Check operational status</li>
+<li>Verify booking end time hasn&#39;t expired</li>
+<li>Contact environment owner</li>
+</ul>
+<h4>Refresh-Booking Conflicts <span class="badge badge-new">⭐ NEW</span></h4>
+<ul>
+<li><strong>Problem</strong>: Cannot approve refresh due to MAJOR conflicts</li>
+<li><strong>Solutions</strong>:<ul>
+<li>Use &quot;Suggest Alternative Slots&quot; to find conflict-free times</li>
+<li>Contact booking owners to negotiate timing</li>
+<li>If urgent, use Force Approve with proper justification</li>
+<li>Consider splitting the refresh into smaller windows</li>
+</ul>
+</li>
+</ul>
+<h4>Test Data Lost After Refresh <span class="badge badge-new">⭐ NEW</span></h4>
+<ul>
+<li><strong>Problem</strong>: Booking&#39;s test data was overwritten by refresh</li>
+<li><strong>Solutions</strong>:<ul>
+<li>Check refresh history to understand what happened</li>
+<li>Contact environment manager for possible data recovery</li>
+<li>Review notification settings to ensure you receive alerts</li>
+<li>Mark future bookings as &quot;Critical&quot; to increase conflict severity</li>
+</ul>
+</li>
+</ul>
+<h4>Refresh Intent Rejected <span class="badge badge-new">⭐ NEW</span></h4>
+<ul>
+<li><strong>Problem</strong>: Refresh intent was rejected by approver</li>
+<li><strong>Solutions</strong>:<ul>
+<li>Review rejection reason in the intent details</li>
+<li>Adjust timing to avoid critical booking conflicts</li>
+<li>Provide more detailed business justification</li>
+<li>Escalate to management if refresh is mandatory</li>
+</ul>
+</li>
+</ul>
+<h4>Page Not Loading</h4>
+<ul>
+<li>Check network connection</li>
+<li>Clear browser cache</li>
+<li>Try refreshing the page</li>
+</ul>
+<h3>Getting Help</h3>
+<ol>
+<li>Check this documentation</li>
+<li>Contact your system administrator</li>
+<li>Review recent activity logs</li>
+<li>Submit a support ticket</li>
+</ol>
+<hr>
+<h2>Keyboard Shortcuts</h2>
+<table>
+<thead>
+<tr>
+<th>Shortcut</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Ctrl + K</code></td>
+<td>Quick search</td>
+</tr>
+<tr>
+<td><code>Esc</code></td>
+<td>Close dialogs</td>
+</tr>
+<tr>
+<td><code>Enter</code></td>
+<td>Confirm actions</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>API Access</h2>
+<p>For programmatic access, see the API documentation:</p>
+<ul>
+<li>Base URL: <code>http://localhost:5000/api</code> (local) or <code>https://your-domain.com/api</code> (AWS)</li>
+<li>Authentication: JWT Bearer token</li>
+<li>Full API docs: <code>/api/docs</code></li>
+</ul>
+<hr>
+<h2>Cloud Deployment</h2>
+<p>BookMyEnv can be deployed to AWS using the provided Terraform configuration. See <a href="../terraform/README.md">terraform/README.md</a> for:</p>
+<ul>
+<li>Infrastructure as Code setup</li>
+<li>ECS Fargate container deployment</li>
+<li>RDS PostgreSQL managed database</li>
+<li>CloudFront CDN with SSL</li>
+<li>CI/CD pipeline with GitHub Actions</li>
+</ul>
+<hr>
+<h2>Version History</h2>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Date</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>4.0.0</strong></td>
+<td><strong>Dec 2025</strong></td>
+<td><strong>Refresh Lifecycle Management, Booking-Refresh Dependency Detection, Conflict Resolution Workflows</strong></td>
+</tr>
+<tr>
+<td>3.1.0</td>
+<td>Dec 2025</td>
+<td>AWS Terraform deployment, GitHub Actions CI/CD</td>
+</tr>
+<tr>
+<td>3.0.0</td>
+<td>Dec 2025</td>
+<td>Interface Endpoints and Component Instances bulk upload, enhanced documentation</td>
+</tr>
+<tr>
+<td>2.1.0</td>
+<td>Dec 2025</td>
+<td>Application Deployments management, bidirectional deploy/undeploy</td>
+</tr>
+<tr>
+<td>2.0.0</td>
+<td>Dec 2025</td>
+<td>Conflict detection &amp; resolution, Bulk data upload</td>
+</tr>
+<tr>
+<td>1.0.0</td>
+<td>Nov 2025</td>
+<td>Initial release</td>
+</tr>
+</tbody></table>
+<hr>
+<p><strong>© 2025 BookMyEnv. All rights reserved.</strong></p>
+
         <div class="footer">
-            <p>© 2025 BookMyEnv. All rights reserved.</p>
-            <p style="margin-top: 10px; font-size: 0.9rem;">Version 1.0.0 | Last Updated: November 2025</p>
+            <p>BookMyEnv v4.2.0 | January 2025</p>
+            <p>Documentation generated automatically</p>
         </div>
-    </main>
+    </div>
 </body>
 </html>

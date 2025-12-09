@@ -7,6 +7,7 @@ A comprehensive, enterprise-grade Environment Booking and Management System (BME
 - **Environment Management** - Create and manage environments with multiple instances
 - **Application Deployments** - Track application deployments across environment instances
 - **Booking System** - Book environments with conflict detection and resolution
+- **Refresh Lifecycle (v4.0)** - Schedule data refreshes with booking conflict detection and resolution workflows
 - **Release Management** - Plan and track releases across environments
 - **Bulk Data Upload** - Import data in bulk via CSV (7 entity types)
 - **Real-time Monitoring** - Dashboard with live activity feed
@@ -117,6 +118,11 @@ See [docs/SECURITY.md](docs/SECURITY.md) for complete security documentation.
 
 #### Booking & Scheduling
 - EnvironmentBooking, BookingResource, BookingApplication
+- BookingConflict, ConflictResolution
+
+#### Refresh Management (v4.0)
+- RefreshIntent, RefreshImpactedResource
+- RefreshBookingConflict, RefreshConflictResolution
 
 #### Release Management
 - Release, ReleaseApplication, ReleaseEnvironment, ReleaseComponentInstance
@@ -208,6 +214,18 @@ GET    /api/releases/:id                    - Get release
 PATCH  /api/releases/:id/status             - Update status
 ```
 
+### Refresh Management (v4.0)
+```
+GET    /api/refresh/intents                 - List refresh intents
+POST   /api/refresh/intents                 - Create refresh intent
+GET    /api/refresh/intents/:id             - Get refresh intent
+PATCH  /api/refresh/intents/:id/status      - Update status
+GET    /api/refresh/intents/:id/conflicts   - Get booking conflicts
+POST   /api/refresh/conflicts/:id/resolve   - Resolve conflict
+POST   /api/refresh/conflicts/:id/force     - Force approve (admin)
+POST   /api/refresh/notify                  - Send conflict notifications
+```
+
 ### Integrations
 ```
 GET    /api/integrations                    - List integrations
@@ -270,7 +288,9 @@ test-env-management/
     ├── ARCHITECTURE.md         # System architecture
     ├── USER_GUIDE.md           # User documentation
     ├── QUICK_REFERENCE.md      # Quick reference card
-    └── SECURITY.md             # Security documentation
+    ├── SECURITY.md             # Security documentation
+    ├── LIFECYCLE_GUIDE.md      # Entity lifecycle states & transitions
+    └── WORKFLOW_GUIDE.md       # End-user workflow walkthroughs
 ```
 
 ## 📚 Documentation
@@ -279,6 +299,8 @@ test-env-management/
 |----------|-------------|
 | [DEMO_GUIDE.md](docs/DEMO_GUIDE.md) | Step-by-step demo walkthrough |
 | [USER_GUIDE.md](docs/USER_GUIDE.md) | Complete user documentation |
+| [WORKFLOW_GUIDE.md](docs/WORKFLOW_GUIDE.md) | **Step-by-step workflow guides for bookings, refreshes, and conflict resolution** |
+| [LIFECYCLE_GUIDE.md](docs/LIFECYCLE_GUIDE.md) | Entity lifecycle states, transitions, and state diagrams |
 | [QUICK_REFERENCE.md](docs/QUICK_REFERENCE.md) | Quick reference card |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture, data model, flows |
 | [SECURITY.md](docs/SECURITY.md) | Security features and configuration |
@@ -346,6 +368,20 @@ See `.env.example` files in backend and frontend directories.
 
 ## 📋 Changelog
 
+### v4.0.0 (January 2025)
+**Refresh Lifecycle Management**
+- **Refresh Intent System**: Complete lifecycle for managing environment refresh requests (draft → scheduled → in_progress → completed)
+- **Booking-Refresh Conflict Detection**: Automatic detection of conflicts between scheduled refreshes and active bookings
+- **Impact Types**: DATA_OVERWRITE, DOWNTIME_REQUIRED, READ_ONLY, CONFIG_CHANGE, SCHEMA_CHANGE with severity-based conflict flags
+- **Conflict Resolution Workflows**: RESCHEDULE, CANCEL, ACKNOWLEDGE_PROCEED options with required approvals for major conflicts
+- **Real-time Notifications**: Automatic email alerts to booking owners when refresh conflicts detected
+- **Force Approval**: Admin-only approval for major conflicts that require override
+
+**Documentation Updates**
+- New [WORKFLOW_GUIDE.md](docs/WORKFLOW_GUIDE.md) - Comprehensive step-by-step workflows for end users
+- Updated [USER_GUIDE.md](docs/USER_GUIDE.md) - Added refresh lifecycle and conflict resolution sections
+- Updated [LIFECYCLE_GUIDE.md](docs/LIFECYCLE_GUIDE.md) - Added refresh intent state diagrams
+
 ### v3.2.0 (January 2025)
 **Major Frontend Upgrade**
 - **Next.js**: 14.2 → 15.1 with Turbopack support
@@ -374,4 +410,4 @@ MIT License
 
 ---
 
-**BookMyEnv v3.2.0** | January 2025
+**BookMyEnv v4.0.0** | January 2025

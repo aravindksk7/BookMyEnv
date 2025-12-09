@@ -13,6 +13,9 @@ router.get('/statistics', bookingController.getStatistics);
 // Conflict management routes (must be before :id routes)
 router.get('/all-conflicts', bookingController.getConflictingBookings);
 
+// Refresh awareness routes (v4.1 - must be before :id routes)
+router.post('/check-refresh-conflicts', bookingController.checkRefreshConflicts);
+
 // Bookings
 router.get('/', bookingController.getAll);
 router.get('/calendar', bookingController.getCalendar);
@@ -29,6 +32,9 @@ router.put('/:id/status', bookingController.updateStatus);
 // Booking conflict management
 router.get('/:id/conflicts', bookingController.getConflicts);
 router.post('/:id/conflicts/resolve', bookingController.resolveConflict);
+
+// Refresh awareness for existing booking
+router.get('/:id/refresh-conflicts', bookingController.getRefreshesForBooking);
 
 // Booking resources
 router.post('/:id/resources', bookingController.addResource);

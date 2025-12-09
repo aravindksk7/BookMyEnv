@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const auditService = require('../services/auditService');
 
 // UUID validation regex - allow any hex characters in version/variant fields for compatibility with seed data
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -129,6 +130,15 @@ const environmentController = {
         [req.user.user_id, 'CREATE', 'Environment', result.rows[0].environment_id, name]
       );
 
+      // Audit logging
+      await auditService.logCreate(
+        auditService.ENTITY_TYPES.ENVIRONMENT,
+        result.rows[0].environment_id,
+        name,
+        result.rows[0],
+        req
+      );
+
       res.status(201).json(result.rows[0]);
     } catch (error) {
       console.error('Create environment error:', error);
@@ -144,6 +154,10 @@ const environmentController = {
     try {
       const { id } = req.params;
       const { name, description, environment_category, lifecycle_stage, owner_team, support_group, data_sensitivity, usage_policies } = req.body;
+
+      // Get before state for audit
+      const beforeResult = await db.query('SELECT * FROM environments WHERE environment_id = $1', [id]);
+      const beforeState = beforeResult.rows[0];
 
       const result = await db.query(
         `UPDATE environments 
@@ -165,6 +179,16 @@ const environmentController = {
         return res.status(404).json({ error: 'Environment not found' });
       }
 
+      // Audit logging
+      await auditService.logUpdate(
+        auditService.ENTITY_TYPES.ENVIRONMENT,
+        id,
+        result.rows[0].name,
+        beforeState,
+        result.rows[0],
+        req
+      );
+
       res.json(result.rows[0]);
     } catch (error) {
       console.error('Update environment error:', error);
@@ -177,6 +201,10 @@ const environmentController = {
     try {
       const { id } = req.params;
 
+      // Get before state for audit
+      const beforeResult = await db.query('SELECT * FROM environments WHERE environment_id = $1', [id]);
+      const beforeState = beforeResult.rows[0];
+
       const result = await db.query(
         'DELETE FROM environments WHERE environment_id = $1 RETURNING name',
         [id]
@@ -185,6 +213,15 @@ const environmentController = {
       if (result.rows.length === 0) {
         return res.status(404).json({ error: 'Environment not found' });
       }
+
+      // Audit logging
+      await auditService.logDelete(
+        auditService.ENTITY_TYPES.ENVIRONMENT,
+        id,
+        beforeState?.name,
+        beforeState,
+        req
+      );
 
       res.json({ message: 'Environment deleted successfully' });
     } catch (error) {

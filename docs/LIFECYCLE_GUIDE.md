@@ -1,6 +1,6 @@
 # BookMyEnv - Entity Lifecycle Guide
 
-A comprehensive guide to understanding the complete lifecycle of all major entities in BookMyEnv: Environments, Environment Instances, Applications, Interfaces, and Components.
+A comprehensive guide to understanding the complete lifecycle of all major entities in BookMyEnv: Environments, Environment Instances, Applications, Interfaces, Components, and **Refresh Intents**.
 
 ---
 
@@ -9,15 +9,17 @@ A comprehensive guide to understanding the complete lifecycle of all major entit
 1. [Overview](#overview)
 2. [Environment Lifecycle](#environment-lifecycle)
 3. [Environment Instance Lifecycle](#environment-instance-lifecycle)
-4. [Application Lifecycle](#application-lifecycle)
-5. [Interface Lifecycle](#interface-lifecycle)
-6. [Component Lifecycle](#component-lifecycle)
-7. [Component Instance Lifecycle](#component-instance-lifecycle)
-8. [Interface Endpoint Lifecycle](#interface-endpoint-lifecycle)
-9. [Application Deployment Lifecycle](#application-deployment-lifecycle)
-10. [Lifecycle Interactions](#lifecycle-interactions)
-11. [Best Practices](#best-practices)
-12. [Troubleshooting Lifecycle Issues](#troubleshooting-lifecycle-issues)
+4. [**Refresh Intent Lifecycle**](#refresh-intent-lifecycle) ⭐ NEW
+5. [**Booking-Refresh Interaction Lifecycle**](#booking-refresh-interaction-lifecycle) ⭐ NEW
+6. [Application Lifecycle](#application-lifecycle)
+7. [Interface Lifecycle](#interface-lifecycle)
+8. [Component Lifecycle](#component-lifecycle)
+9. [Component Instance Lifecycle](#component-instance-lifecycle)
+10. [Interface Endpoint Lifecycle](#interface-endpoint-lifecycle)
+11. [Application Deployment Lifecycle](#application-deployment-lifecycle)
+12. [Lifecycle Interactions](#lifecycle-interactions)
+13. [Best Practices](#best-practices)
+14. [Troubleshooting Lifecycle Issues](#troubleshooting-lifecycle-issues)
 
 ---
 
@@ -338,6 +340,338 @@ Environment Instances have two parallel lifecycle dimensions: **Operational Stat
 | Available | FullyBooked | No | Yes (full) |
 | Maintenance | Any | No | Yes (maintenance) |
 | Broken | Any | No | Yes (unavailable) |
+
+---
+
+## Refresh Intent Lifecycle
+
+> **Version 4.0 Feature**: Comprehensive refresh planning and approval workflow.
+
+Refresh Intents represent planned data/environment refresh operations and follow a structured approval workflow.
+
+### Refresh Intent Lifecycle Flow
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────┐
+│                           REFRESH INTENT LIFECYCLE FLOW                                   │
+├──────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                           │
+│   ┌─────────┐     ┌───────────┐     ┌──────────┐     ┌───────────┐     ┌─────────────┐  │
+│   │  DRAFT  │ ──► │ REQUESTED │ ──► │ APPROVED │ ──► │ SCHEDULED │ ──► │ IN_PROGRESS │  │
+│   └─────────┘     └───────────┘     └──────────┘     └───────────┘     └──────┬──────┘  │
+│        │               │                 │                                     │         │
+│        │               │                 │                             ┌───────┼───────┐ │
+│        │               ▼                 ▼                             ▼       ▼       ▼ │
+│        │         ┌──────────┐      ┌───────────┐                ┌──────────┐ ┌──────┐   │
+│        │         │ REJECTED │      │ CANCELLED │                │COMPLETED │ │FAILED│   │
+│        │         └──────────┘      └───────────┘                └──────────┘ └──┬───┘   │
+│        │                                                                         │       │
+│        │                                                                         ▼       │
+│        │                                                               ┌─────────────┐   │
+│        └──────────────────────────────────────────────────────────────►│ ROLLED_BACK │   │
+│                        (Can be cancelled at any stage)                 └─────────────┘   │
+│                                                                                           │
+└──────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Stage Details
+
+#### 1. DRAFT Stage
+**Purpose**: Initial intent creation, not yet submitted for approval.
+
+| Aspect | Description |
+|--------|-------------|
+| **Entry** | User creates new refresh intent |
+| **Actions Allowed** | Edit, Delete, Submit |
+| **Exit Conditions** | Submit for approval → REQUESTED |
+| **Who Can Transition** | Creator |
+| **Booking Conflicts** | Not checked until submission |
+
+#### 2. REQUESTED Stage
+**Purpose**: Intent submitted and awaiting approval.
+
+| Aspect | Description |
+|--------|-------------|
+| **Entry** | User submits draft for approval |
+| **Actions Allowed** | Approve, Reject, Cancel |
+| **Exit Conditions** | Approve → APPROVED, Reject → REJECTED, Cancel → CANCELLED |
+| **Who Can Transition** | Admin, Environment Manager |
+| **Booking Conflicts** | Checked and displayed to approver |
+| **Notifications** | Sent to approvers and notification groups |
+
+#### 3. APPROVED Stage
+**Purpose**: Intent approved, awaiting scheduling confirmation.
+
+| Aspect | Description |
+|--------|-------------|
+| **Entry** | Approver approves the request |
+| **Actions Allowed** | Schedule, Cancel |
+| **Exit Conditions** | Schedule → SCHEDULED, Cancel → CANCELLED |
+| **Who Can Transition** | Admin, Environment Manager |
+| **Booking Conflicts** | Re-validated before scheduling |
+| **Notifications** | Approval notification sent |
+
+#### 4. SCHEDULED Stage
+**Purpose**: Refresh confirmed for execution at specified time.
+
+| Aspect | Description |
+|--------|-------------|
+| **Entry** | Intent scheduled for execution |
+| **Actions Allowed** | Start Execution, Cancel |
+| **Exit Conditions** | Start → IN_PROGRESS, Cancel → CANCELLED |
+| **Who Can Transition** | Admin, System (auto-start) |
+| **Booking Conflicts** | Final re-validation before start |
+| **Notifications** | Reminder notifications (7d, 1d, 1h) |
+
+#### 5. IN_PROGRESS Stage
+**Purpose**: Refresh actively executing.
+
+| Aspect | Description |
+|--------|-------------|
+| **Entry** | Execution started manually or automatically |
+| **Actions Allowed** | Complete, Fail, Rollback |
+| **Exit Conditions** | Success → COMPLETED, Error → FAILED |
+| **Who Can Transition** | System, Operator |
+| **Duration Tracking** | Start time recorded |
+| **Notifications** | "Refresh started" notification |
+
+#### 6. COMPLETED Stage (Terminal)
+**Purpose**: Refresh successfully finished.
+
+| Aspect | Description |
+|--------|-------------|
+| **Entry** | Execution completed successfully |
+| **Actions Allowed** | View only |
+| **Exit Conditions** | None (terminal state) |
+| **Audit** | Full execution details recorded |
+| **Notifications** | "Refresh completed" notification |
+| **Entity Update** | Target entity's last_refresh_date updated |
+
+#### 7. FAILED Stage (Terminal)
+**Purpose**: Refresh execution encountered errors.
+
+| Aspect | Description |
+|--------|-------------|
+| **Entry** | Execution failed with errors |
+| **Actions Allowed** | Rollback, View |
+| **Exit Conditions** | Rollback → ROLLED_BACK |
+| **Who Can Transition** | Admin, Operator |
+| **Error Logging** | Failure details captured |
+| **Notifications** | "Refresh failed" alert |
+
+#### 8. ROLLED_BACK Stage (Terminal)
+**Purpose**: Failed refresh was reverted.
+
+| Aspect | Description |
+|--------|-------------|
+| **Entry** | Rollback operation completed |
+| **Actions Allowed** | View only |
+| **Exit Conditions** | None (terminal state) |
+| **Audit** | Rollback details recorded |
+
+#### 9. REJECTED Stage (Terminal)
+**Purpose**: Refresh request denied by approver.
+
+| Aspect | Description |
+|--------|-------------|
+| **Entry** | Approver rejected the request |
+| **Actions Allowed** | View only |
+| **Exit Conditions** | None (terminal state) |
+| **Reason Required** | Rejection reason mandatory |
+| **Notifications** | Rejection notification to requester |
+
+#### 10. CANCELLED Stage (Terminal)
+**Purpose**: Refresh cancelled before execution.
+
+| Aspect | Description |
+|--------|-------------|
+| **Entry** | User or admin cancelled the intent |
+| **Actions Allowed** | View only |
+| **Exit Conditions** | None (terminal state) |
+| **Audit** | Cancellation reason recorded |
+
+### Conflict Flag States
+
+During the lifecycle, refresh intents maintain a conflict flag:
+
+| Flag | Meaning | Approval Requirement |
+|------|---------|---------------------|
+| **NONE** | No booking conflicts detected | Standard approval |
+| **MINOR** | Low-impact conflicts exist | Standard approval with warning |
+| **MAJOR** | Critical booking conflicts exist | Force approval required |
+
+---
+
+## Booking-Refresh Interaction Lifecycle
+
+The interaction between bookings and refreshes follows a defined detection and resolution workflow.
+
+### Conflict Detection Flow
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────┐
+│                      BOOKING-REFRESH CONFLICT DETECTION FLOW                              │
+├──────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                           │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
+│  │                        TRIGGER EVENTS                                                │ │
+│  ├─────────────────────────────────────────────────────────────────────────────────────┤ │
+│  │                                                                                      │ │
+│  │  ┌─────────────────────┐       ┌─────────────────────┐       ┌────────────────────┐ │ │
+│  │  │ Refresh Intent      │       │ Booking Created/    │       │ Approval Request   │ │ │
+│  │  │ Created             │       │ Modified            │       │ Submitted          │ │ │
+│  │  └──────────┬──────────┘       └──────────┬──────────┘       └─────────┬──────────┘ │ │
+│  │             │                             │                            │            │ │
+│  │             ▼                             ▼                            ▼            │ │
+│  │  ┌──────────────────────────────────────────────────────────────────────────────┐  │ │
+│  │  │                      CONFLICT DETECTION ENGINE                                │  │ │
+│  │  └──────────────────────────────────────────────────────────────────────────────┘  │ │
+│  │                                      │                                             │ │
+│  │                                      ▼                                             │ │
+│  │  ┌──────────────────────────────────────────────────────────────────────────────┐  │ │
+│  │  │                        EVALUATION CRITERIA                                    │  │ │
+│  │  │  • Time period overlap (booking ∩ refresh window)                            │  │ │
+│  │  │  • Entity match (same environment/instance)                                  │  │ │
+│  │  │  • Impact type assessment (DATA_OVERWRITE vs READ_ONLY)                      │  │ │
+│  │  │  • Booking priority (Critical > High > Normal > Low)                         │  │ │
+│  │  │  • Booking status (Active > Approved > Requested)                            │  │ │
+│  │  │  • Test phase criticality (UAT/Performance = higher weight)                  │  │ │
+│  │  └──────────────────────────────────────────────────────────────────────────────┘  │ │
+│  │                                      │                                             │ │
+│  │                   ┌──────────────────┼──────────────────┐                         │ │
+│  │                   ▼                  ▼                  ▼                         │ │
+│  │           ┌─────────────┐    ┌─────────────┐    ┌─────────────┐                   │ │
+│  │           │    NONE     │    │    MINOR    │    │    MAJOR    │                   │ │
+│  │           │ No overlap  │    │ Low impact  │    │ High impact │                   │ │
+│  │           │             │    │ Non-critical│    │ Critical    │                   │ │
+│  │           │             │    │ bookings    │    │ bookings    │                   │ │
+│  │           └─────────────┘    └─────────────┘    └─────────────┘                   │ │
+│  │                                                                                    │ │
+│  └────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                                                                           │
+└──────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Conflict Resolution Lifecycle
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────┐
+│                        CONFLICT RESOLUTION LIFECYCLE                                      │
+├──────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                           │
+│   ┌────────────┐                                                                         │
+│   │  CONFLICT  │                                                                         │
+│   │  DETECTED  │                                                                         │
+│   └─────┬──────┘                                                                         │
+│         │                                                                                 │
+│         ▼                                                                                 │
+│   ┌────────────────────────────────────────────────────────────────────────────────────┐ │
+│   │                           RESOLUTION OPTIONS                                        │ │
+│   ├────────────────────────────────────────────────────────────────────────────────────┤ │
+│   │                                                                                     │ │
+│   │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌───────────┐│ │
+│   │  │ RESCHEDULE  │  │   ADJUST    │  │   FORCE     │  │   NOTIFY    │  │   REJECT  ││ │
+│   │  │   REFRESH   │  │   BOOKING   │  │   APPROVE   │  │    ONLY     │  │   REFRESH ││ │
+│   │  │             │  │             │  │             │  │             │  │           ││ │
+│   │  │ Move to     │  │ Shorten/    │  │ Override    │  │ Proceed     │  │ Deny the  ││ │
+│   │  │ conflict-   │  │ split the   │  │ with full   │  │ with        │  │ refresh   ││ │
+│   │  │ free slot   │  │ booking     │  │ justification│ │ awareness   │  │ request   ││ │
+│   │  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  └─────┬─────┘│ │
+│   │         │                │                │                │               │       │ │
+│   │         ▼                ▼                ▼                ▼               ▼       │ │
+│   │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌───────────┐│ │
+│   │  │   CONFLICT  │  │   CONFLICT  │  │   CONFLICT  │  │   CONFLICT  │  │  REFRESH  ││ │
+│   │  │   CLEARED   │  │   CLEARED   │  │   OVERRIDDEN│  │   ACCEPTED  │  │  REJECTED ││ │
+│   │  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘  └───────────┘│ │
+│   │                                                                                     │ │
+│   └────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                                                                           │
+│   RESOLUTION STATUS TRACKING:                                                            │
+│   ┌────────────────────────────────────────────────────────────────────────────────────┐ │
+│   │                                                                                     │ │
+│   │   UNRESOLVED ──► ACKNOWLEDGED ──► IN_PROGRESS ──► RESOLVED                         │ │
+│   │       │                                              │                              │ │
+│   │       └──────────────────────────────────────────────┘                              │ │
+│   │                   (Auto-resolved when conditions change)                            │ │
+│   │                                                                                     │ │
+│   └────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                                                                           │
+└──────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### State Transition Matrix
+
+| Current State | Action | New State | Who Can Perform |
+|---------------|--------|-----------|-----------------|
+| UNRESOLVED | Acknowledge | ACKNOWLEDGED | Refresh owner, Booking owner |
+| UNRESOLVED | Reschedule refresh | RESOLVED | Refresh owner |
+| UNRESOLVED | Adjust booking | RESOLVED | Booking owner |
+| UNRESOLVED | Force approve | OVERRIDDEN | Admin, Environment Manager |
+| ACKNOWLEDGED | Begin resolution | IN_PROGRESS | Any authorized user |
+| ACKNOWLEDGED | Force approve | OVERRIDDEN | Admin, Environment Manager |
+| IN_PROGRESS | Complete resolution | RESOLVED | Resolver |
+| Any | Booking cancelled | AUTO_RESOLVED | System |
+| Any | Refresh cancelled | AUTO_RESOLVED | System |
+
+### Conflict Severity Rules
+
+The system calculates conflict severity using this priority matrix:
+
+```
+┌────────────────────────────────────────────────────────────────────────────┐
+│                    SEVERITY CALCULATION RULES                               │
+├────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  MAJOR Severity (Requires Force Approval):                                  │
+│  ─────────────────────────────────────────                                  │
+│  • Critical booking + DATA_OVERWRITE or DOWNTIME_REQUIRED                  │
+│  • Any booking in Active status + DATA_OVERWRITE                           │
+│  • High-priority booking + DOWNTIME_REQUIRED                               │
+│  • UAT/Performance test phase + destructive impact                         │
+│                                                                             │
+│  MEDIUM Severity (Review Required):                                         │
+│  ──────────────────────────────────                                         │
+│  • Normal priority booking + DATA_OVERWRITE                                │
+│  • Any booking + SCHEMA_CHANGE impact                                      │
+│  • Critical booking + CONFIG_CHANGE                                        │
+│                                                                             │
+│  LOW Severity (Warning Only):                                               │
+│  ─────────────────────────────                                              │
+│  • Low priority booking + any impact                                       │
+│  • Any booking + READ_ONLY impact                                          │
+│  • Requested (not confirmed) booking + any impact                          │
+│                                                                             │
+│  NONE (No Conflict):                                                        │
+│  ──────────────────                                                         │
+│  • No time overlap                                                          │
+│  • Different entity                                                         │
+│  • Cancelled/completed bookings                                             │
+│                                                                             │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Lifecycle Best Practices
+
+#### For Refresh Intent Creators
+
+1. **Submit early** - Allow adequate review time (7+ days)
+2. **Check calendar first** - Review booking calendar before choosing dates
+3. **Use accurate impact types** - Don't over-classify to avoid false MAJOR conflicts
+4. **Provide clear justification** - Document business reasons thoroughly
+
+#### For Approvers
+
+1. **Review conflict details** - Understand which bookings are affected
+2. **Contact booking owners** - Verify impact before force approving
+3. **Use "Suggest Slots"** - Offer alternatives when rejecting
+4. **Document decisions** - Add approval/rejection notes
+
+#### For Booking Owners
+
+1. **Mark critical bookings** - Set `is_critical_booking = true` for important tests
+2. **Set appropriate priority** - Use Critical/High for time-sensitive work
+3. **Monitor notifications** - Respond to conflict alerts promptly
+4. **Plan for refresh cycles** - Know your environment's refresh schedule
 
 ---
 

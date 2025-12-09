@@ -2,6 +2,9 @@
 
 A comprehensive guide to using the BookMyEnv environment booking and management system.
 
+**Version:** 4.2.0  
+**Last Updated:** December 2025
+
 ---
 
 ## Table of Contents
@@ -12,19 +15,22 @@ A comprehensive guide to using the BookMyEnv environment booking and management 
 4. [Environment Instance Lifecycle](#environment-instance-lifecycle)
 5. [Bookings Management](#bookings-management)
 6. [Conflict Detection & Resolution](#conflict-detection--resolution)
-7. [Releases Management](#releases-management)
-8. [Applications Management](#applications-management)
-9. [Application Deployments](#application-deployments)
-10. [Interfaces & Endpoints](#interfaces--endpoints)
-11. [Components & Instances](#components--instances)
-12. [Groups Management](#groups-management)
-13. [Bulk Data Upload](#bulk-data-upload)
-14. [Monitoring](#monitoring)
-15. [Integrations](#integrations)
-16. [Settings & Administration](#settings--administration)
-17. [User Roles & Permissions](#user-roles--permissions)
-18. [Best Practices](#best-practices)
-19. [Troubleshooting](#troubleshooting)
+7. [**Refresh Lifecycle Management**](#refresh-lifecycle-management) ⭐ v4.0
+8. [**Booking-Refresh Dependency**](#booking-refresh-dependency) ⭐ v4.0
+9. [Releases Management](#releases-management)
+10. [Applications Management](#applications-management)
+11. [Application Deployments](#application-deployments)
+12. [Interfaces & Endpoints](#interfaces--endpoints)
+13. [Components & Instances](#components--instances)
+14. [Groups Management](#groups-management)
+15. [Bulk Data Upload](#bulk-data-upload)
+16. [Monitoring](#monitoring)
+17. [Integrations](#integrations)
+18. [**Audit & Compliance**](#audit--compliance) ⭐ v4.2 NEW
+19. [Settings & Administration](#settings--administration)
+20. [User Roles & Permissions](#user-roles--permissions)
+21. [Best Practices](#best-practices)
+22. [Troubleshooting](#troubleshooting)
 
 > **📘 Related Documentation**: For detailed lifecycle diagrams and state transitions, see the [Lifecycle Guide](LIFECYCLE_GUIDE.md).
 
@@ -372,6 +378,663 @@ The system automatically detects conflicts when:
 - Review conflict warnings when creating a new booking
 - Consider booking during off-peak times
 - Communicate with other teams about shared resources
+
+---
+
+## Refresh Lifecycle Management
+
+> **Version 4.0 Feature**: Comprehensive refresh planning, approval workflow, and booking conflict detection.
+
+### Overview
+
+**Refresh Lifecycle Management** enables teams to:
+- Track historical refresh activities with full audit trails
+- Plan future refreshes with approval workflows
+- Detect and manage conflicts with active bookings
+- Receive notifications before scheduled refreshes
+- Maintain data lineage and compliance records
+
+### Accessing Refresh Management
+
+1. Click **Refresh** in the sidebar navigation
+2. Two views are available:
+   - **Calendar View** - Visual timeline of planned and historical refreshes
+   - **Approvals View** - Pending refresh requests requiring approval
+
+### Understanding Refresh Types
+
+| Refresh Type | Description | Impact Level |
+|--------------|-------------|--------------|
+| **FULL_COPY** | Complete environment/database copy | 🔴 High - All data overwritten |
+| **MASKED_COPY** | PII/PCI masked data copy | 🔴 High - All data overwritten with masking |
+| **PARTIAL_COPY** | Selective data copy | 🟡 Medium - Selected data overwritten |
+| **DATA_ONLY** | Data refresh without schema changes | 🟡 Medium - Data changes, schema intact |
+| **SCHEMA_SYNC** | Schema synchronization only | 🟡 Medium - Schema changes, data intact |
+| **CONFIG_ONLY** | Configuration refresh | 🟢 Low - Configs only |
+| **GOLDEN_COPY** | Restore from golden baseline | 🔴 High - Full restore |
+| **POINT_IN_TIME** | Point-in-time recovery | 🔴 High - Full restore to point |
+
+### Impact Types
+
+When creating a refresh intent, you must specify the **Impact Type**:
+
+| Impact Type | Meaning | Conflict Severity |
+|-------------|---------|-------------------|
+| **DATA_OVERWRITE** | All data will be overwritten | 🔴 MAJOR if critical bookings exist |
+| **DOWNTIME_REQUIRED** | Environment unavailable during refresh | 🔴 MAJOR for all active bookings |
+| **SCHEMA_CHANGE** | Database schema will be modified | 🟡 MEDIUM - May break tests |
+| **CONFIG_CHANGE** | Configuration changes only | 🟢 LOW - Minimal impact |
+| **READ_ONLY** | Non-destructive read operation | 🟢 NONE - Safe operation |
+
+### Refresh Calendar View
+
+The **Refresh Calendar** provides a unified timeline showing:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  December 2025                                    [< Previous]  [Next >]   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  Sun    Mon    Tue    Wed    Thu    Fri    Sat                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   1      2      3      4      5      6      7                               │
+│         🟡     ✓                    ⏳                                      │
+│       UAT1    SIT1                 SIT2                                     │
+│      Pending  Done               Scheduled                                  │
+│                                                                             │
+│   8      9     10     11     12     13     14                               │
+│         🔵                  ⚠️                                              │
+│        PROD              UAT1 (!)                                           │
+│       Approved          Has Conflicts                                       │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Legend:
+  🟡 REQUESTED - Awaiting approval
+  🔵 APPROVED - Ready for execution
+  ⏳ SCHEDULED - Confirmed schedule
+  🔄 IN_PROGRESS - Currently executing
+  ✓  COMPLETED - Successfully finished
+  ❌ FAILED - Execution failed
+  ⚠️ Has Conflicts - Booking conflicts detected
+```
+
+### Creating a Refresh Intent
+
+#### Step-by-Step Workflow
+
+1. **Navigate to Refresh Calendar**
+   - Click **Refresh** → **Calendar** in sidebar
+
+2. **Click "New Refresh Intent"**
+   - Or click directly on a calendar date
+
+3. **Select Entity to Refresh**
+   - **Entity Type**: Environment, EnvironmentInstance, Application, etc.
+   - **Entity**: Select specific entity from dropdown
+
+4. **Configure Refresh Details**
+   ```
+   ┌─────────────────────────────────────────────────────────┐
+   │ New Refresh Intent                                       │
+   ├─────────────────────────────────────────────────────────┤
+   │ Entity Type:    [Environment Instance    ▼]             │
+   │ Entity:         [SIT1 - Core Banking     ▼]             │
+   │                                                          │
+   │ Refresh Type:   [MASKED_COPY             ▼]             │
+   │ Source Env:     [Production              ]              │
+   │                                                          │
+   │ Impact Type:    [DATA_OVERWRITE          ▼]  ⚠️         │
+   │                 ⚠️ This will overwrite existing data    │
+   │                                                          │
+   │ Planned Date:   [2025-12-15] [09:00]                    │
+   │ End Date:       [2025-12-15] [13:00]                    │
+   │                                                          │
+   │ □ Requires Downtime                                      │
+   │   Estimated: [240] minutes                               │
+   │                                                          │
+   │ Reason:         [Quarterly data refresh for R2025.1]    │
+   │ Justification:  [Required for release testing baseline] │
+   └─────────────────────────────────────────────────────────┘
+   ```
+
+5. **Review Booking Conflicts** (Automatic Check)
+   - System automatically checks for conflicting bookings
+   - Conflict panel appears showing any affected bookings
+
+6. **Acknowledge Conflicts (if MAJOR)**
+   - If MAJOR conflicts exist, you must acknowledge before proceeding
+   - Check the acknowledgement box
+
+7. **Submit for Approval**
+   - Click **Create** to submit the refresh intent
+
+### Refresh Intent Statuses
+
+```
+DRAFT ──► REQUESTED ──► APPROVED ──► SCHEDULED ──► IN_PROGRESS ──► COMPLETED
+              │             │                           │
+              ▼             ▼                           ▼
+           REJECTED     CANCELLED                    FAILED
+                                                       │
+                                                       ▼
+                                                   ROLLED_BACK
+```
+
+| Status | Description | Who Can Transition |
+|--------|-------------|-------------------|
+| **DRAFT** | Created but not submitted | Creator |
+| **REQUESTED** | Submitted for approval | Creator → Approver |
+| **APPROVED** | Approved, awaiting schedule | Approver |
+| **SCHEDULED** | Confirmed for execution | Admin/EnvMgr |
+| **IN_PROGRESS** | Currently executing | System/Operator |
+| **COMPLETED** | Successfully finished | System/Operator |
+| **FAILED** | Execution failed | System |
+| **CANCELLED** | Cancelled before execution | Approver/Creator |
+| **ROLLED_BACK** | Reverted after failure | System/Operator |
+
+### Approving Refresh Intents
+
+> **Required Role**: Admin or Environment Manager
+
+1. **Navigate to Approvals**
+   - Click **Refresh** → **Approvals** in sidebar
+
+2. **Review Pending Intents**
+   - View all intents with status "REQUESTED"
+   - Statistics cards show approval metrics
+
+3. **Review Intent Details**
+   - Click on an intent to see full details:
+     - Entity being refreshed
+     - Refresh type and source
+     - Planned timing
+     - **Booking conflicts** (if any)
+     - Requester information
+
+4. **Check Conflict Panel**
+   ```
+   ┌─────────────────────────────────────────────────────────┐
+   │ ⚠️ BOOKING CONFLICTS DETECTED                           │
+   ├─────────────────────────────────────────────────────────┤
+   │ Found 2 conflicting bookings:                           │
+   │                                                          │
+   │ ┌─────────────────────────────────────────────────────┐ │
+   │ │ 🔴 HIGH SEVERITY         CRITICAL                   │ │
+   │ │ UAT Regression Testing                               │ │
+   │ │ 📅 Dec 15, 9:00 AM - Dec 17, 5:00 PM               │ │
+   │ │ ⏱️ Overlap: 240 minutes                             │ │
+   │ │ 👤 John Smith (Testing Team)                        │ │
+   │ │ 🧪 Phase: UAT                                       │ │
+   │ └─────────────────────────────────────────────────────┘ │
+   │                                                          │
+   │ ┌─────────────────────────────────────────────────────┐ │
+   │ │ 🟡 MEDIUM SEVERITY                                  │ │
+   │ │ Performance Testing                                  │ │
+   │ │ 📅 Dec 15, 2:00 PM - Dec 15, 6:00 PM               │ │
+   │ │ ⏱️ Overlap: 120 minutes                             │ │
+   │ │ 👤 Jane Doe (Performance Team)                      │ │
+   │ └─────────────────────────────────────────────────────┘ │
+   │                                                          │
+   │ ⚠️ This refresh requires FORCE APPROVAL due to MAJOR   │
+   │    conflicts with critical bookings.                    │
+   └─────────────────────────────────────────────────────────┘
+   ```
+
+5. **Make Approval Decision**
+   - **Approve**: Click ✓ Approve (add approval notes)
+   - **Reject**: Click ✗ Reject (provide rejection reason)
+   - **Force Approve**: For MAJOR conflicts, force approval requires justification
+
+### Tracking Refresh History
+
+The **Refresh History** tab shows completed refreshes:
+
+| Field | Description |
+|-------|-------------|
+| Entity | What was refreshed |
+| Date | When the refresh occurred |
+| Type | FULL_COPY, MASKED_COPY, etc. |
+| Source | Where data came from |
+| Duration | How long it took |
+| Status | SUCCESS, FAILED, ROLLED_BACK |
+| Executed By | Who performed the refresh |
+| Notes | Execution notes |
+
+---
+
+## Booking-Refresh Dependency
+
+> **Critical Feature**: Understanding and managing the relationship between bookings and planned refreshes.
+
+### Why This Matters
+
+When a refresh occurs during an active booking:
+- **Data Loss Risk**: Test data created during the booking may be overwritten
+- **Test Cycle Disruption**: Active testing may be interrupted
+- **Data Inconsistency**: Partial refresh during tests causes unpredictable results
+- **Loss of Trust**: Teams lose confidence in the test environment system
+
+### The Dependency Model
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│              BOOKING-REFRESH DEPENDENCY DETECTION                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   BOOKING                        REFRESH INTENT                             │
+│   ════════                       ══════════════                             │
+│   ┌─────────────┐               ┌─────────────┐                            │
+│   │  Dec 10-15  │←────OVERLAP──→│  Dec 12     │                            │
+│   │  UAT Testing│   DETECTED    │  DATA COPY  │                            │
+│   │  SIT1       │               │  SIT1       │                            │
+│   │  🟡 Active  │               │  🟡 Planned │                            │
+│   └─────────────┘               └─────────────┘                            │
+│         │                              │                                    │
+│         ▼                              ▼                                    │
+│   ┌─────────────────────────────────────────────┐                          │
+│   │         CONFLICT DETECTION ENGINE            │                          │
+│   │  • Check time overlap                        │                          │
+│   │  • Evaluate impact type                      │                          │
+│   │  • Assess booking criticality               │                          │
+│   │  • Calculate conflict severity              │                          │
+│   └─────────────────────────────────────────────┘                          │
+│                      │                                                      │
+│                      ▼                                                      │
+│   ┌─────────────────────────────────────────────┐                          │
+│   │              CONFLICT RESULT                 │                          │
+│   │  Severity: MAJOR                            │                          │
+│   │  Flag: Requires Force Approval              │                          │
+│   │  Affected Teams: [Testing Team]             │                          │
+│   │  Overlap: 72 hours                          │                          │
+│   └─────────────────────────────────────────────┘                          │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Conflict Severity Calculation
+
+The system calculates conflict severity based on multiple factors:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    CONFLICT SEVERITY MATRIX                                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│                         REFRESH IMPACT TYPE                                 │
+│                   ┌─────────────┬─────────────┬─────────────┐              │
+│                   │ DATA_OVER-  │ DOWNTIME_   │ READ_ONLY / │              │
+│                   │ WRITE       │ REQUIRED    │ CONFIG_ONLY │              │
+│  BOOKING    ┌─────┼─────────────┼─────────────┼─────────────┤              │
+│  PRIORITY   │CRIT │ 🔴 MAJOR   │ 🔴 MAJOR   │ 🟡 MEDIUM  │              │
+│             │     │ Force Req   │ Force Req   │ Warning     │              │
+│             ├─────┼─────────────┼─────────────┼─────────────┤              │
+│             │HIGH │ 🔴 MAJOR   │ 🟡 MEDIUM  │ 🟢 LOW     │              │
+│             │     │ Force Req   │ Review Req  │ Info Only   │              │
+│             ├─────┼─────────────┼─────────────┼─────────────┤              │
+│             │NORM │ 🟡 MEDIUM  │ 🟡 MEDIUM  │ 🟢 NONE    │              │
+│             │     │ Review Req  │ Review Req  │ No Impact   │              │
+│             ├─────┼─────────────┼─────────────┼─────────────┤              │
+│             │LOW  │ 🟡 MEDIUM  │ 🟢 LOW     │ 🟢 NONE    │              │
+│             │     │ Review Req  │ Info Only   │ No Impact   │              │
+│             └─────┴─────────────┴─────────────┴─────────────┘              │
+│                                                                             │
+│  Additional Factors:                                                        │
+│  • Test Phase (UAT/Performance = Higher severity)                          │
+│  • Booking Status (Active > Approved > Requested)                          │
+│  • Overlap Duration (Longer = Higher severity)                             │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Conflict Detection Workflow
+
+#### When Creating a Refresh Intent
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                 REFRESH INTENT CREATION WORKFLOW                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  START: User creates refresh intent                                         │
+│    │                                                                        │
+│    ▼                                                                        │
+│  ┌─────────────────────────────────┐                                       │
+│  │ 1. User enters refresh details  │                                       │
+│  │    • Entity selection           │                                       │
+│  │    • Date/time range            │                                       │
+│  │    • Impact type                │                                       │
+│  └────────────────┬────────────────┘                                       │
+│                   │                                                         │
+│                   ▼                                                         │
+│  ┌─────────────────────────────────┐                                       │
+│  │ 2. AUTOMATIC CONFLICT CHECK     │  ← Triggered on form changes         │
+│  │    Query: Find all bookings     │                                       │
+│  │    WHERE entity matches AND     │                                       │
+│  │    time periods overlap         │                                       │
+│  └────────────────┬────────────────┘                                       │
+│                   │                                                         │
+│         ┌─────────┴─────────┐                                              │
+│         ▼                   ▼                                              │
+│  ┌─────────────┐     ┌─────────────┐                                       │
+│  │ No Conflicts│     │  Conflicts  │                                       │
+│  │   Found     │     │   Found     │                                       │
+│  └──────┬──────┘     └──────┬──────┘                                       │
+│         │                   │                                               │
+│         ▼                   ▼                                               │
+│  ┌─────────────┐     ┌─────────────────────────────────┐                   │
+│  │ Show green  │     │ 3. Display Conflict Panel      │                   │
+│  │ "No conflicts│    │    • List affected bookings    │                   │
+│  │  detected"  │     │    • Show severity badges      │                   │
+│  └──────┬──────┘     │    • Overlap details           │                   │
+│         │            │    • Affected team info        │                   │
+│         │            └────────────────┬───────────────┘                   │
+│         │                             │                                    │
+│         │            ┌────────────────┴───────────────┐                   │
+│         │            ▼                                ▼                    │
+│         │     ┌─────────────┐              ┌─────────────┐                │
+│         │     │ MINOR Flag  │              │ MAJOR Flag  │                │
+│         │     │ • Warning   │              │ • Must ack  │                │
+│         │     │ • Can submit│              │ • Force req │                │
+│         │     └──────┬──────┘              └──────┬──────┘                │
+│         │            │                            │                        │
+│         │            ▼                            ▼                        │
+│         │     ┌─────────────┐              ┌─────────────────┐            │
+│         │     │ Submit with │              │ 4. User must    │            │
+│         │     │ warning     │              │    acknowledge  │            │
+│         │     │ status      │              │    conflicts    │            │
+│         │     └──────┬──────┘              └────────┬────────┘            │
+│         │            │                              │                      │
+│         └────────────┼──────────────────────────────┘                      │
+│                      │                                                      │
+│                      ▼                                                      │
+│  ┌─────────────────────────────────────────────────────────────┐          │
+│  │ 5. Intent Created with Conflict Metadata                    │          │
+│  │    • conflict_flag: MAJOR/MINOR/NONE                        │          │
+│  │    • conflict_summary: JSON with details                    │          │
+│  │    • impacted_teams: Array of affected groups               │          │
+│  └─────────────────────────────────────────────────────────────┘          │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### When Creating a Booking
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    BOOKING CREATION WORKFLOW                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  START: User creates new booking                                            │
+│    │                                                                        │
+│    ▼                                                                        │
+│  ┌─────────────────────────────────┐                                       │
+│  │ 1. User enters booking details  │                                       │
+│  │    • Environment selection      │                                       │
+│  │    • Date/time range            │                                       │
+│  │    • Test phase                 │                                       │
+│  └────────────────┬────────────────┘                                       │
+│                   │                                                         │
+│                   ▼                                                         │
+│  ┌─────────────────────────────────┐                                       │
+│  │ 2. CHECK FOR PLANNED REFRESHES  │  ← Automatic on submission           │
+│  │    Query: Find all refresh      │                                       │
+│  │    intents WHERE entity matches │                                       │
+│  │    AND status IN (APPROVED,     │                                       │
+│  │    SCHEDULED, IN_PROGRESS)      │                                       │
+│  │    AND time periods overlap     │                                       │
+│  └────────────────┬────────────────┘                                       │
+│                   │                                                         │
+│         ┌─────────┴─────────┐                                              │
+│         ▼                   ▼                                              │
+│  ┌─────────────┐     ┌─────────────────────────────────┐                   │
+│  │ No Planned  │     │  Planned Refreshes Found       │                   │
+│  │  Refreshes  │     │                                 │                   │
+│  └──────┬──────┘     └────────────────┬───────────────┘                   │
+│         │                             │                                    │
+│         ▼                             ▼                                    │
+│  ┌─────────────┐     ┌─────────────────────────────────┐                   │
+│  │ Booking     │     │ 3. REFRESH WARNING DISPLAYED    │                   │
+│  │ created     │     │                                 │                   │
+│  │ normally    │     │ ⚠️ REFRESH WARNING              │                   │
+│  └─────────────┘     │ A data refresh is scheduled    │                   │
+│                      │ during your booking period:     │                   │
+│                      │                                 │                   │
+│                      │ 📅 Dec 15, 2025 (MASKED_COPY)  │                   │
+│                      │ ⏱️ ~4 hours downtime expected  │                   │
+│                      │ 💾 All test data will be lost  │                   │
+│                      │                                 │                   │
+│                      │ Consider:                       │                   │
+│                      │ • Adjusting booking dates       │                   │
+│                      │ • Coordinating with refresh team│                   │
+│                      │                                 │                   │
+│                      │ [Proceed Anyway] [Adjust Dates] │                   │
+│                      └────────────────┬───────────────┘                   │
+│                                       │                                    │
+│                                       ▼                                    │
+│                      ┌─────────────────────────────────┐                   │
+│                      │ 4. Booking created with         │                   │
+│                      │    refresh_warnings in response │                   │
+│                      └─────────────────────────────────┘                   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Conflict Resolution Options
+
+When conflicts are detected, teams have several resolution paths:
+
+#### Option 1: Reschedule the Refresh
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ RESOLUTION: Reschedule Refresh                                  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│ Original Plan:  Dec 12-14   ███████░░░░░░░░░░░░░░              │
+│ Booking:        Dec 10-17   ████████████████████████           │
+│                                   ▲                             │
+│                                   │ CONFLICT                    │
+│                                   │                             │
+│ Use "Suggest Alternative Slots" feature:                        │
+│                                                                 │
+│ ┌─────────────────────────────────────────────────────────────┐│
+│ │ 💡 SUGGESTED ALTERNATIVE TIME SLOTS                         ││
+│ │                                                             ││
+│ │ ✅ Dec 18-20  No booking conflicts                          ││
+│ │    Score: 100% - Optimal choice                             ││
+│ │                                                             ││
+│ │ ⚠️ Dec 8-10   Minor conflict (low priority booking)         ││
+│ │    Score: 75% - Acceptable                                  ││
+│ │                                                             ││
+│ │ ⚠️ Dec 22-24  Holiday period (reduced support)              ││
+│ │    Score: 60% - Use with caution                            ││
+│ │                                                             ││
+│ │ [Apply Slot 1] [Apply Slot 2] [Keep Original]               ││
+│ └─────────────────────────────────────────────────────────────┘│
+│                                                                 │
+│ New Plan:       Dec 18-20   ░░░░░░░░░░░░░░░░░░░░███████        │
+│ Booking:        Dec 10-17   ████████████████████████           │
+│                             NO CONFLICT ✓                       │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Option 2: Adjust the Booking
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ RESOLUTION: Adjust Booking                                      │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│ User contacts booking owner to negotiate:                       │
+│                                                                 │
+│ • Shorten booking to end before refresh                         │
+│ • Split booking around refresh window                           │
+│ • Accept data loss and re-create test data after refresh        │
+│                                                                 │
+│ Before: Dec 10 ████████████████████████ Dec 17                 │
+│ After:  Dec 10 ███████████ Dec 12  Dec 14 █████████ Dec 17     │
+│                           ▲          ▲                          │
+│                           └──REFRESH─┘                          │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Option 3: Force Approve (Admin Only)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ RESOLUTION: Force Approve Refresh                               │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│ ⚠️ WARNING: Force approval overrides booking conflicts         │
+│                                                                 │
+│ When to use:                                                    │
+│ • Critical production data sync required                        │
+│ • Security patch that cannot wait                               │
+│ • Compliance/audit requirement with deadline                    │
+│ • Booking owner has acknowledged impact                         │
+│                                                                 │
+│ Requirements:                                                   │
+│ • Admin or Environment Manager role                             │
+│ • Written justification required                                │
+│ • Affected teams notified automatically                         │
+│ • Audit trail created                                           │
+│                                                                 │
+│ ┌─────────────────────────────────────────────────────────────┐│
+│ │ Force Approval Justification (required):                    ││
+│ │ ┌─────────────────────────────────────────────────────────┐ ││
+│ │ │ Critical security patch CVE-2025-1234 must be applied   │ ││
+│ │ │ within 48 hours per security policy. Booking owner      │ ││
+│ │ │ (John Smith) notified and acknowledged via JIRA-5678.   │ ││
+│ │ └─────────────────────────────────────────────────────────┘ ││
+│ │                                                             ││
+│ │ □ I confirm all affected teams have been notified           ││
+│ │ □ I accept responsibility for any test data loss            ││
+│ │                                                             ││
+│ │ [Cancel] [Force Approve Refresh]                            ││
+│ └─────────────────────────────────────────────────────────────┘│
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Notification Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    CONFLICT NOTIFICATION FLOW                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌─────────────────┐                                                       │
+│  │ Refresh Intent  │                                                       │
+│  │ Created with    │                                                       │
+│  │ MAJOR Conflict  │                                                       │
+│  └────────┬────────┘                                                       │
+│           │                                                                 │
+│           ▼                                                                 │
+│  ┌─────────────────────────────────────────────────────────────┐           │
+│  │                NOTIFICATION SYSTEM                          │           │
+│  └─────────────────────────────────────────────────────────────┘           │
+│           │                                                                 │
+│     ┌─────┴─────┬───────────┬───────────┬────────────┐                     │
+│     ▼           ▼           ▼           ▼            ▼                     │
+│  ┌──────┐  ┌──────┐   ┌──────┐   ┌──────┐   ┌──────────┐                  │
+│  │ 📧   │  │ 💬   │   │ 🔔   │   │ 📱   │   │ 🔗       │                  │
+│  │Email │  │Teams │   │In-App│   │Slack │   │Webhook   │                  │
+│  └──┬───┘  └──┬───┘   └──┬───┘   └──┬───┘   └────┬─────┘                  │
+│     │         │          │          │            │                         │
+│     ▼         ▼          ▼          ▼            ▼                         │
+│  ┌───────────────────────────────────────────────────────────┐             │
+│  │ RECIPIENTS                                                │             │
+│  │ • Booking owners (affected bookings)                      │             │
+│  │ • Environment managers                                    │             │
+│  │ • Owning groups of affected bookings                      │             │
+│  │ • Refresh requester                                       │             │
+│  │ • Configured notification groups                          │             │
+│  └───────────────────────────────────────────────────────────┘             │
+│                                                                             │
+│  NOTIFICATION TIMING:                                                       │
+│  ┌───────────────────────────────────────────────────────────┐             │
+│  │ • Immediate: When conflict detected                       │             │
+│  │ • 7 days before: Reminder notification                    │             │
+│  │ • 1 day before: Final warning                             │             │
+│  │ • 1 hour before: Last chance alert                        │             │
+│  │ • On execution: "Refresh started" notification            │             │
+│  │ • On completion: "Refresh completed" notification         │             │
+│  └───────────────────────────────────────────────────────────┘             │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Best Practices for Booking-Refresh Coordination
+
+#### For Testers (Booking Owners)
+
+1. **Check for Planned Refreshes Before Booking**
+   - Review refresh calendar before creating bookings
+   - Look for scheduled refreshes in your target environment
+
+2. **Mark Critical Bookings**
+   - Set `is_critical_booking = true` for important test cycles
+   - Set appropriate priority (Critical, High, Normal, Low)
+   - This ensures higher severity when conflicts arise
+
+3. **Monitor Notifications**
+   - Enable all notification channels
+   - Respond promptly to conflict alerts
+   - Negotiate with refresh owners when needed
+
+4. **Plan Around Refresh Cycles**
+   - Know your environment's typical refresh schedule
+   - Avoid booking during maintenance windows
+   - Build test data backup strategies
+
+#### For Environment Managers (Refresh Owners)
+
+1. **Schedule Refreshes Strategically**
+   - Use the "Suggest Alternative Slots" feature
+   - Prefer weekends or off-hours for major refreshes
+   - Consider quarterly refresh cycles
+
+2. **Communicate Early**
+   - Submit refresh intents with adequate lead time
+   - Provide detailed justification
+   - Notify affected teams proactively
+
+3. **Use Appropriate Impact Types**
+   - Don't over-classify (use READ_ONLY when appropriate)
+   - Accurately estimate downtime
+   - Be specific about what data will be affected
+
+4. **Handle Conflicts Gracefully**
+   - Work with booking owners to find mutually acceptable times
+   - Force approve only when truly necessary
+   - Document all conflict resolutions
+
+### Viewing All Unresolved Conflicts
+
+Navigate to **Refresh** → **Conflicts** to see a dashboard of all unresolved conflicts:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  UNRESOLVED CONFLICTS DASHBOARD                              [Export CSV]  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  Summary: 5 unresolved conflicts across 3 refresh intents                   │
+│                                                                             │
+│  ┌───────────────────────────────────────────────────────────────────────┐ │
+│  │ Refresh     │ Entity   │ Conflicts │ Severity │ Status    │ Actions  │ │
+│  ├─────────────┼──────────┼───────────┼──────────┼───────────┼──────────┤ │
+│  │ Dec 15 Prod │ SIT1     │ 3         │ 🔴 MAJOR │ REQUESTED │ [View]   │ │
+│  │ Dec 18 UAT  │ UAT1     │ 1         │ 🟡 MEDIUM│ APPROVED  │ [View]   │ │
+│  │ Dec 20 NFT  │ PERF1    │ 1         │ 🟢 LOW   │ SCHEDULED │ [View]   │ │
+│  └───────────────────────────────────────────────────────────────────────┘ │
+│                                                                             │
+│  Filter: [All Severities ▼] [All Statuses ▼] [All Entities ▼]              │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -825,6 +1488,95 @@ View infrastructure components deployed across environments.
 
 ---
 
+## Audit & Compliance
+
+> **⭐ New in v4.2** - Comprehensive audit logging and compliance reporting
+
+The Audit & Compliance module provides full CRUD traceability across the system, enabling organizations to meet regulatory requirements and maintain operational visibility.
+
+### Accessing Audit & Compliance
+
+1. Click **Audit & Compliance** in the sidebar
+2. Available to: **Admin**, **EnvironmentManager**, **ProjectLead** roles
+
+### Audit Events Tab
+
+#### Statistics Dashboard
+
+The top of the page displays key metrics:
+
+| Card | Description |
+|------|-------------|
+| **Events Today** | Audit events recorded in the last 24 hours |
+| **Events (7 Days)** | Total events in the past week |
+| **Events (30 Days)** | Total events in the past month |
+| **Top Entity Types** | Most frequently modified entity types |
+| **Top Actors** | Users with the most activity |
+
+#### Filtering Events
+
+Use the filter panel to narrow down audit events:
+
+- **Date Range** - Select from presets (Today, Last 7 Days, Last 30 Days) or custom range
+- **Entity Type** - Filter by entity (Environment, Booking, Application, Release, User, etc.)
+- **Action Type** - Filter by action (CREATE, UPDATE, DELETE, LOGIN, APPROVE, etc.)
+- **Actor** - Filter by user who performed the action
+- **Regulatory Tag** - Filter by compliance tag (SOX, GDPR, PCI-DSS, etc.)
+- **Search** - Full-text search across entity names and descriptions
+
+#### Viewing Event Details
+
+1. Click on any row in the events table
+2. A detail drawer opens on the right showing:
+   - **Event Summary** - Timestamp, actor, action type
+   - **Entity Information** - Type, ID, name
+   - **Before/After Snapshots** - Full state comparison
+   - **Changed Fields** - Highlighted modified fields
+   - **Context** - IP address, user agent, session info
+
+### Reports Tab
+
+#### Pre-built Report Templates
+
+| Template | Description |
+|----------|-------------|
+| **All Activity Report** | Complete audit trail of all system activities |
+| **User Activity Report** | All activities performed by a specific user |
+| **Environment Changes** | All changes to environment configurations |
+| **Booking Audit Trail** | Complete history of booking operations |
+| **Security Events** | Login/logout and access-related events |
+| **Compliance Report** | Regulatory compliance audit report |
+
+#### Generating a Report
+
+1. Switch to the **Reports** tab
+2. Select a report template
+3. Choose the date range
+4. Click **Generate Report**
+5. Export as CSV or JSON
+
+### Tracked Events
+
+The audit system automatically tracks:
+
+| Entity | Actions Tracked |
+|--------|-----------------|
+| **Environment** | Create, Update, Delete |
+| **Booking** | Create, Update, Status Change, Delete |
+| **Application** | Create, Update, Delete |
+| **Release** | Create, Update, Status Change |
+| **User** | Create, Update, Role Change |
+| **Authentication** | Login, Logout, Failed Attempts |
+| **Refresh Intent** | Create, Approve, Reject, Execute |
+
+### Data Retention
+
+- Default retention: **7 years** (2555 days)
+- Configurable per regulatory requirement
+- Automatic archival available for older events
+
+---
+
 ## Settings & Administration
 
 ### Accessing Settings
@@ -911,6 +1663,20 @@ Click **Settings** in the sidebar or click your avatar → **Settings**
 3. **Descriptive Titles** - Use clear, descriptive booking names
 4. **Check Conflicts** - Review conflicts before submitting
 5. **Release on Time** - Complete bookings promptly to free resources
+6. **Check Refresh Calendar** - Review planned refreshes before booking ⭐
+7. **Mark Critical Bookings** - Set priority for important test cycles ⭐
+8. **Enable Notifications** - Stay informed about refresh activities ⭐
+
+### Refresh Management Best Practices ⭐ NEW
+
+1. **Plan Refreshes Early** - Submit refresh intents at least 7 days in advance
+2. **Use Correct Impact Types** - Accurately classify data impact
+3. **Consider Booking Calendar** - Check for active bookings before scheduling
+4. **Use Alternative Slots** - Leverage the "Suggest Slots" feature
+5. **Coordinate with Teams** - Communicate with booking owners proactively
+6. **Document Thoroughly** - Provide clear business justification
+7. **Schedule Off-Hours** - Prefer weekends/nights for disruptive refreshes
+8. **Notify in Advance** - Configure proper notification lead times
 
 ### Environment Management
 
@@ -918,6 +1684,8 @@ Click **Settings** in the sidebar or click your avatar → **Settings**
 2. **Document Changes** - Add descriptions when updating environments
 3. **Regular Cleanup** - Remove obsolete instances and environments
 4. **Capacity Planning** - Monitor instance utilization
+5. **Establish Refresh Cycles** - Define regular refresh schedules ⭐
+6. **Track Data Lineage** - Document refresh sources ⭐
 
 ### Release Management
 
@@ -925,6 +1693,7 @@ Click **Settings** in the sidebar or click your avatar → **Settings**
 2. **Link Applications** - Associate all affected applications
 3. **Target Environments** - Specify all deployment targets
 4. **Update Status** - Keep release status current
+5. **Align with Refresh Schedule** - Consider refresh timing when planning releases ⭐
 
 ---
 
@@ -946,6 +1715,30 @@ Click **Settings** in the sidebar or click your avatar → **Settings**
 - Check operational status
 - Verify booking end time hasn't expired
 - Contact environment owner
+
+#### Refresh-Booking Conflicts ⭐ NEW
+- **Problem**: Cannot approve refresh due to MAJOR conflicts
+- **Solutions**:
+  - Use "Suggest Alternative Slots" to find conflict-free times
+  - Contact booking owners to negotiate timing
+  - If urgent, use Force Approve with proper justification
+  - Consider splitting the refresh into smaller windows
+
+#### Test Data Lost After Refresh ⭐ NEW
+- **Problem**: Booking's test data was overwritten by refresh
+- **Solutions**:
+  - Check refresh history to understand what happened
+  - Contact environment manager for possible data recovery
+  - Review notification settings to ensure you receive alerts
+  - Mark future bookings as "Critical" to increase conflict severity
+
+#### Refresh Intent Rejected ⭐ NEW
+- **Problem**: Refresh intent was rejected by approver
+- **Solutions**:
+  - Review rejection reason in the intent details
+  - Adjust timing to avoid critical booking conflicts
+  - Provide more detailed business justification
+  - Escalate to management if refresh is mandatory
 
 #### Page Not Loading
 - Check network connection
@@ -996,6 +1789,7 @@ BookMyEnv can be deployed to AWS using the provided Terraform configuration. See
 
 | Version | Date | Changes |
 |---------|------|--------|
+| **4.0.0** | **Dec 2025** | **Refresh Lifecycle Management, Booking-Refresh Dependency Detection, Conflict Resolution Workflows** |
 | 3.1.0 | Dec 2025 | AWS Terraform deployment, GitHub Actions CI/CD |
 | 3.0.0 | Dec 2025 | Interface Endpoints and Component Instances bulk upload, enhanced documentation |
 | 2.1.0 | Dec 2025 | Application Deployments management, bidirectional deploy/undeploy |

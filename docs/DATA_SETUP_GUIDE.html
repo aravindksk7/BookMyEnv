@@ -6,797 +6,1963 @@
     <title>BookMyEnv - Data Setup Guide</title>
     <style>
         :root {
-            --primary-color: #1976d2;
-            --secondary-color: #dc004e;
-            --success-color: #4caf50;
-            --warning-color: #ff9800;
-            --bg-color: #f5f5f5;
-            --card-bg: #ffffff;
-            --text-color: #333333;
-            --border-color: #e0e0e0;
+            --primary: #1976d2;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --error: #f44336;
+            --gray-50: #fafafa;
+            --gray-100: #f5f5f5;
+            --gray-200: #eeeeee;
+            --gray-800: #424242;
+            --gray-900: #212121;
         }
         
-        * {
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            line-height: 1.6;
-            color: var(--text-color);
-            background-color: var(--bg-color);
-            margin: 0;
-            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: white;
+            color: var(--gray-900);
+            line-height: 1.7;
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 900px;
             margin: 0 auto;
-            padding: 20px;
-        }
-        
-        header {
-            background: linear-gradient(135deg, var(--primary-color), #1565c0);
-            color: white;
             padding: 40px 20px;
-            text-align: center;
         }
         
-        header h1 {
-            margin: 0;
-            font-size: 2.5em;
+        h1 { 
+            color: var(--primary); 
+            border-bottom: 3px solid var(--primary); 
+            padding-bottom: 10px; 
+            margin-bottom: 30px; 
         }
+        h2 { 
+            color: var(--gray-800); 
+            margin: 30px 0 15px; 
+            padding-bottom: 8px; 
+            border-bottom: 1px solid var(--gray-200); 
+        }
+        h3 { color: var(--gray-800); margin: 20px 0 10px; }
+        h4 { color: var(--gray-800); margin: 15px 0 8px; }
         
-        header p {
-            margin: 10px 0 0;
-            opacity: 0.9;
-        }
-        
-        nav {
-            background: var(--card-bg);
-            padding: 15px 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        
-        nav ul {
-            list-style: none;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-        }
-        
-        nav a {
-            color: var(--primary-color);
-            text-decoration: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            transition: all 0.3s;
-            font-size: 0.9em;
-        }
-        
-        nav a:hover {
-            background: var(--primary-color);
-            color: white;
-        }
-        
-        section {
-            background: var(--card-bg);
-            margin: 20px 0;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        h2 {
-            color: var(--primary-color);
-            border-bottom: 2px solid var(--primary-color);
-            padding-bottom: 10px;
-            margin-top: 0;
-        }
-        
-        h3 {
-            color: #424242;
-            margin-top: 25px;
-        }
+        p { margin: 10px 0; }
         
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 15px 0;
-            font-size: 0.95em;
+            font-size: 14px;
         }
         
         th, td {
-            padding: 12px;
+            border: 1px solid var(--gray-200);
+            padding: 10px 12px;
             text-align: left;
-            border-bottom: 1px solid var(--border-color);
         }
         
-        th {
-            background: #f8f9fa;
-            font-weight: 600;
-            color: #424242;
-        }
-        
-        tr:hover {
-            background: #f8f9fa;
-        }
+        th { background: var(--gray-100); font-weight: 600; }
+        tr:nth-child(even) { background: var(--gray-50); }
         
         code {
-            background: #f5f5f5;
+            background: var(--gray-100);
             padding: 2px 6px;
             border-radius: 4px;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 0.9em;
-            color: var(--secondary-color);
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 13px;
         }
         
         pre {
-            background: #263238;
-            color: #aed581;
-            padding: 20px;
-            border-radius: 8px;
-            overflow-x: auto;
-            font-size: 0.9em;
-        }
-        
-        pre code {
-            background: none;
-            color: inherit;
-            padding: 0;
-        }
-        
-        .tip {
-            background: #e3f2fd;
-            border-left: 4px solid var(--primary-color);
-            padding: 15px 20px;
-            margin: 15px 0;
-            border-radius: 0 8px 8px 0;
-        }
-        
-        .warning {
-            background: #fff3e0;
-            border-left: 4px solid var(--warning-color);
-            padding: 15px 20px;
-            margin: 15px 0;
-            border-radius: 0 8px 8px 0;
-        }
-        
-        .success {
-            background: #e8f5e9;
-            border-left: 4px solid var(--success-color);
-            padding: 15px 20px;
-            margin: 15px 0;
-            border-radius: 0 8px 8px 0;
-        }
-        
-        .diagram {
-            background: #fafafa;
-            border: 1px solid var(--border-color);
-            padding: 20px;
-            border-radius: 8px;
-            font-family: 'Consolas', monospace;
-            overflow-x: auto;
-            line-height: 1.4;
-        }
-        
-        .step-list {
-            counter-reset: step-counter;
-            list-style: none;
-            padding: 0;
-        }
-        
-        .step-list li {
-            counter-increment: step-counter;
-            padding: 15px 15px 15px 60px;
-            position: relative;
-            border-left: 2px solid var(--border-color);
-            margin-left: 20px;
-        }
-        
-        .step-list li::before {
-            content: counter(step-counter);
-            position: absolute;
-            left: -22px;
-            top: 12px;
-            background: var(--primary-color);
-            color: white;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-        
-        .csv-sample {
-            background: #eceff1;
+            background: var(--gray-900);
+            color: #f5f5f5;
             padding: 15px;
             border-radius: 8px;
             overflow-x: auto;
-            font-family: 'Consolas', monospace;
-            font-size: 0.85em;
-            white-space: pre;
+            margin: 15px 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        pre code { background: none; padding: 0; color: inherit; }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .alert-warning {
+            background: #fff3e0;
+            border-left: 4px solid var(--warning);
+        }
+        
+        .alert-danger {
+            background: #ffebee;
+            border-left: 4px solid var(--error);
+        }
+        
+        .alert-success {
+            background: #e8f5e9;
+            border-left: 4px solid var(--success);
         }
         
         .badge {
             display: inline-block;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.8em;
-            font-weight: 500;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
         }
         
-        .badge-required {
-            background: #ffebee;
-            color: #c62828;
+        .badge-new {
+            background: var(--success);
+            color: white;
         }
         
-        .badge-optional {
-            background: #e8f5e9;
-            color: #2e7d32;
+        ul, ol { margin: 10px 0 10px 25px; }
+        li { margin: 5px 0; }
+        
+        a { color: var(--primary); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        
+        blockquote {
+            border-left: 4px solid var(--primary);
+            padding: 10px 20px;
+            margin: 15px 0;
+            background: var(--gray-50);
         }
         
-        .card-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin: 20px 0;
+        hr {
+            border: none;
+            border-top: 1px solid var(--gray-200);
+            margin: 30px 0;
         }
         
-        .card {
-            background: #fafafa;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 20px;
+        .new-badge::after {
+            content: "NEW";
+            background: var(--success);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            margin-left: 8px;
+            vertical-align: middle;
         }
         
-        .card h4 {
-            margin-top: 0;
-            color: var(--primary-color);
+        .version-badge {
+            background: var(--primary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            margin-left: 10px;
         }
         
-        footer {
+        /* Syntax highlighting classes */
+        .hljs-keyword { color: #c792ea; }
+        .hljs-string { color: #c3e88d; }
+        .hljs-comment { color: #546e7a; }
+        .hljs-number { color: #f78c6c; }
+        
+        /* Footer */
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid var(--gray-200);
             text-align: center;
-            padding: 30px;
-            color: #757575;
-            font-size: 0.9em;
-        }
-        
-        @media (max-width: 768px) {
-            nav ul {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .container {
-                padding: 10px;
-            }
-            
-            section {
-                padding: 20px;
-            }
-            
-            table {
-                font-size: 0.85em;
-            }
-            
-            th, td {
-                padding: 8px;
-            }
+            color: var(--gray-800);
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>📋 Data Setup Guide</h1>
-        <p>A comprehensive guide to setting up environments, applications, and more in BookMyEnv</p>
-    </header>
-    
-    <nav>
-        <ul>
-            <li><a href="#understanding">Understanding the Data Model</a></li>
-            <li><a href="#getting-started">Getting Started</a></li>
-            <li><a href="#environments">Environments</a></li>
-            <li><a href="#instances">Instances</a></li>
-            <li><a href="#applications">Applications</a></li>
-            <li><a href="#interfaces">Interfaces</a></li>
-            <li><a href="#configurations">Configurations</a></li>
-            <li><a href="#bulk-upload">Bulk Upload</a></li>
-            <li><a href="#sample-data">Sample Data</a></li>
-        </ul>
-    </nav>
-    
     <div class="container">
-        <section id="understanding">
-            <h2>Understanding the Data Model</h2>
-            <p>Think of BookMyEnv like organizing a company's IT landscape. Here's how everything fits together:</p>
-            
-            <div class="diagram">
-┌─────────────────────────────────────────────────────────────────┐
-│                        ENVIRONMENT                               │
-│  (e.g., "Development Environment", "Testing Environment")        │
-│                                                                   │
-│   ┌─────────────────┐    ┌─────────────────┐                     │
-│   │    INSTANCE 1   │    │    INSTANCE 2   │   (Can be booked)   │
-│   │  (e.g., DEV-1)  │    │  (e.g., DEV-2)  │                     │
-│   └────────┬────────┘    └────────┬────────┘                     │
-│            │                      │                               │
-│   ┌────────▼────────┐    ┌────────▼────────┐                     │
-│   │  APPLICATIONS   │    │  APPLICATIONS   │                     │
-│   │  deployed here  │    │  deployed here  │                     │
-│   └─────────────────┘    └─────────────────┘                     │
-└─────────────────────────────────────────────────────────────────┘
-            </div>
-            
-            <h3>Key Concepts</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Term</th>
-                        <th>What It Means</th>
-                        <th>Example</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>Environment</strong></td>
-                        <td>A category or type of testing area</td>
-                        <td>"Non-Production", "Pre-Production", "DR"</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Instance</strong></td>
-                        <td>A specific copy of an environment that can be booked</td>
-                        <td>"DEV-Instance-1", "TEST-Instance-A"</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Application</strong></td>
-                        <td>A software system that runs in environments</td>
-                        <td>"Online Banking Portal", "Payment Gateway"</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Interface</strong></td>
-                        <td>A connection point between applications</td>
-                        <td>"REST API", "Message Queue", "File Transfer"</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Configuration</strong></td>
-                        <td>Settings and values for applications</td>
-                        <td>"Database connection string", "API timeout"</td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
-        
-        <section id="getting-started">
-            <h2>Getting Started</h2>
-            
-            <h3>Logging In</h3>
-            <ol class="step-list">
-                <li>Open your browser and go to <code>http://localhost:3000</code></li>
-                <li>Log in with your credentials:<br>
-                    <strong>Email:</strong> <code>admin@bme.local</code><br>
-                    <strong>Password:</strong> <code>Admin@123</code>
-                </li>
-            </ol>
-            
-            <h3>Navigation</h3>
-            <p>After logging in, you'll see the sidebar with these options:</p>
-            <div class="card-grid">
-                <div class="card">
-                    <h4>📊 Dashboard</h4>
-                    <p>Overview of your system</p>
-                </div>
-                <div class="card">
-                    <h4>🖥️ Environments</h4>
-                    <p>Manage environments and instances</p>
-                </div>
-                <div class="card">
-                    <h4>📱 Applications</h4>
-                    <p>Manage applications</p>
-                </div>
-                <div class="card">
-                    <h4>🔗 Interfaces</h4>
-                    <p>Manage application interfaces</p>
-                </div>
-                <div class="card">
-                    <h4>⚙️ Configs</h4>
-                    <p>Manage configurations</p>
-                </div>
-                <div class="card">
-                    <h4>📅 Bookings</h4>
-                    <p>Book environment instances</p>
-                </div>
-            </div>
-        </section>
-        
-        <section id="environments">
-            <h2>Creating Environments</h2>
-            <p>Environments are the top-level containers that represent different types of testing areas.</p>
-            
-            <h3>Step-by-Step</h3>
-            <ol class="step-list">
-                <li>Click <strong>Environments</strong> in the sidebar</li>
-                <li>Click the <strong>+ Add Environment</strong> button</li>
-                <li>Fill in the form (see fields below)</li>
-                <li>Click <strong>Save</strong></li>
-            </ol>
-            
-            <h3>Environment Fields</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Field</th>
-                        <th>Required</th>
-                        <th>Description</th>
-                        <th>Example</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Name</td>
-                        <td><span class="badge badge-required">Required</span></td>
-                        <td>Unique name for the environment</td>
-                        <td><code>Development-Team-A</code></td>
-                    </tr>
-                    <tr>
-                        <td>Description</td>
-                        <td><span class="badge badge-optional">Optional</span></td>
-                        <td>What this environment is for</td>
-                        <td><code>Development environment for mobile team</code></td>
-                    </tr>
-                    <tr>
-                        <td>Category</td>
-                        <td><span class="badge badge-required">Required</span></td>
-                        <td>Type of environment</td>
-                        <td><code>NonProd</code>, <code>PreProd</code>, <code>DR</code>, <code>Training</code>, <code>Sandpit</code></td>
-                    </tr>
-                    <tr>
-                        <td>Lifecycle Stage</td>
-                        <td><span class="badge badge-optional">Optional</span></td>
-                        <td>Current status</td>
-                        <td><code>Active</code>, <code>Provisioning</code>, <code>Decommissioning</code>, <code>Archived</code></td>
-                    </tr>
-                    <tr>
-                        <td>Owner Team</td>
-                        <td><span class="badge badge-optional">Optional</span></td>
-                        <td>Team responsible</td>
-                        <td><code>Mobile Development Team</code></td>
-                    </tr>
-                    <tr>
-                        <td>Data Sensitivity</td>
-                        <td><span class="badge badge-optional">Optional</span></td>
-                        <td>Type of data allowed</td>
-                        <td><code>NonProdDummy</code>, <code>PII</code>, <code>PCI</code>, <code>Confidential</code></td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <h3>Environment Categories Explained</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Category</th>
-                        <th>When to Use</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>NonProd</strong></td>
-                        <td>Development and general testing</td>
-                    </tr>
-                    <tr>
-                        <td><strong>PreProd</strong></td>
-                        <td>Final testing before production</td>
-                    </tr>
-                    <tr>
-                        <td><strong>DR</strong></td>
-                        <td>Disaster recovery environments</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Training</strong></td>
-                        <td>User training and demos</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Sandpit</strong></td>
-                        <td>Experimentation and POCs</td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
-        
-        <section id="instances">
-            <h2>Creating Instances</h2>
-            <p>Instances are the bookable copies of environments. One environment can have multiple instances.</p>
-            
-            <div class="tip">
-                <strong>💡 Why Multiple Instances?</strong><br>
-                Imagine you have a "Development" environment. You might have DEV-Instance-1 for Team Alpha, DEV-Instance-2 for Team Beta, and DEV-Instance-3 for automated testing. Each team can book their own instance without interfering with others.
-            </div>
-            
-            <h3>Instance Fields</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Field</th>
-                        <th>Required</th>
-                        <th>Description</th>
-                        <th>Example</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Name</td>
-                        <td><span class="badge badge-required">Required</span></td>
-                        <td>Unique name within the environment</td>
-                        <td><code>Instance-1</code></td>
-                    </tr>
-                    <tr>
-                        <td>Operational Status</td>
-                        <td><span class="badge badge-optional">Optional</span></td>
-                        <td>Current availability</td>
-                        <td><code>Available</code>, <code>InUse</code>, <code>Maintenance</code>, <code>Offline</code></td>
-                    </tr>
-                    <tr>
-                        <td>Availability Window</td>
-                        <td><span class="badge badge-optional">Optional</span></td>
-                        <td>When it can be used</td>
-                        <td><code>24x7</code>, <code>Business Hours</code></td>
-                    </tr>
-                    <tr>
-                        <td>Capacity</td>
-                        <td><span class="badge badge-optional">Optional</span></td>
-                        <td>How many users/tests it can handle</td>
-                        <td><code>10</code></td>
-                    </tr>
-                    <tr>
-                        <td>Bookable</td>
-                        <td><span class="badge badge-optional">Optional</span></td>
-                        <td>Can users book this instance?</td>
-                        <td><code>true</code> / <code>false</code></td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
-        
-        <section id="applications">
-            <h2>Creating Applications</h2>
-            <p>Applications are the software systems that get deployed to your environments.</p>
-            
-            <h3>Application Fields</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Field</th>
-                        <th>Required</th>
-                        <th>Description</th>
-                        <th>Example</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Name</td>
-                        <td><span class="badge badge-required">Required</span></td>
-                        <td>Unique application name</td>
-                        <td><code>Online Banking Portal</code></td>
-                    </tr>
-                    <tr>
-                        <td>Business Domain</td>
-                        <td><span class="badge badge-optional">Optional</span></td>
-                        <td>What business area it belongs to</td>
-                        <td><code>Retail Banking</code>, <code>Payments</code></td>
-                    </tr>
-                    <tr>
-                        <td>Criticality</td>
-                        <td><span class="badge badge-optional">Optional</span></td>
-                        <td>How important is it?</td>
-                        <td><code>High</code>, <code>Medium</code>, <code>Low</code></td>
-                    </tr>
-                    <tr>
-                        <td>Data Sensitivity</td>
-                        <td><span class="badge badge-optional">Optional</span></td>
-                        <td>What kind of data it handles</td>
-                        <td><code>PCI</code>, <code>PII</code>, <code>Confidential</code>, <code>NonProdDummy</code></td>
-                    </tr>
-                    <tr>
-                        <td>Owner Team</td>
-                        <td><span class="badge badge-optional">Optional</span></td>
-                        <td>Team that owns it</td>
-                        <td><code>Digital Banking Team</code></td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
-        
-        <section id="interfaces">
-            <h2>Creating Interfaces</h2>
-            <p>Interfaces define how applications communicate with each other.</p>
-            
-            <h3>Interface Fields</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Field</th>
-                        <th>Required</th>
-                        <th>Description</th>
-                        <th>Example</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Name</td>
-                        <td><span class="badge badge-required">Required</span></td>
-                        <td>Unique interface name</td>
-                        <td><code>Payment-API</code></td>
-                    </tr>
-                    <tr>
-                        <td>Direction</td>
-                        <td><span class="badge badge-optional">Optional</span></td>
-                        <td>Flow of data</td>
-                        <td><code>Inbound</code>, <code>Outbound</code>, <code>Bidirectional</code></td>
-                    </tr>
-                    <tr>
-                        <td>Pattern</td>
-                        <td><span class="badge badge-optional">Optional</span></td>
-                        <td>Type of integration</td>
-                        <td><code>REST</code>, <code>SOAP</code>, <code>GraphQL</code>, <code>Messaging</code></td>
-                    </tr>
-                    <tr>
-                        <td>Source Application</td>
-                        <td><span class="badge badge-optional">Optional</span></td>
-                        <td>Where data comes from</td>
-                        <td><code>Online Banking Portal</code></td>
-                    </tr>
-                    <tr>
-                        <td>Target Application</td>
-                        <td><span class="badge badge-optional">Optional</span></td>
-                        <td>Where data goes to</td>
-                        <td><code>Payment Gateway</code></td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <h3>Interface Patterns Explained</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Pattern</th>
-                        <th>Description</th>
-                        <th>Example Use Case</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>REST</strong></td>
-                        <td>Web API calls</td>
-                        <td>Mobile app calling backend</td>
-                    </tr>
-                    <tr>
-                        <td><strong>SOAP</strong></td>
-                        <td>XML-based web services</td>
-                        <td>Legacy system integration</td>
-                    </tr>
-                    <tr>
-                        <td><strong>GraphQL</strong></td>
-                        <td>Flexible query API</td>
-                        <td>Modern web applications</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Messaging</strong></td>
-                        <td>Async message queues</td>
-                        <td>Order processing</td>
-                    </tr>
-                    <tr>
-                        <td><strong>File</strong></td>
-                        <td>File-based transfer</td>
-                        <td>Batch data imports</td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
-        
-        <section id="configurations">
-            <h2>Creating Configurations</h2>
-            <p>Configurations store settings and values for your applications and environments.</p>
-            
-            <h3>Configuration Fields</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Field</th>
-                        <th>Required</th>
-                        <th>Description</th>
-                        <th>Example</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Key</td>
-                        <td><span class="badge badge-required">Required</span></td>
-                        <td>Configuration name</td>
-                        <td><code>database.connection.url</code></td>
-                    </tr>
-                    <tr>
-                        <td>Value</td>
-                        <td><span class="badge badge-required">Required</span></td>
-                        <td>Configuration value</td>
-                        <td><code>jdbc:postgresql://db:5432/myapp</code></td>
-                    </tr>
-                    <tr>
-                        <td>Environment</td>
-                        <td><span class="badge badge-optional">Optional</span></td>
-                        <td>Which environment</td>
-                        <td><code>Development-Team-A</code></td>
-                    </tr>
-                    <tr>
-                        <td>Application</td>
-                        <td><span class="badge badge-optional">Optional</span></td>
-                        <td>Which application</td>
-                        <td><code>Online Banking Portal</code></td>
-                    </tr>
-                    <tr>
-                        <td>Is Secret</td>
-                        <td><span class="badge badge-optional">Optional</span></td>
-                        <td>Is this a sensitive value?</td>
-                        <td><code>true</code> (will be masked)</td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <div class="tip">
-                <strong>💡 Best Practice:</strong> Use consistent naming like <code>category.subcategory.name</code>
-                <br>Examples: <code>database.pool.size</code>, <code>api.timeout.seconds</code>, <code>feature.dark-mode.enabled</code>
-            </div>
-        </section>
-        
-        <section id="bulk-upload">
-            <h2>Bulk Upload Guide</h2>
-            <p>For setting up many items at once, use the <strong>Bulk Upload</strong> feature.</p>
-            
-            <h3>Accessing Bulk Upload</h3>
-            <ol class="step-list">
-                <li>Go to <strong>Settings</strong> in the sidebar</li>
-                <li>Click on <strong>Data Management</strong> tab</li>
-                <li>Click <strong>Go to Bulk Upload</strong></li>
-            </ol>
-            
-            <h3>How Bulk Upload Works</h3>
-            <ol class="step-list">
-                <li><strong>Download a Template</strong> - Get the CSV template for the entity type</li>
-                <li><strong>Fill in Your Data</strong> - Edit the CSV in Excel or any spreadsheet</li>
-                <li><strong>Upload the File</strong> - Drag and drop or browse to select</li>
-                <li><strong>Preview</strong> - Review the data before uploading</li>
-                <li><strong>Upload</strong> - Click to process the data</li>
-                <li><strong>Review Results</strong> - See what succeeded and what failed</li>
-            </ol>
-            
-            <div class="warning">
-                <strong>⚠️ Upload Order Matters!</strong><br>
-                Because items reference each other, upload in this order:
-                <ol>
-                    <li><strong>Environments</strong> first (no dependencies)</li>
-                    <li><strong>Applications</strong> second (no dependencies)</li>
-                    <li><strong>Instances</strong> third (requires environments to exist)</li>
-                    <li><strong>Interfaces</strong> fourth (can reference applications)</li>
-                    <li><strong>Components</strong> fifth (requires applications to exist)</li>
-                    <li><strong>App-Instance Mappings</strong> sixth (requires both apps and instances)</li>
-                </ol>
-            </div>
-        </section>
-        
-        <section id="sample-data">
-            <h2>Sample Data Files</h2>
-            <p>Ready-to-use CSV files for testing bulk upload. Save these and upload in order.</p>
-            
-            <h3>1. Environments CSV</h3>
-            <div class="csv-sample">name,description,environment_category,lifecycle_stage,owner_team,support_group,data_sensitivity,usage_policies
+        <h1>BookMyEnv - Data Setup Guide</h1>
+<p>A comprehensive guide to setting up your test environment management system. This guide explains the data model, entity relationships, and how to create environments, applications, instances, interfaces, components, and their deployments.</p>
+<hr>
+<h2>Related Documentation</h2>
+<table>
+<thead>
+<tr>
+<th>Document</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="USER_GUIDE.md">User Guide</a></td>
+<td>End-user instructions for day-to-day usage</td>
+</tr>
+<tr>
+<td><a href="LIFECYCLE_GUIDE.md"><strong>Lifecycle Guide</strong></a></td>
+<td><strong>Detailed lifecycle states, transitions, and best practices</strong></td>
+</tr>
+<tr>
+<td><a href="ARCHITECTURE.md">Architecture Guide</a></td>
+<td>Technical architecture and system design</td>
+</tr>
+<tr>
+<td><a href="QUICK_REFERENCE.md">Quick Reference</a></td>
+<td>Cheat sheet for common operations</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Table of Contents</h2>
+<ol>
+<li><a href="#understanding-the-data-model">Understanding the Data Model</a></li>
+<li><a href="#core-entity-overview">Core Entity Overview</a></li>
+<li><a href="#environments">Environments</a></li>
+<li><a href="#environment-instances">Environment Instances</a></li>
+<li><a href="#applications">Applications</a></li>
+<li><a href="#application-components">Application Components</a></li>
+<li><a href="#interfaces">Interfaces</a></li>
+<li><a href="#interface-endpoints">Interface Endpoints</a></li>
+<li><a href="#component-instances">Component Instances</a></li>
+<li><a href="#application-deployments">Application Deployments</a></li>
+<li><a href="#entity-relationships">Entity Relationships</a></li>
+<li><a href="#entity-lifecycle-summary">Entity Lifecycle Summary</a></li>
+<li><a href="#bulk-upload-guide">Bulk Upload Guide</a></li>
+<li><a href="#sample-data-files">Sample Data Files</a></li>
+<li><a href="#quick-reference">Quick Reference</a></li>
+</ol>
+<hr>
+<h2>Understanding the Data Model</h2>
+<p>BookMyEnv organizes your IT landscape into a hierarchical structure that allows granular control and tracking of test environments and their applications.</p>
+<h3>High-Level Architecture</h3>
+<pre><code>┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              ENVIRONMENT HIERARCHY                               │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│   ENVIRONMENT (Category: NonProd, PreProd, DR, Training, Sandpit)               │
+│   └── ENVIRONMENT INSTANCE (Bookable unit - what teams actually reserve)        │
+│       ├── APPLICATION DEPLOYMENTS (Apps deployed to this instance)              │
+│       │   └── Tracks: version, deployment_model, deployment_status              │
+│       ├── COMPONENT INSTANCES (Individual app components in this instance)      │
+│       │   └── Tracks: version, deployment_status, last_deployed_date            │
+│       ├── INTERFACE ENDPOINTS (How interfaces work in this instance)            │
+│       │   └── Tracks: endpoint URL, test_mode (Live/Virtualised/Stubbed)        │
+│       └── INFRASTRUCTURE COMPONENTS (VMs, containers, databases)                │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                             APPLICATION HIERARCHY                                │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│   APPLICATION (Business system: Payment Gateway, Customer Portal)               │
+│   ├── APP COMPONENTS (Microservices, APIs, UIs, Databases within the app)       │
+│   │   └── COMPONENT INSTANCES (Component deployed to a specific instance)       │
+│   └── INTERFACES (How this app communicates with other apps)                    │
+│       └── INTERFACE ENDPOINTS (Interface configuration per instance)            │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3>Why This Structure?</h3>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Purpose</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Environment</strong></td>
+<td>Categorize environments by purpose</td>
+<td>&quot;Non-Production&quot;, &quot;Pre-Production&quot;</td>
+</tr>
+<tr>
+<td><strong>Instance</strong></td>
+<td>Provide bookable units</td>
+<td>&quot;SIT-1&quot;, &quot;UAT-Instance-A&quot;</td>
+</tr>
+<tr>
+<td><strong>Application Deployment</strong></td>
+<td>Track what apps are in each instance</td>
+<td>&quot;Payment Gateway v2.1 in SIT-1&quot;</td>
+</tr>
+<tr>
+<td><strong>Component Instance</strong></td>
+<td>Track individual service versions</td>
+<td>&quot;payment-api v2.1.0 in SIT-1&quot;</td>
+</tr>
+<tr>
+<td><strong>Interface Endpoint</strong></td>
+<td>Configure interface behavior per instance</td>
+<td>&quot;Payment API using stub in SIT&quot;</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Core Entity Overview</h2>
+<h3>Entity Summary Table</h3>
+<table>
+<thead>
+<tr>
+<th>Entity</th>
+<th>Description</th>
+<th>Parent</th>
+<th>Key Fields</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Environment</strong></td>
+<td>Top-level category</td>
+<td>None</td>
+<td>name, category, lifecycle_stage</td>
+</tr>
+<tr>
+<td><strong>Environment Instance</strong></td>
+<td>Bookable environment copy</td>
+<td>Environment</td>
+<td>name, operational_status, bookable</td>
+</tr>
+<tr>
+<td><strong>Application</strong></td>
+<td>Business system</td>
+<td>None</td>
+<td>name, business_domain, criticality</td>
+</tr>
+<tr>
+<td><strong>App Component</strong></td>
+<td>Part of an application</td>
+<td>Application</td>
+<td>name, component_type, runtime_platform</td>
+</tr>
+<tr>
+<td><strong>Interface</strong></td>
+<td>Communication channel</td>
+<td>Application (source/target)</td>
+<td>name, direction, pattern, frequency</td>
+</tr>
+<tr>
+<td><strong>App Deployment</strong></td>
+<td>App → Instance link</td>
+<td>Application + Instance</td>
+<td>version, deployment_model, status</td>
+</tr>
+<tr>
+<td><strong>Component Instance</strong></td>
+<td>Component → Instance link</td>
+<td>App Component + Instance</td>
+<td>version, deployment_status</td>
+</tr>
+<tr>
+<td><strong>Interface Endpoint</strong></td>
+<td>Interface → Instance link</td>
+<td>Interface + Instance</td>
+<td>endpoint, test_mode, enabled</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Environments</h2>
+<p><strong>Environments</strong> are the top-level containers that categorize your testing landscape. They represent a type or category of environment rather than a specific deployable unit.</p>
+<h3>Environment Fields</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+<th>Valid Values</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>name</code></td>
+<td>String(50)</td>
+<td>✓</td>
+<td>Unique environment name</td>
+<td>Any unique name</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Text</td>
+<td></td>
+<td>Detailed description</td>
+<td>Free text</td>
+</tr>
+<tr>
+<td><code>environment_category</code></td>
+<td>Enum</td>
+<td></td>
+<td>Type of environment</td>
+<td><code>NonProd</code>, <code>PreProd</code>, <code>DR</code>, <code>Training</code>, <code>Sandpit</code></td>
+</tr>
+<tr>
+<td><code>lifecycle_stage</code></td>
+<td>Enum</td>
+<td></td>
+<td>Current stage</td>
+<td><code>Planned</code>, <code>Active</code>, <code>Retiring</code>, <code>Decommissioned</code></td>
+</tr>
+<tr>
+<td><code>owner_team</code></td>
+<td>String(100)</td>
+<td></td>
+<td>Responsible team</td>
+<td>e.g., &quot;Platform Team&quot;</td>
+</tr>
+<tr>
+<td><code>support_group</code></td>
+<td>String(100)</td>
+<td></td>
+<td>Support contact</td>
+<td>e.g., &quot;IT Support&quot;</td>
+</tr>
+<tr>
+<td><code>data_sensitivity</code></td>
+<td>Enum</td>
+<td></td>
+<td>Data classification</td>
+<td><code>PII</code>, <code>PCI</code>, <code>Confidential</code>, <code>NonProdDummy</code></td>
+</tr>
+<tr>
+<td><code>usage_policies</code></td>
+<td>Text</td>
+<td></td>
+<td>Usage guidelines</td>
+<td>Free text</td>
+</tr>
+</tbody></table>
+<h3>Environment Categories Explained</h3>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Purpose</th>
+<th>Typical Use</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>NonProd</strong></td>
+<td>Development and general testing</td>
+<td>DEV, SIT, Integration Testing</td>
+</tr>
+<tr>
+<td><strong>PreProd</strong></td>
+<td>Final testing before production</td>
+<td>UAT, Staging, Pre-Production</td>
+</tr>
+<tr>
+<td><strong>DR</strong></td>
+<td>Disaster recovery testing</td>
+<td>DR Failover, Business Continuity</td>
+</tr>
+<tr>
+<td><strong>Training</strong></td>
+<td>User training and demos</td>
+<td>Training environments, Demo systems</td>
+</tr>
+<tr>
+<td><strong>Sandpit</strong></td>
+<td>Experimentation</td>
+<td>POCs, Innovation, Experimentation</td>
+</tr>
+</tbody></table>
+<h3>Lifecycle Stages</h3>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Description</th>
+<th>Actions Allowed</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Planned</strong></td>
+<td>Environment is being planned</td>
+<td>Create instances, configure</td>
+</tr>
+<tr>
+<td><strong>Active</strong></td>
+<td>Fully operational</td>
+<td>All operations, bookings</td>
+</tr>
+<tr>
+<td><strong>Retiring</strong></td>
+<td>Being phased out</td>
+<td>View only, complete existing bookings</td>
+</tr>
+<tr>
+<td><strong>Decommissioned</strong></td>
+<td>No longer in use</td>
+<td>Archive, read-only</td>
+</tr>
+</tbody></table>
+<h3>Creating an Environment</h3>
+<p><strong>Via UI:</strong></p>
+<ol>
+<li>Navigate to <strong>Environments</strong> in the sidebar</li>
+<li>Click <strong>+ Add Environment</strong></li>
+<li>Fill in the required and optional fields</li>
+<li>Click <strong>Save</strong></li>
+</ol>
+<p><strong>Via Bulk Upload CSV:</strong></p>
+<pre><code class="language-csv">name,description,environment_category,lifecycle_stage,owner_team,support_group,data_sensitivity,usage_policies
+SIT-Environment,System Integration Testing,NonProd,Active,QA Team,IT Support,NonProdDummy,Integration testing only
+UAT-Environment,User Acceptance Testing,PreProd,Active,UAT Team,IT Support,Confidential,UAT with masked prod data
+</code></pre>
+<hr>
+<h2>Environment Instances</h2>
+<p><strong>Environment Instances</strong> are the actual deployable units that teams book and use. Each Environment can have multiple Instances, allowing parallel usage.</p>
+<h3>Instance Fields</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+<th>Valid Values</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>name</code></td>
+<td>String(100)</td>
+<td>✓</td>
+<td>Unique name within environment</td>
+<td>Any unique name</td>
+</tr>
+<tr>
+<td><code>operational_status</code></td>
+<td>Enum</td>
+<td></td>
+<td>Current operational state</td>
+<td><code>Available</code>, <code>Broken</code>, <code>Maintenance</code>, <code>Provisioning</code></td>
+</tr>
+<tr>
+<td><code>booking_status</code></td>
+<td>Enum</td>
+<td></td>
+<td>Booking availability</td>
+<td><code>Available</code>, <code>PartiallyBooked</code>, <code>FullyBooked</code></td>
+</tr>
+<tr>
+<td><code>active_booking_count</code></td>
+<td>Integer</td>
+<td></td>
+<td>Number of active bookings</td>
+<td>Auto-calculated</td>
+</tr>
+<tr>
+<td><code>availability_window</code></td>
+<td>String(100)</td>
+<td></td>
+<td>When available</td>
+<td>e.g., &quot;24x7&quot;, &quot;Business Hours&quot;</td>
+</tr>
+<tr>
+<td><code>capacity</code></td>
+<td>Integer</td>
+<td></td>
+<td>Concurrent usage capacity</td>
+<td>Number of teams/users</td>
+</tr>
+<tr>
+<td><code>primary_location</code></td>
+<td>String(100)</td>
+<td></td>
+<td>Physical/cloud location</td>
+<td>e.g., &quot;Sydney DC&quot;, &quot;AWS ap-southeast-2&quot;</td>
+</tr>
+<tr>
+<td><code>bookable</code></td>
+<td>Boolean</td>
+<td></td>
+<td>Can be booked</td>
+<td><code>true</code> / <code>false</code></td>
+</tr>
+</tbody></table>
+<h3>Operational vs Booking Status</h3>
+<p><strong>Operational Status</strong> - Physical/technical state:</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Meaning</th>
+<th>Bookable?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Available</code></td>
+<td>Fully functional, ready for use</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>Broken</code></td>
+<td>Has issues, not usable</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>Maintenance</code></td>
+<td>Scheduled maintenance</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>Provisioning</code></td>
+<td>Being set up</td>
+<td>No</td>
+</tr>
+</tbody></table>
+<p><strong>Booking Status</strong> - Reservation state:</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Available</code></td>
+<td>No active bookings, can be reserved</td>
+</tr>
+<tr>
+<td><code>PartiallyBooked</code></td>
+<td>Has some bookings but has capacity</td>
+</tr>
+<tr>
+<td><code>FullyBooked</code></td>
+<td>At capacity, cannot accept more bookings</td>
+</tr>
+</tbody></table>
+<h3>Why Multiple Instances?</h3>
+<p>Consider a &quot;SIT Environment&quot; that needs to support 3 teams testing simultaneously:</p>
+<pre><code>SIT Environment (Category: NonProd)
+├── SIT-Instance-1 → Team Alpha testing Payment module
+├── SIT-Instance-2 → Team Beta testing User module  
+└── SIT-Instance-3 → Automated regression testing
+</code></pre>
+<p>Each instance can have different applications deployed at different versions.</p>
+<h3>Creating an Instance</h3>
+<p><strong>Via UI:</strong></p>
+<ol>
+<li>Navigate to <strong>Environments</strong></li>
+<li>Click on an environment to expand</li>
+<li>Click <strong>+ Add Instance</strong></li>
+<li>Fill in the fields</li>
+<li>Click <strong>Save</strong></li>
+</ol>
+<p><strong>Via Bulk Upload CSV:</strong></p>
+<pre><code class="language-csv">environment_name,name,operational_status,availability_window,capacity,primary_location,bookable
+SIT-Environment,SIT-1,Available,24x7,5,Sydney DC,true
+SIT-Environment,SIT-2,Available,24x7,5,Melbourne DC,true
+SIT-Environment,SIT-3,Maintenance,24x7,5,Sydney DC,false
+</code></pre>
+<hr>
+<h2>Applications</h2>
+<p><strong>Applications</strong> represent business systems that are deployed to environments. They are the software products your organization develops, purchases, or integrates.</p>
+<h3>Application Fields</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+<th>Valid Values</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>name</code></td>
+<td>String(255)</td>
+<td>✓</td>
+<td>Unique application name</td>
+<td>Any unique name</td>
+</tr>
+<tr>
+<td><code>business_domain</code></td>
+<td>String(100)</td>
+<td></td>
+<td>Business area</td>
+<td>e.g., &quot;Retail Banking&quot;, &quot;Payments&quot;</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Text</td>
+<td></td>
+<td>What the app does</td>
+<td>Free text</td>
+</tr>
+<tr>
+<td><code>criticality</code></td>
+<td>Enum</td>
+<td></td>
+<td>Business importance</td>
+<td><code>High</code>, <code>Medium</code>, <code>Low</code></td>
+</tr>
+<tr>
+<td><code>data_sensitivity</code></td>
+<td>Enum</td>
+<td></td>
+<td>Data it handles</td>
+<td><code>PII</code>, <code>PCI</code>, <code>Confidential</code>, <code>NonProdDummy</code></td>
+</tr>
+<tr>
+<td><code>owner_team</code></td>
+<td>String(100)</td>
+<td></td>
+<td>Development owner</td>
+<td>e.g., &quot;Digital Banking Team&quot;</td>
+</tr>
+<tr>
+<td><code>test_owner</code></td>
+<td>String(100)</td>
+<td></td>
+<td>QA/Test owner</td>
+<td>e.g., &quot;QA Team&quot;</td>
+</tr>
+</tbody></table>
+<h3>Criticality Levels</h3>
+<table>
+<thead>
+<tr>
+<th>Level</th>
+<th>Meaning</th>
+<th>Typical Applications</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>High</strong></td>
+<td>Business critical, affects revenue/customers</td>
+<td>Payment systems, Core banking</td>
+</tr>
+<tr>
+<td><strong>Medium</strong></td>
+<td>Important but not critical</td>
+<td>Reporting, Analytics</td>
+</tr>
+<tr>
+<td><strong>Low</strong></td>
+<td>Nice to have</td>
+<td>Internal tools, Utilities</td>
+</tr>
+</tbody></table>
+<h3>Data Sensitivity</h3>
+<table>
+<thead>
+<tr>
+<th>Classification</th>
+<th>Description</th>
+<th>Example Data</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>PCI</strong></td>
+<td>Payment Card Industry data</td>
+<td>Credit card numbers, CVV</td>
+</tr>
+<tr>
+<td><strong>PII</strong></td>
+<td>Personally Identifiable Information</td>
+<td>Names, addresses, SSN</td>
+</tr>
+<tr>
+<td><strong>Confidential</strong></td>
+<td>Business sensitive</td>
+<td>Financial reports, strategies</td>
+</tr>
+<tr>
+<td><strong>NonProdDummy</strong></td>
+<td>Test/dummy data only</td>
+<td>Synthetic test data</td>
+</tr>
+</tbody></table>
+<h3>Creating an Application</h3>
+<p><strong>Via UI:</strong></p>
+<ol>
+<li>Navigate to <strong>Applications</strong></li>
+<li>Click <strong>+ Add Application</strong></li>
+<li>Fill in the fields</li>
+<li>Click <strong>Save</strong></li>
+</ol>
+<p><strong>Via Bulk Upload CSV:</strong></p>
+<pre><code class="language-csv">name,business_domain,description,criticality,data_sensitivity,owner_team,test_owner
+Payment Gateway,Payments,Core payment processing system,High,PCI,Payments Team,QA Team
+Customer Portal,Retail Banking,Customer-facing web application,High,PII,Digital Team,QA Team
+Notification Service,Communications,Email and SMS notifications,Medium,PII,Platform Team,QA Team
+</code></pre>
+<hr>
+<h2>Application Components</h2>
+<p><strong>App Components</strong> are the individual services, modules, or deployable units that make up an Application. Modern applications often consist of multiple microservices.</p>
+<h3>Component Fields</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+<th>Valid Values</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>name</code></td>
+<td>String(255)</td>
+<td>✓</td>
+<td>Component name</td>
+<td>Any unique name within app</td>
+</tr>
+<tr>
+<td><code>application_id</code></td>
+<td>UUID</td>
+<td>✓</td>
+<td>Parent application</td>
+<td>FK to applications</td>
+</tr>
+<tr>
+<td><code>component_type</code></td>
+<td>Enum</td>
+<td></td>
+<td>Type of component</td>
+<td>See below</td>
+</tr>
+<tr>
+<td><code>source_repo</code></td>
+<td>String(500)</td>
+<td></td>
+<td>Git repository URL</td>
+<td>e.g., &quot;github.com/org/repo&quot;</td>
+</tr>
+<tr>
+<td><code>build_pipeline_id</code></td>
+<td>String(255)</td>
+<td></td>
+<td>CI/CD pipeline ID</td>
+<td>e.g., &quot;pipeline-123&quot;</td>
+</tr>
+<tr>
+<td><code>runtime_platform</code></td>
+<td>String(100)</td>
+<td></td>
+<td>Where it runs</td>
+<td>e.g., &quot;Kubernetes&quot;, &quot;AWS Lambda&quot;</td>
+</tr>
+<tr>
+<td><code>owner_team</code></td>
+<td>String(100)</td>
+<td></td>
+<td>Component owner</td>
+<td>e.g., &quot;Backend Team&quot;</td>
+</tr>
+</tbody></table>
+<h3>Component Types</h3>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>API</strong></td>
+<td>REST/GraphQL/gRPC API service</td>
+<td>payment-api, user-service</td>
+</tr>
+<tr>
+<td><strong>UI</strong></td>
+<td>Frontend/User Interface</td>
+<td>web-portal, admin-dashboard</td>
+</tr>
+<tr>
+<td><strong>Batch</strong></td>
+<td>Batch processing jobs</td>
+<td>daily-report, data-sync</td>
+</tr>
+<tr>
+<td><strong>RuleEngine</strong></td>
+<td>Business rules processing</td>
+<td>fraud-rules, pricing-engine</td>
+</tr>
+<tr>
+<td><strong>DBSchema</strong></td>
+<td>Database schema/migrations</td>
+<td>payment-db, user-db</td>
+</tr>
+<tr>
+<td><strong>MessageProcessor</strong></td>
+<td>Message queue consumer</td>
+<td>order-processor, notification-handler</td>
+</tr>
+<tr>
+<td><strong>Job</strong></td>
+<td>Scheduled/background jobs</td>
+<td>cleanup-job, reconciliation</td>
+</tr>
+<tr>
+<td><strong>Lambda</strong></td>
+<td>Serverless functions</td>
+<td>image-resize, email-sender</td>
+</tr>
+<tr>
+<td><strong>Other</strong></td>
+<td>Other component types</td>
+<td>Custom components</td>
+</tr>
+</tbody></table>
+<h3>Example: Payment Gateway Components</h3>
+<pre><code>Payment Gateway (Application)
+├── payment-api (API) - REST API for payment operations
+├── payment-processor (MessageProcessor) - Processes payment queue
+├── payment-validator (API) - Validates payment requests
+├── payment-db (DBSchema) - PostgreSQL database schema
+├── payment-batch (Batch) - End-of-day settlement
+└── payment-ui (UI) - Admin dashboard
+</code></pre>
+<h3>Creating a Component</h3>
+<p><strong>Via UI:</strong></p>
+<ol>
+<li>Navigate to <strong>Applications</strong></li>
+<li>Select an application</li>
+<li>Go to <strong>Components</strong> tab</li>
+<li>Click <strong>+ Add Component</strong></li>
+<li>Fill in the fields</li>
+<li>Click <strong>Save</strong></li>
+</ol>
+<p><strong>Via Bulk Upload CSV:</strong></p>
+<pre><code class="language-csv">application_name,name,component_type,source_repo,runtime_platform,owner_team
+Payment Gateway,payment-api,API,github.com/org/payment-api,Kubernetes,Backend Team
+Payment Gateway,payment-processor,MessageProcessor,github.com/org/payment-proc,Kubernetes,Backend Team
+Payment Gateway,payment-db,DBSchema,github.com/org/payment-db,PostgreSQL,DBA Team
+Customer Portal,portal-ui,UI,github.com/org/portal-ui,Kubernetes,Frontend Team
+Customer Portal,portal-bff,API,github.com/org/portal-bff,Kubernetes,Backend Team
+</code></pre>
+<hr>
+<h2>Interfaces</h2>
+<p><strong>Interfaces</strong> define how applications communicate with each other. They represent the contracts and channels for data exchange.</p>
+<h3>Interface Fields</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+<th>Valid Values</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>name</code></td>
+<td>String(255)</td>
+<td>✓</td>
+<td>Interface name</td>
+<td>Any unique name</td>
+</tr>
+<tr>
+<td><code>direction</code></td>
+<td>Enum</td>
+<td></td>
+<td>Data flow direction</td>
+<td><code>Inbound</code>, <code>Outbound</code>, <code>Bidirectional</code></td>
+</tr>
+<tr>
+<td><code>pattern</code></td>
+<td>Enum</td>
+<td></td>
+<td>Integration pattern</td>
+<td>See below</td>
+</tr>
+<tr>
+<td><code>frequency</code></td>
+<td>Enum</td>
+<td></td>
+<td>Call frequency</td>
+<td><code>RealTime</code>, <code>NearRealTime</code>, <code>Batch</code></td>
+</tr>
+<tr>
+<td><code>source_application_id</code></td>
+<td>UUID</td>
+<td></td>
+<td>Where data originates</td>
+<td>FK to applications</td>
+</tr>
+<tr>
+<td><code>target_application_id</code></td>
+<td>UUID</td>
+<td></td>
+<td>Where data goes</td>
+<td>FK to applications</td>
+</tr>
+<tr>
+<td><code>external_party</code></td>
+<td>String(255)</td>
+<td></td>
+<td>External system name</td>
+<td>e.g., &quot;Visa&quot;, &quot;SWIFT&quot;</td>
+</tr>
+<tr>
+<td><code>sla</code></td>
+<td>String(100)</td>
+<td></td>
+<td>Service level agreement</td>
+<td>e.g., &quot;99.9%, &lt;100ms&quot;</td>
+</tr>
+<tr>
+<td><code>contract_id</code></td>
+<td>String(100)</td>
+<td></td>
+<td>API contract reference</td>
+<td>e.g., &quot;SWAGGER-001&quot;</td>
+</tr>
+</tbody></table>
+<h3>Interface Patterns</h3>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Description</th>
+<th>Use Case</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>REST</strong></td>
+<td>RESTful HTTP APIs</td>
+<td>Web services, mobile backends</td>
+</tr>
+<tr>
+<td><strong>SOAP</strong></td>
+<td>XML-based web services</td>
+<td>Legacy enterprise systems</td>
+</tr>
+<tr>
+<td><strong>MQ</strong></td>
+<td>IBM MQ messaging</td>
+<td>Enterprise message queues</td>
+</tr>
+<tr>
+<td><strong>Kafka</strong></td>
+<td>Event streaming</td>
+<td>Real-time event processing</td>
+</tr>
+<tr>
+<td><strong>FileDrop</strong></td>
+<td>File-based exchange</td>
+<td>Batch data transfers</td>
+</tr>
+<tr>
+<td><strong>FTP</strong></td>
+<td>File Transfer Protocol</td>
+<td>Legacy file transfers</td>
+</tr>
+<tr>
+<td><strong>SFTP</strong></td>
+<td>Secure FTP</td>
+<td>Secure file transfers</td>
+</tr>
+<tr>
+<td><strong>FIX</strong></td>
+<td>Financial Information eXchange</td>
+<td>Trading systems</td>
+</tr>
+<tr>
+<td><strong>Other</strong></td>
+<td>Other patterns</td>
+<td>Custom integrations</td>
+</tr>
+</tbody></table>
+<h3>Direction Types</h3>
+<table>
+<thead>
+<tr>
+<th>Direction</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Inbound</strong></td>
+<td>App receives data</td>
+<td>Payment Gateway receives orders</td>
+</tr>
+<tr>
+<td><strong>Outbound</strong></td>
+<td>App sends data</td>
+<td>Portal sends payment requests</td>
+</tr>
+<tr>
+<td><strong>Bidirectional</strong></td>
+<td>Two-way communication</td>
+<td>Real-time sync</td>
+</tr>
+</tbody></table>
+<h3>Frequency Types</h3>
+<table>
+<thead>
+<tr>
+<th>Frequency</th>
+<th>Description</th>
+<th>Typical Latency</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>RealTime</strong></td>
+<td>Immediate, synchronous</td>
+<td>&lt; 1 second</td>
+</tr>
+<tr>
+<td><strong>NearRealTime</strong></td>
+<td>Slight delay, async</td>
+<td>1-60 seconds</td>
+</tr>
+<tr>
+<td><strong>Batch</strong></td>
+<td>Scheduled batches</td>
+<td>Hours/Daily</td>
+</tr>
+</tbody></table>
+<h3>Example: Portal-to-Payment Interface</h3>
+<pre><code>Interface: Portal-Payment-API
+├── Source: Customer Portal
+├── Target: Payment Gateway
+├── Direction: Outbound
+├── Pattern: REST
+├── Frequency: RealTime
+└── SLA: 99.9%, response &lt; 200ms
+</code></pre>
+<h3>Creating an Interface</h3>
+<p><strong>Via Bulk Upload CSV:</strong></p>
+<pre><code class="language-csv">name,direction,pattern,frequency,source_application_name,target_application_name,sla,external_party
+Portal-to-Payment-API,Outbound,REST,RealTime,Customer Portal,Payment Gateway,99.9% &lt;200ms,
+Payment-to-Fraud-Check,Outbound,REST,RealTime,Payment Gateway,Fraud Detection,99.99% &lt;100ms,
+Payment-to-VISA,Outbound,REST,RealTime,Payment Gateway,,99.9%,VISA
+Daily-Statement-Export,Outbound,FileDrop,Batch,Transaction History,,Daily 6AM,
+</code></pre>
+<hr>
+<h2>Interface Endpoints</h2>
+<p><strong>Interface Endpoints</strong> define how an interface behaves in a specific environment instance. The same interface may have different configurations (URLs, test modes) across instances.</p>
+<h3>Interface Endpoint Fields</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+<th>Valid Values</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>interface_id</code></td>
+<td>UUID</td>
+<td>✓</td>
+<td>Parent interface</td>
+<td>FK to interfaces</td>
+</tr>
+<tr>
+<td><code>env_instance_id</code></td>
+<td>UUID</td>
+<td>✓</td>
+<td>Environment instance</td>
+<td>FK to environment_instances</td>
+</tr>
+<tr>
+<td><code>endpoint</code></td>
+<td>String(500)</td>
+<td></td>
+<td>URL or connection string</td>
+<td>e.g., &quot;<a href="https://api.sit.local/v1">https://api.sit.local/v1</a>&quot;</td>
+</tr>
+<tr>
+<td><code>test_mode</code></td>
+<td>Enum</td>
+<td></td>
+<td>How interface behaves</td>
+<td><code>Live</code>, <code>Virtualised</code>, <code>Stubbed</code>, <code>Disabled</code></td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>Boolean</td>
+<td></td>
+<td>Is endpoint active</td>
+<td><code>true</code> / <code>false</code></td>
+</tr>
+<tr>
+<td><code>source_component_instance_id</code></td>
+<td>UUID</td>
+<td></td>
+<td>Source component</td>
+<td>FK to component_instances</td>
+</tr>
+<tr>
+<td><code>target_component_instance_id</code></td>
+<td>UUID</td>
+<td></td>
+<td>Target component</td>
+<td>FK to component_instances</td>
+</tr>
+<tr>
+<td><code>external_stub_id</code></td>
+<td>String(255)</td>
+<td></td>
+<td>Virtual service ID</td>
+<td>e.g., &quot;WireMock-stub-001&quot;</td>
+</tr>
+</tbody></table>
+<h3>Test Modes Explained</h3>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Description</th>
+<th>When to Use</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Live</strong></td>
+<td>Connects to real target system</td>
+<td>Production-like testing, E2E tests</td>
+</tr>
+<tr>
+<td><strong>Virtualised</strong></td>
+<td>Uses service virtualization</td>
+<td>Isolated testing, parallel testing</td>
+</tr>
+<tr>
+<td><strong>Stubbed</strong></td>
+<td>Uses simple mock responses</td>
+<td>Unit testing, development</td>
+</tr>
+<tr>
+<td><strong>Disabled</strong></td>
+<td>Interface is turned off</td>
+<td>Focused component testing</td>
+</tr>
+</tbody></table>
+<h3>Why Different Test Modes?</h3>
+<p>In a <strong>SIT Instance</strong>, you might want:</p>
+<ul>
+<li>Internal APIs → <strong>Live</strong> (real connections within SIT)</li>
+<li>External vendor APIs → <strong>Virtualised</strong> (use Parasoft/WireMock stubs)</li>
+<li>Third-party services → <strong>Stubbed</strong> (simple mocks)</li>
+</ul>
+<h3>Example: Same Interface, Different Instances</h3>
+<pre><code>Interface: Payment-to-VISA
+├── SIT-1 Instance
+│   ├── Endpoint: https://stub.internal/visa-mock
+│   ├── Test Mode: Stubbed
+│   └── Enabled: true
+├── UAT-1 Instance
+│   ├── Endpoint: https://virtualservice.internal/visa
+│   ├── Test Mode: Virtualised
+│   └── Enabled: true
+└── PreProd-1 Instance
+    ├── Endpoint: https://sandbox.visa.com/api
+    ├── Test Mode: Live
+    └── Enabled: true
+</code></pre>
+<h3>Creating Interface Endpoints via Bulk Upload</h3>
+<pre><code class="language-csv">interface_name,instance_name,endpoint,test_mode,enabled,source_component_name,target_component_name
+Portal-to-Payment-API,SIT-1,https://payment-api.sit.local/v1,Live,true,portal-bff,payment-api
+Portal-to-Payment-API,UAT-1,https://payment-api.uat.local/v1,Live,true,portal-bff,payment-api
+Payment-to-VISA,SIT-1,https://stub.internal/visa-mock,Stubbed,true,payment-processor,
+Payment-to-VISA,UAT-1,https://sandbox.visa.com/api,Virtualised,true,payment-processor,
+</code></pre>
+<hr>
+<h2>Component Instances</h2>
+<p><strong>Component Instances</strong> track the deployment of individual application components to environment instances. This allows version tracking at the component level.</p>
+<h3>Component Instance Fields</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+<th>Valid Values</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>component_id</code></td>
+<td>UUID</td>
+<td>✓</td>
+<td>Parent component</td>
+<td>FK to app_components</td>
+</tr>
+<tr>
+<td><code>env_instance_id</code></td>
+<td>UUID</td>
+<td>✓</td>
+<td>Environment instance</td>
+<td>FK to environment_instances</td>
+</tr>
+<tr>
+<td><code>version</code></td>
+<td>String(50)</td>
+<td></td>
+<td>Deployed version</td>
+<td>e.g., &quot;2.1.0&quot;, &quot;2.1.0-SNAPSHOT&quot;</td>
+</tr>
+<tr>
+<td><code>deployment_status</code></td>
+<td>Enum</td>
+<td></td>
+<td>Current state</td>
+<td><code>Deployed</code>, <code>PartiallyDeployed</code>, <code>RollbackPending</code>, <code>Failed</code></td>
+</tr>
+<tr>
+<td><code>last_deployed_date</code></td>
+<td>Timestamp</td>
+<td></td>
+<td>Last deployment time</td>
+<td>Auto-updated</td>
+</tr>
+</tbody></table>
+<h3>Deployment Statuses</h3>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Description</th>
+<th>Action Needed</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Deployed</strong></td>
+<td>Successfully deployed and running</td>
+<td>None</td>
+</tr>
+<tr>
+<td><strong>PartiallyDeployed</strong></td>
+<td>Some replicas deployed</td>
+<td>Monitor, may need retry</td>
+</tr>
+<tr>
+<td><strong>RollbackPending</strong></td>
+<td>Rollback in progress</td>
+<td>Wait for completion</td>
+</tr>
+<tr>
+<td><strong>Failed</strong></td>
+<td>Deployment failed</td>
+<td>Investigate and retry</td>
+</tr>
+</tbody></table>
+<h3>Example: Tracking Component Versions</h3>
+<pre><code>SIT-1 Instance:
+├── payment-api v2.1.0 (Deployed)
+├── payment-processor v2.1.0 (Deployed)
+├── payment-db v2.1.0 (Deployed)
+├── portal-ui v3.0.0-beta (Deployed)
+└── portal-bff v2.9.0 (Deployed)
+
+UAT-1 Instance:
+├── payment-api v2.0.0 (Deployed)
+├── payment-processor v2.0.0 (Deployed)
+├── portal-ui v2.9.0 (Deployed)
+└── portal-bff v2.9.0 (Deployed)
+</code></pre>
+<p>This shows SIT has newer payment versions while UAT has stable releases.</p>
+<h3>Creating Component Instances via Bulk Upload</h3>
+<pre><code class="language-csv">application_name,component_name,instance_name,version,deployment_status
+Payment Gateway,payment-api,SIT-1,2.1.0,Deployed
+Payment Gateway,payment-api,UAT-1,2.0.0,Deployed
+Payment Gateway,payment-processor,SIT-1,2.1.0,Deployed
+Customer Portal,portal-ui,SIT-1,3.0.0-beta,Deployed
+Customer Portal,portal-ui,UAT-1,2.9.0,Deployed
+</code></pre>
+<hr>
+<h2>Application Deployments</h2>
+<p><strong>Application Deployments</strong> (stored in <code>application_environment_instances</code>) track the high-level relationship between Applications and Environment Instances.</p>
+<h3>Deployment Fields</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+<th>Valid Values</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>application_id</code></td>
+<td>UUID</td>
+<td>✓</td>
+<td>Application</td>
+<td>FK to applications</td>
+</tr>
+<tr>
+<td><code>env_instance_id</code></td>
+<td>UUID</td>
+<td>✓</td>
+<td>Environment instance</td>
+<td>FK to environment_instances</td>
+</tr>
+<tr>
+<td><code>deployment_model</code></td>
+<td>Enum</td>
+<td></td>
+<td>Architecture type</td>
+<td><code>Monolith</code>, <code>Microservices</code>, <code>SaaS</code>, <code>COTS</code></td>
+</tr>
+<tr>
+<td><code>version</code></td>
+<td>String(50)</td>
+<td></td>
+<td>Overall app version</td>
+<td>e.g., &quot;2.1.0&quot;</td>
+</tr>
+<tr>
+<td><code>deployment_status</code></td>
+<td>Enum</td>
+<td></td>
+<td>Overall health</td>
+<td><code>Aligned</code>, <code>Mixed</code>, <code>OutOfSync</code>, <code>Broken</code></td>
+</tr>
+</tbody></table>
+<h3>Deployment Models</h3>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Description</th>
+<th>Use Case</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Monolith</strong></td>
+<td>Single deployable unit</td>
+<td>Traditional applications</td>
+</tr>
+<tr>
+<td><strong>Microservices</strong></td>
+<td>Multiple independent services</td>
+<td>Cloud-native apps</td>
+</tr>
+<tr>
+<td><strong>SaaS</strong></td>
+<td>Third-party hosted</td>
+<td>Salesforce, ServiceNow</td>
+</tr>
+<tr>
+<td><strong>COTS</strong></td>
+<td>Commercial off-the-shelf</td>
+<td>Oracle, SAP</td>
+</tr>
+</tbody></table>
+<h3>Deployment Status</h3>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Meaning</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Aligned</strong></td>
+<td>All components at expected versions</td>
+<td>None</td>
+</tr>
+<tr>
+<td><strong>Mixed</strong></td>
+<td>Some components at different versions</td>
+<td>Review</td>
+</tr>
+<tr>
+<td><strong>OutOfSync</strong></td>
+<td>Deployment differs from planned state</td>
+<td>Investigate</td>
+</tr>
+<tr>
+<td><strong>Broken</strong></td>
+<td>Deployment has failures</td>
+<td>Immediate action</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Entity Relationships</h2>
+<h3>Complete Relationship Diagram</h3>
+<pre><code>┌─────────────────────────────────────────────────────────────────────────────────┐
+│                         COMPLETE ENTITY RELATIONSHIP                             │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────┐                                    ┌──────────────┐
+│  ENVIRONMENT │                                    │ APPLICATION  │
+│              │                                    │              │
+│ • name       │                                    │ • name       │
+│ • category   │                                    │ • domain     │
+│ • stage      │                                    │ • criticality│
+└──────┬───────┘                                    └──────┬───────┘
+       │ 1:N                                               │ 1:N
+       ▼                                                   ▼
+┌──────────────────┐                              ┌─────────────────┐
+│ ENV INSTANCE     │                              │ APP COMPONENT   │
+│                  │                              │                 │
+│ • name           │                              │ • name          │
+│ • op_status      │                              │ • type          │
+│ • bookable       │                              │ • source_repo   │
+└────────┬─────────┘                              └────────┬────────┘
+         │                                                 │
+         │         ┌──────────────────────┐               │
+         │         │ APP_ENV_INSTANCE     │               │
+         ├────────►│ (App Deployment)     │◄──────────────┤
+         │         │                      │               │
+         │         │ • version            │               │
+         │         │ • deployment_model   │               │
+         │         │ • deployment_status  │               │
+         │         └──────────────────────┘               │
+         │                                                │
+         │         ┌──────────────────────┐               │
+         ├────────►│ COMPONENT_INSTANCE   │◄──────────────┘
+         │         │                      │
+         │         │ • version            │
+         │         │ • deployment_status  │
+         │         └──────────────────────┘
+         │
+         │                                        ┌──────────────────┐
+         │         ┌──────────────────────┐      │ INTERFACE        │
+         └────────►│ INTERFACE_ENDPOINT   │◄─────┤                  │
+                   │                      │      │ • name           │
+                   │ • endpoint           │      │ • direction      │
+                   │ • test_mode          │      │ • pattern        │
+                   │ • enabled            │      │ • frequency      │
+                   └──────────────────────┘      │ • source_app_id  │
+                                                 │ • target_app_id  │
+                                                 └──────────────────┘
+</code></pre>
+<h3>Relationship Summary</h3>
+<table>
+<thead>
+<tr>
+<th>From</th>
+<th>To</th>
+<th>Cardinality</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Environment</td>
+<td>Instance</td>
+<td>1:N</td>
+<td>One environment has many instances</td>
+</tr>
+<tr>
+<td>Application</td>
+<td>Component</td>
+<td>1:N</td>
+<td>One application has many components</td>
+</tr>
+<tr>
+<td>Application</td>
+<td>Interface</td>
+<td>1:N</td>
+<td>One app can be source/target of many interfaces</td>
+</tr>
+<tr>
+<td>Instance + Application</td>
+<td>App Deployment</td>
+<td>1:1</td>
+<td>One deployment per app per instance</td>
+</tr>
+<tr>
+<td>Instance + Component</td>
+<td>Component Instance</td>
+<td>1:1</td>
+<td>One component instance per component per instance</td>
+</tr>
+<tr>
+<td>Instance + Interface</td>
+<td>Interface Endpoint</td>
+<td>1:1</td>
+<td>One endpoint per interface per instance</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Entity Lifecycle Summary</h2>
+<p>Understanding entity lifecycles is crucial for effective test environment management. This section provides a summary; for complete details including state transition diagrams, see the <strong><a href="LIFECYCLE_GUIDE.md">Lifecycle Guide</a></strong>.</p>
+<h3>Environment Lifecycle</h3>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Description</th>
+<th>Can Book?</th>
+<th>Can Modify?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Planned</strong></td>
+<td>Being designed and set up</td>
+<td>❌</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><strong>Active</strong></td>
+<td>Fully operational</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><strong>Retiring</strong></td>
+<td>Being phased out</td>
+<td>⚠️ Existing only</td>
+<td>Limited</td>
+</tr>
+<tr>
+<td><strong>Decommissioned</strong></td>
+<td>Archived, read-only</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+</tbody></table>
+<p><strong>Transition Path:</strong> <code>Planned → Active → Retiring → Decommissioned</code></p>
+<h3>Environment Instance Lifecycle</h3>
+<p><strong>Operational Status:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Can Book?</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Provisioning</strong></td>
+<td>❌</td>
+<td>Being set up</td>
+</tr>
+<tr>
+<td><strong>Available</strong></td>
+<td>✅</td>
+<td>Ready for use</td>
+</tr>
+<tr>
+<td><strong>Maintenance</strong></td>
+<td>❌</td>
+<td>Scheduled maintenance</td>
+</tr>
+<tr>
+<td><strong>Broken</strong></td>
+<td>❌</td>
+<td>Has critical issues</td>
+</tr>
+</tbody></table>
+<p><strong>Booking Status:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Can Book?</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Available</strong></td>
+<td>✅</td>
+<td>No active bookings</td>
+</tr>
+<tr>
+<td><strong>PartiallyBooked</strong></td>
+<td>✅</td>
+<td>Has capacity remaining</td>
+</tr>
+<tr>
+<td><strong>FullyBooked</strong></td>
+<td>❌</td>
+<td>At maximum capacity</td>
+</tr>
+</tbody></table>
+<h3>Application Deployment Lifecycle</h3>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Description</th>
+<th>Action Required</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Aligned</strong></td>
+<td>All components at expected versions</td>
+<td>None</td>
+</tr>
+<tr>
+<td><strong>Mixed</strong></td>
+<td>Some components at different versions</td>
+<td>Review</td>
+</tr>
+<tr>
+<td><strong>OutOfSync</strong></td>
+<td>Configuration drift</td>
+<td>Investigate</td>
+</tr>
+<tr>
+<td><strong>Broken</strong></td>
+<td>Critical failures</td>
+<td>Immediate action</td>
+</tr>
+</tbody></table>
+<h3>Component Instance Lifecycle</h3>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Description</th>
+<th>Alert Level</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Deployed</strong></td>
+<td>Successfully running</td>
+<td>✅ None</td>
+</tr>
+<tr>
+<td><strong>PartiallyDeployed</strong></td>
+<td>Some replicas running</td>
+<td>⚠️ Warning</td>
+</tr>
+<tr>
+<td><strong>RollbackPending</strong></td>
+<td>Rolling back</td>
+<td>⚠️ Info</td>
+</tr>
+<tr>
+<td><strong>Failed</strong></td>
+<td>Deployment failed</td>
+<td>❌ Critical</td>
+</tr>
+</tbody></table>
+<h3>Interface Endpoint Test Modes</h3>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Description</th>
+<th>Typical Environment</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Live</strong></td>
+<td>Real connection</td>
+<td>UAT, PreProd, Performance</td>
+</tr>
+<tr>
+<td><strong>Virtualised</strong></td>
+<td>Service virtualization</td>
+<td>SIT, Integration</td>
+</tr>
+<tr>
+<td><strong>Stubbed</strong></td>
+<td>Simple mock</td>
+<td>Development</td>
+</tr>
+<tr>
+<td><strong>Disabled</strong></td>
+<td>Turned off</td>
+<td>Isolated testing</td>
+</tr>
+</tbody></table>
+<p><strong>Promotion Path:</strong> <code>Stubbed → Virtualised → Live</code></p>
+<blockquote>
+<p><strong>📘 Complete Lifecycle Details</strong>: See <a href="LIFECYCLE_GUIDE.md">LIFECYCLE_GUIDE.md</a> for:</p>
+<ul>
+<li>Detailed state transition diagrams</li>
+<li>Lifecycle interaction rules</li>
+<li>Troubleshooting lifecycle issues</li>
+<li>Best practices per lifecycle stage</li>
+</ul>
+</blockquote>
+<hr>
+<h2>Bulk Upload Guide</h2>
+<p>For setting up many items at once, use the <strong>Bulk Upload</strong> feature. This is the most efficient way to populate the system with your existing environment data.</p>
+<h3>Accessing Bulk Upload</h3>
+<ol>
+<li>Go to <strong>Settings</strong> in the sidebar</li>
+<li>Click on <strong>Data Management</strong> tab</li>
+<li>Click <strong>Go to Bulk Upload</strong></li>
+</ol>
+<p>Or navigate directly to: <code>/settings/bulk-upload</code></p>
+<h3>Available Upload Types</h3>
+<table>
+<thead>
+<tr>
+<th>Tab</th>
+<th>Entity</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Environments</td>
+<td><code>environments</code></td>
+<td>Top-level environment categories</td>
+</tr>
+<tr>
+<td>Instances</td>
+<td><code>environment_instances</code></td>
+<td>Bookable environment instances</td>
+</tr>
+<tr>
+<td>Applications</td>
+<td><code>applications</code></td>
+<td>Business applications</td>
+</tr>
+<tr>
+<td>Interfaces</td>
+<td><code>interfaces</code></td>
+<td>App-to-app communication channels</td>
+</tr>
+<tr>
+<td>Components</td>
+<td><code>app_components</code></td>
+<td>Application components/services</td>
+</tr>
+<tr>
+<td>App Deployments</td>
+<td><code>application_environment_instances</code></td>
+<td>App → Instance mappings</td>
+</tr>
+<tr>
+<td>Infrastructure</td>
+<td><code>infra_components</code></td>
+<td>VMs, containers, databases</td>
+</tr>
+<tr>
+<td><strong>Interface Endpoints</strong></td>
+<td><code>interface_endpoints</code></td>
+<td>Interface configuration per instance</td>
+</tr>
+<tr>
+<td><strong>Component Instances</strong></td>
+<td><code>component_instances</code></td>
+<td>Component deployment per instance</td>
+</tr>
+</tbody></table>
+<h3>How Bulk Upload Works</h3>
+<ol>
+<li><strong>Select Tab</strong> - Choose the entity type you want to upload</li>
+<li><strong>Download Template</strong> - Click the download button to get a CSV template</li>
+<li><strong>Fill in Data</strong> - Edit the CSV in Excel, Google Sheets, or any spreadsheet</li>
+<li><strong>Upload File</strong> - Paste CSV content or upload file</li>
+<li><strong>Review Results</strong> - See success/failure counts and error details</li>
+</ol>
+<h3>Upload Order (Critical!)</h3>
+<p>Because entities reference each other, upload in this sequence:</p>
+<pre><code>1. Environments          ─┐
+2. Applications          ─┼── No dependencies (upload first)
+                          │
+3. Instances             ─┤── Requires Environments
+4. Interfaces            ─┤── Can reference Applications
+5. Components            ─┤── Requires Applications
+                          │
+6. App Deployments       ─┤── Requires Applications + Instances
+7. Infrastructure        ─┤── Requires Instances
+                          │
+8. Interface Endpoints   ─┤── Requires Interfaces + Instances
+9. Component Instances   ─┘── Requires Components + Instances
+</code></pre>
+<h3>Interface Endpoints Bulk Upload</h3>
+<p>Upload interface configurations per environment instance.</p>
+<p><strong>Required Fields:</strong></p>
+<ul>
+<li><code>interface_name</code> - Name of the interface (must exist)</li>
+<li><code>instance_name</code> - Name of the environment instance (must exist)</li>
+</ul>
+<p><strong>Optional Fields:</strong></p>
+<ul>
+<li><code>endpoint</code> - URL or connection string</li>
+<li><code>test_mode</code> - <code>Live</code>, <code>Virtualised</code>, <code>Stubbed</code>, <code>Disabled</code></li>
+<li><code>enabled</code> - <code>true</code> or <code>false</code></li>
+<li><code>source_component_name</code> - Source component for tracing</li>
+<li><code>target_component_name</code> - Target component for tracing</li>
+</ul>
+<p><strong>Example CSV:</strong></p>
+<pre><code class="language-csv">interface_name,instance_name,endpoint,test_mode,enabled
+Portal-to-Payment-API,SIT-1,https://payment-api.sit.local/v1,Live,true
+Portal-to-Payment-API,UAT-1,https://payment-api.uat.local/v1,Live,true
+Payment-to-VISA,SIT-1,https://stub.internal/visa,Stubbed,true
+Payment-to-VISA,UAT-1,https://sandbox.visa.com/api,Virtualised,true
+</code></pre>
+<h3>Component Instances Bulk Upload</h3>
+<p>Upload component deployments per environment instance.</p>
+<p><strong>Required Fields:</strong></p>
+<ul>
+<li><code>application_name</code> - Name of the parent application</li>
+<li><code>component_name</code> - Name of the component (must exist under application)</li>
+<li><code>instance_name</code> - Name of the environment instance (must exist)</li>
+</ul>
+<p><strong>Optional Fields:</strong></p>
+<ul>
+<li><code>version</code> - Deployed version (e.g., &quot;2.1.0&quot;)</li>
+<li><code>deployment_status</code> - <code>Deployed</code>, <code>PartiallyDeployed</code>, <code>RollbackPending</code>, <code>Failed</code></li>
+</ul>
+<p><strong>Example CSV:</strong></p>
+<pre><code class="language-csv">application_name,component_name,instance_name,version,deployment_status
+Payment Gateway,payment-api,SIT-1,2.1.0,Deployed
+Payment Gateway,payment-api,UAT-1,2.0.0,Deployed
+Payment Gateway,payment-processor,SIT-1,2.1.0,Deployed
+Customer Portal,portal-ui,SIT-1,3.0.0-beta,Deployed
+Customer Portal,portal-bff,SIT-1,2.9.0,Deployed
+</code></pre>
+<h3>CSV Format Guidelines</h3>
+<ul>
+<li>Use <strong>UTF-8 encoding</strong> (important for special characters)</li>
+<li>First row must contain <strong>exact header names</strong> as shown in templates</li>
+<li>Use <strong>commas</strong> as delimiters</li>
+<li>Wrap text containing commas in <strong>double quotes</strong></li>
+<li>Leave optional fields <strong>empty</strong> (not null or N/A)</li>
+<li>Date format: <strong>YYYY-MM-DD</strong> or <strong>ISO 8601</strong></li>
+<li>Boolean values: <code>true</code> or <code>false</code> (lowercase)</li>
+</ul>
+<h3>Error Messages and Solutions</h3>
+<table>
+<thead>
+<tr>
+<th>Error Message</th>
+<th>Cause</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Name is required</code></td>
+<td>Missing required name field</td>
+<td>Add name column with values</td>
+</tr>
+<tr>
+<td><code>Environment not found: X</code></td>
+<td>Environment doesn&#39;t exist</td>
+<td>Upload environments first</td>
+</tr>
+<tr>
+<td><code>Application not found: X</code></td>
+<td>Application doesn&#39;t exist</td>
+<td>Upload applications first</td>
+</tr>
+<tr>
+<td><code>Instance not found: X</code></td>
+<td>Instance doesn&#39;t exist</td>
+<td>Upload instances first</td>
+</tr>
+<tr>
+<td><code>Interface not found: X</code></td>
+<td>Interface doesn&#39;t exist</td>
+<td>Upload interfaces first</td>
+</tr>
+<tr>
+<td><code>Component not found: X in application Y</code></td>
+<td>Component doesn&#39;t exist</td>
+<td>Upload components first</td>
+</tr>
+<tr>
+<td><code>Invalid test_mode: X</code></td>
+<td>Wrong test_mode value</td>
+<td>Use: Live, Virtualised, Stubbed, Disabled</td>
+</tr>
+<tr>
+<td><code>Invalid deployment_status: X</code></td>
+<td>Wrong status value</td>
+<td>Use: Deployed, PartiallyDeployed, RollbackPending, Failed</td>
+</tr>
+<tr>
+<td><code>Invalid category: X</code></td>
+<td>Wrong environment_category</td>
+<td>Use: NonProd, PreProd, DR, Training, Sandpit</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Sample Data Files</h2>
+<h3>Environments CSV</h3>
+<pre><code class="language-csv">name,description,environment_category,lifecycle_stage,owner_team,support_group,data_sensitivity,usage_policies
 Development-Alpha,Development environment for Alpha team,NonProd,Active,Alpha Team,IT Support,NonProdDummy,Development and unit testing only
 Development-Beta,Development environment for Beta team,NonProd,Active,Beta Team,IT Support,NonProdDummy,Development and unit testing only
 Integration-Testing,Shared integration testing environment,NonProd,Active,QA Team,IT Support,NonProdDummy,Integration and API testing
@@ -804,142 +1970,637 @@ UAT-Environment,User acceptance testing environment,PreProd,Active,UAT Team,IT S
 Performance-Testing,Performance and load testing environment,NonProd,Active,Performance Team,IT Support,NonProdDummy,Load and stress testing
 DR-Failover,Disaster recovery failover environment,DR,Active,DR Team,IT Support,PCI,DR testing and failover verification
 Training-Environment,Training and demo environment,Training,Active,Training Team,IT Support,NonProdDummy,User training and product demos
-Sandbox-Innovation,Innovation and experimentation sandbox,Sandpit,Active,Innovation Team,IT Support,NonProdDummy,POCs and experimentation</div>
-            
-            <h3>2. Applications CSV</h3>
-            <div class="csv-sample">name,business_domain,description,criticality,data_sensitivity,owner_team,test_owner
-Customer-Portal,Retail Banking,Customer-facing internet banking portal,High,PCI,Digital Banking,QA Team
-Mobile-Banking-App,Retail Banking,Mobile banking application for iOS and Android,High,PCI,Mobile Team,QA Team
-Payment-Gateway,Payments,Core payment processing system,High,PCI,Payments Team,QA Team
-Notification-Service,Communications,Email and SMS notification system,Medium,PII,Platform Team,QA Team
-User-Authentication,Security,Centralized authentication and authorization,High,PII,Security Team,QA Team
-Account-Management,Core Banking,Account creation and management system,High,PII,Core Banking Team,QA Team</div>
-            
-            <h3>3. Instances CSV</h3>
-            <div class="csv-sample">environment_name,name,operational_status,availability_window,capacity,primary_location,bookable
+Sandbox-Innovation,Innovation and experimentation sandbox,Sandpit,Active,Innovation Team,IT Support,NonProdDummy,POCs and experimentation
+</code></pre>
+<p><strong>Save as:</strong> <code>environments.csv</code></p>
+<hr>
+<h3>Instances CSV</h3>
+<pre><code class="language-csv">environment_name,name,operational_status,availability_window,capacity,primary_location,bookable
 Development-Alpha,DEV-Alpha-1,Available,24x7,5,Sydney DC,true
 Development-Alpha,DEV-Alpha-2,Available,24x7,5,Sydney DC,true
 Development-Beta,DEV-Beta-1,Available,24x7,5,Sydney DC,true
 Integration-Testing,INT-Instance-A,Available,Business Hours,10,Sydney DC,true
 Integration-Testing,INT-Instance-B,Available,Business Hours,10,Melbourne DC,true
-UAT-Environment,UAT-Instance-1,Available,Business Hours,20,Sydney DC,true</div>
-            
-            <h3>4. Interfaces CSV</h3>
-            <div class="csv-sample">name,direction,pattern,frequency,protocol,source_application_name,target_application_name,description
+Integration-Testing,INT-Instance-C,Maintenance,Business Hours,10,Sydney DC,false
+UAT-Environment,UAT-Instance-1,Available,Business Hours,20,Sydney DC,true
+UAT-Environment,UAT-Instance-2,Available,Business Hours,20,Melbourne DC,true
+Performance-Testing,PERF-Instance-1,Available,24x7,50,Sydney DC,true
+DR-Failover,DR-Instance-1,Available,24x7,100,Brisbane DC,true
+Training-Environment,TRAIN-Instance-1,Available,Business Hours,30,Sydney DC,true
+Sandbox-Innovation,SANDBOX-1,Available,24x7,5,Sydney DC,true
+</code></pre>
+<p><strong>Save as:</strong> <code>instances.csv</code></p>
+<hr>
+<h3>Applications CSV</h3>
+<pre><code class="language-csv">name,business_domain,description,criticality,data_sensitivity,owner_team,test_owner
+Customer-Portal,Retail Banking,Customer-facing internet banking portal,High,PCI,Digital Banking,QA Team
+Mobile-Banking-App,Retail Banking,Mobile banking application for iOS and Android,High,PCI,Mobile Team,QA Team
+Payment-Gateway,Payments,Core payment processing system,High,PCI,Payments Team,QA Team
+Notification-Service,Communications,Email and SMS notification system,Medium,PII,Platform Team,QA Team
+User-Authentication,Security,Centralized authentication and authorization,High,PII,Security Team,QA Team
+Account-Management,Core Banking,Account creation and management system,High,PII,Core Banking Team,QA Team
+Transaction-History,Reporting,Transaction history and statement generation,Medium,PCI,Reporting Team,QA Team
+Fraud-Detection,Risk,Real-time fraud detection and prevention,High,PCI,Risk Team,QA Team
+API-Gateway,Platform,Centralized API gateway and rate limiting,High,Confidential,Platform Team,QA Team
+Content-Management,Marketing,Marketing content and banner management,Low,NonProdDummy,Marketing Team,QA Team
+Loyalty-Program,Customer Experience,Customer loyalty points and rewards,Medium,PII,CX Team,QA Team
+Support-Ticketing,Operations,Customer support ticket management,Medium,PII,Support Team,QA Team
+</code></pre>
+<p><strong>Save as:</strong> <code>applications.csv</code></p>
+<hr>
+<h3>Interfaces CSV</h3>
+<pre><code class="language-csv">name,direction,pattern,frequency,protocol,source_application_name,target_application_name,description
 Portal-to-Auth-API,Outbound,REST,RealTime,HTTPS,Customer-Portal,User-Authentication,User login and authentication
 Portal-to-Account-API,Outbound,REST,RealTime,HTTPS,Customer-Portal,Account-Management,Account balance and details
 Portal-to-Payment-API,Outbound,REST,RealTime,HTTPS,Customer-Portal,Payment-Gateway,Payment initiation
-Payment-to-Notification,Outbound,Messaging,RealTime,MQ,Payment-Gateway,Notification-Service,Payment confirmation notifications</div>
-            
-            <div class="success">
-                <strong>✅ Sample files are available in:</strong> <code>docs/sample-data/</code>
-                <br>Files are numbered (01, 02, 03...) to indicate upload order.
-            </div>
-        </section>
-        
-        <section id="quick-reference">
-            <h2>Quick Reference</h2>
-            
-            <div class="card-grid">
-                <div class="card">
-                    <h4>Environment Categories</h4>
-                    <table>
-                        <tr><td><code>NonProd</code></td><td>Development, Testing</td></tr>
-                        <tr><td><code>PreProd</code></td><td>UAT, Staging</td></tr>
-                        <tr><td><code>DR</code></td><td>Disaster Recovery</td></tr>
-                        <tr><td><code>Training</code></td><td>Training environments</td></tr>
-                        <tr><td><code>Sandpit</code></td><td>Experimentation</td></tr>
-                    </table>
-                </div>
-                
-                <div class="card">
-                    <h4>Lifecycle Stages</h4>
-                    <table>
-                        <tr><td><code>Active</code></td><td>Currently in use</td></tr>
-                        <tr><td><code>Provisioning</code></td><td>Being set up</td></tr>
-                        <tr><td><code>Decommissioning</code></td><td>Being retired</td></tr>
-                        <tr><td><code>Archived</code></td><td>No longer active</td></tr>
-                    </table>
-                </div>
-                
-                <div class="card">
-                    <h4>Criticality Levels</h4>
-                    <table>
-                        <tr><td><code>High</code></td><td>Business critical</td></tr>
-                        <tr><td><code>Medium</code></td><td>Important but not critical</td></tr>
-                        <tr><td><code>Low</code></td><td>Nice to have</td></tr>
-                    </table>
-                </div>
-                
-                <div class="card">
-                    <h4>Data Sensitivity</h4>
-                    <table>
-                        <tr><td><code>PCI</code></td><td>Payment card data</td></tr>
-                        <tr><td><code>PII</code></td><td>Personal information</td></tr>
-                        <tr><td><code>Confidential</code></td><td>Business sensitive</td></tr>
-                        <tr><td><code>NonProdDummy</code></td><td>Test/dummy data only</td></tr>
-                    </table>
-                </div>
-            </div>
-        </section>
-        
-        <section id="troubleshooting">
-            <h2>Troubleshooting</h2>
-            
-            <h3>Common Upload Errors</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Error</th>
-                        <th>Cause</th>
-                        <th>Solution</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>"Environment not found"</td>
-                        <td>Referenced environment doesn't exist</td>
-                        <td>Upload environments first</td>
-                    </tr>
-                    <tr>
-                        <td>"Application not found"</td>
-                        <td>Referenced application doesn't exist</td>
-                        <td>Upload applications first</td>
-                    </tr>
-                    <tr>
-                        <td>"Instance not found"</td>
-                        <td>Referenced instance doesn't exist</td>
-                        <td>Upload instances first</td>
-                    </tr>
-                    <tr>
-                        <td>"Invalid category"</td>
-                        <td>Wrong environment_category value</td>
-                        <td>Use: NonProd, PreProd, DR, Training, Sandpit</td>
-                    </tr>
-                    <tr>
-                        <td>"Name is required"</td>
-                        <td>Missing required field</td>
-                        <td>Fill in all fields marked with *</td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <div class="tip">
-                <strong>💡 Tips for Success:</strong>
-                <ul>
-                    <li>Download templates first to see the correct format</li>
-                    <li>Upload entities in dependency order</li>
-                    <li>Use exact names when referencing other entities</li>
-                    <li>Always preview before uploading</li>
-                    <li>Start with a few rows to test</li>
-                </ul>
-            </div>
-        </section>
+Portal-to-History-API,Outbound,REST,RealTime,HTTPS,Customer-Portal,Transaction-History,Transaction history retrieval
+Mobile-to-Auth-API,Outbound,REST,RealTime,HTTPS,Mobile-Banking-App,User-Authentication,Mobile authentication
+Mobile-to-Account-API,Outbound,REST,RealTime,HTTPS,Mobile-Banking-App,Account-Management,Mobile account access
+Mobile-to-Payment-API,Outbound,REST,RealTime,HTTPS,Mobile-Banking-App,Payment-Gateway,Mobile payments
+Payment-to-Fraud-Check,Outbound,REST,RealTime,HTTPS,Payment-Gateway,Fraud-Detection,Real-time fraud check
+Payment-to-Notification,Outbound,Messaging,RealTime,MQ,Payment-Gateway,Notification-Service,Payment confirmation notifications
+Account-to-Notification,Outbound,Messaging,RealTime,MQ,Account-Management,Notification-Service,Account update notifications
+Fraud-Alert-Notification,Outbound,Messaging,RealTime,MQ,Fraud-Detection,Notification-Service,Fraud alert notifications
+History-Batch-Load,Inbound,File,Batch,SFTP,Transaction-History,,Daily transaction file import
+API-Gateway-to-All,Bidirectional,REST,RealTime,HTTPS,API-Gateway,,API routing and rate limiting
+Loyalty-Points-Sync,Outbound,REST,Batch,HTTPS,Payment-Gateway,Loyalty-Program,Sync loyalty points after purchase
+</code></pre>
+<p><strong>Save as:</strong> <code>interfaces.csv</code></p>
+<hr>
+<h3>Components CSV</h3>
+<pre><code class="language-csv">application_name,name,component_type,technology_stack,description
+Customer-Portal,Portal-Frontend,UI,React,Customer-facing web interface
+Customer-Portal,Portal-BFF,Service,Node.js,Backend for frontend service
+Customer-Portal,Portal-Cache,Cache,Redis,Session and data caching
+Mobile-Banking-App,iOS-App,Mobile,Swift,iOS native application
+Mobile-Banking-App,Android-App,Mobile,Kotlin,Android native application
+Mobile-Banking-App,Mobile-BFF,Service,Node.js,Mobile backend for frontend
+Payment-Gateway,Payment-Processor,Service,Java,Core payment processing logic
+Payment-Gateway,Payment-Validator,Service,Java,Payment validation rules
+Payment-Gateway,Payment-DB,Database,PostgreSQL,Payment transaction database
+User-Authentication,Auth-Service,Service,Go,Authentication microservice
+User-Authentication,Token-Service,Service,Go,JWT token management
+User-Authentication,Auth-DB,Database,PostgreSQL,User credentials database
+Notification-Service,Email-Sender,Service,Python,Email notification sender
+Notification-Service,SMS-Sender,Service,Python,SMS notification sender
+Notification-Service,Notification-Queue,Queue,RabbitMQ,Notification message queue
+Fraud-Detection,Fraud-Engine,Service,Python,ML-based fraud detection
+Fraud-Detection,Rules-Engine,Service,Java,Rule-based fraud detection
+API-Gateway,Kong-Gateway,Gateway,Kong,API gateway instance
+API-Gateway,Rate-Limiter,Service,Redis,Rate limiting cache
+</code></pre>
+<p><strong>Save as:</strong> <code>components.csv</code></p>
+<hr>
+<h3>Application-Instance Mappings CSV</h3>
+<pre><code class="language-csv">application_name,instance_name,deployment_model,version,deployment_status
+Customer-Portal,DEV-Alpha-1,Microservices,2.1.0,Aligned
+Customer-Portal,INT-Instance-A,Microservices,2.0.0,Aligned
+Customer-Portal,UAT-Instance-1,Microservices,2.0.0,Aligned
+Mobile-Banking-App,DEV-Alpha-1,Microservices,3.0.0-beta,Aligned
+Mobile-Banking-App,INT-Instance-A,Microservices,2.9.0,Aligned
+Payment-Gateway,DEV-Alpha-1,Microservices,1.5.0,Aligned
+Payment-Gateway,INT-Instance-A,Microservices,1.4.0,Aligned
+Payment-Gateway,INT-Instance-B,Microservices,1.4.0,Aligned
+Payment-Gateway,UAT-Instance-1,Microservices,1.4.0,Aligned
+User-Authentication,DEV-Alpha-1,Microservices,4.0.0,Aligned
+User-Authentication,INT-Instance-A,Microservices,3.9.0,Aligned
+User-Authentication,UAT-Instance-1,Microservices,3.9.0,Aligned
+Notification-Service,INT-Instance-A,Microservices,2.0.0,Aligned
+Notification-Service,UAT-Instance-1,Microservices,2.0.0,Aligned
+Fraud-Detection,INT-Instance-A,Microservices,1.2.0,Aligned
+Fraud-Detection,UAT-Instance-1,Microservices,1.2.0,Aligned
+API-Gateway,DEV-Alpha-1,Container,3.0.0,Aligned
+API-Gateway,INT-Instance-A,Container,3.0.0,Aligned
+API-Gateway,UAT-Instance-1,Container,3.0.0,Aligned
+</code></pre>
+<p><strong>Save as:</strong> <code>app_instances.csv</code></p>
+<hr>
+<h3>Infrastructure Components CSV</h3>
+<pre><code class="language-csv">instance_name,name,component_type,hostname,ip_address,os_version,status,owner_team
+DEV-Alpha-1,dev-app-server-1,VM,dev-app-01.local,10.0.1.10,Ubuntu 22.04,Active,Infrastructure
+DEV-Alpha-1,dev-db-server-1,VM,dev-db-01.local,10.0.1.20,Ubuntu 22.04,Active,DBA Team
+DEV-Alpha-1,dev-cache-1,Container,dev-cache-01.local,10.0.1.30,Alpine Linux,Active,Infrastructure
+INT-Instance-A,int-app-server-1,VM,int-app-01.local,10.0.2.10,RHEL 8,Active,Infrastructure
+INT-Instance-A,int-app-server-2,VM,int-app-02.local,10.0.2.11,RHEL 8,Active,Infrastructure
+INT-Instance-A,int-db-primary,VM,int-db-01.local,10.0.2.20,RHEL 8,Active,DBA Team
+INT-Instance-A,int-db-replica,VM,int-db-02.local,10.0.2.21,RHEL 8,Active,DBA Team
+INT-Instance-A,int-mq-server,VM,int-mq-01.local,10.0.2.30,RHEL 8,Active,Middleware Team
+UAT-Instance-1,uat-app-server-1,VM,uat-app-01.local,10.0.3.10,RHEL 8,Active,Infrastructure
+UAT-Instance-1,uat-app-server-2,VM,uat-app-02.local,10.0.3.11,RHEL 8,Active,Infrastructure
+UAT-Instance-1,uat-db-primary,VM,uat-db-01.local,10.0.3.20,RHEL 8,Active,DBA Team
+UAT-Instance-1,uat-lb,LoadBalancer,uat-lb-01.local,10.0.3.5,F5 BIG-IP,Active,Network Team
+PERF-Instance-1,perf-app-cluster,Kubernetes,perf-k8s.local,10.0.4.10,Kubernetes 1.28,Active,Infrastructure
+PERF-Instance-1,perf-db-cluster,Database,perf-db.local,10.0.4.20,PostgreSQL 15,Active,DBA Team
+DR-Instance-1,dr-app-server-1,VM,dr-app-01.local,10.0.5.10,RHEL 8,Active,DR Team
+DR-Instance-1,dr-db-primary,VM,dr-db-01.local,10.0.5.20,RHEL 8,Active,DR Team
+</code></pre>
+<p><strong>Save as:</strong> <code>infra_components.csv</code></p>
+<hr>
+<h3>Interface Endpoints CSV</h3>
+<pre><code class="language-csv">interface_name,instance_name,endpoint,test_mode,enabled
+Portal-to-Auth-API,INT-Instance-A,https://auth.int.local/api/v1,Live,true
+Portal-to-Auth-API,UAT-Instance-1,https://auth.uat.local/api/v1,Live,true
+Portal-to-Payment-API,INT-Instance-A,https://payment.int.local/api/v1,Live,true
+Portal-to-Payment-API,UAT-Instance-1,https://payment.uat.local/api/v1,Live,true
+Payment-to-Fraud-Check,INT-Instance-A,https://fraud.int.local/check,Live,true
+Payment-to-Fraud-Check,UAT-Instance-1,https://stub.internal/fraud-mock,Stubbed,true
+API-Gateway-to-All,INT-Instance-A,https://api-gw.int.local,Live,true
+API-Gateway-to-All,UAT-Instance-1,https://api-gw.uat.local,Live,true
+</code></pre>
+<p><strong>Save as:</strong> <code>interface_endpoints.csv</code></p>
+<hr>
+<h3>Component Instances CSV</h3>
+<pre><code class="language-csv">application_name,component_name,instance_name,version,deployment_status
+Customer-Portal,Portal-Frontend,INT-Instance-A,2.1.0,Deployed
+Customer-Portal,Portal-Frontend,UAT-Instance-1,2.0.0,Deployed
+Customer-Portal,Portal-BFF,INT-Instance-A,2.1.0,Deployed
+Customer-Portal,Portal-BFF,UAT-Instance-1,2.0.0,Deployed
+Payment-Gateway,Payment-Processor,INT-Instance-A,1.5.0,Deployed
+Payment-Gateway,Payment-Processor,UAT-Instance-1,1.4.0,Deployed
+Payment-Gateway,Payment-Validator,INT-Instance-A,1.5.0,Deployed
+Payment-Gateway,Payment-DB,INT-Instance-A,1.5.0,Deployed
+User-Authentication,Auth-Service,INT-Instance-A,4.0.0,Deployed
+User-Authentication,Auth-Service,UAT-Instance-1,3.9.0,Deployed
+User-Authentication,Token-Service,INT-Instance-A,4.0.0,Deployed
+Fraud-Detection,Fraud-Engine,INT-Instance-A,1.2.0,Deployed
+Fraud-Detection,Rules-Engine,INT-Instance-A,1.2.0,Deployed
+API-Gateway,Kong-Gateway,INT-Instance-A,3.0.0,Deployed
+API-Gateway,Kong-Gateway,UAT-Instance-1,3.0.0,Deployed
+</code></pre>
+<p><strong>Save as:</strong> <code>component_instances.csv</code></p>
+<hr>
+<h2>Quick Reference</h2>
+<h3>All Valid Enum Values</h3>
+<h4>Environment Categories</h4>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>NonProd</code></td>
+<td>Development, SIT, Integration Testing</td>
+</tr>
+<tr>
+<td><code>PreProd</code></td>
+<td>UAT, Staging, Pre-Production</td>
+</tr>
+<tr>
+<td><code>DR</code></td>
+<td>Disaster Recovery</td>
+</tr>
+<tr>
+<td><code>Training</code></td>
+<td>Training environments</td>
+</tr>
+<tr>
+<td><code>Sandpit</code></td>
+<td>Experimentation, POCs</td>
+</tr>
+</tbody></table>
+<h4>Lifecycle Stages (Environments)</h4>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Planned</code></td>
+<td>Being planned, not yet active</td>
+</tr>
+<tr>
+<td><code>Active</code></td>
+<td>Currently operational</td>
+</tr>
+<tr>
+<td><code>Retiring</code></td>
+<td>Being phased out</td>
+</tr>
+<tr>
+<td><code>Decommissioned</code></td>
+<td>No longer in use</td>
+</tr>
+</tbody></table>
+<h4>Operational Status (Instances)</h4>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Available</code></td>
+<td>Ready for use/booking</td>
+</tr>
+<tr>
+<td><code>Broken</code></td>
+<td>Has issues, not functional</td>
+</tr>
+<tr>
+<td><code>Maintenance</code></td>
+<td>Scheduled maintenance</td>
+</tr>
+<tr>
+<td><code>Provisioning</code></td>
+<td>Being set up</td>
+</tr>
+</tbody></table>
+<h4>Booking Status (Instances)</h4>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Available</code></td>
+<td>Can accept new bookings</td>
+</tr>
+<tr>
+<td><code>PartiallyBooked</code></td>
+<td>Some capacity booked</td>
+</tr>
+<tr>
+<td><code>FullyBooked</code></td>
+<td>At maximum capacity</td>
+</tr>
+</tbody></table>
+<h4>Criticality Levels (Applications)</h4>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>High</code></td>
+<td>Business critical</td>
+</tr>
+<tr>
+<td><code>Medium</code></td>
+<td>Important but not critical</td>
+</tr>
+<tr>
+<td><code>Low</code></td>
+<td>Nice to have</td>
+</tr>
+</tbody></table>
+<h4>Data Sensitivity</h4>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>PCI</code></td>
+<td>Payment Card Industry data</td>
+</tr>
+<tr>
+<td><code>PII</code></td>
+<td>Personally Identifiable Information</td>
+</tr>
+<tr>
+<td><code>Confidential</code></td>
+<td>Business sensitive data</td>
+</tr>
+<tr>
+<td><code>NonProdDummy</code></td>
+<td>Test/synthetic data only</td>
+</tr>
+</tbody></table>
+<h4>Interface Patterns</h4>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>REST</code></td>
+<td>RESTful HTTP API</td>
+</tr>
+<tr>
+<td><code>SOAP</code></td>
+<td>XML SOAP web service</td>
+</tr>
+<tr>
+<td><code>MQ</code></td>
+<td>IBM MQ messaging</td>
+</tr>
+<tr>
+<td><code>Kafka</code></td>
+<td>Apache Kafka streaming</td>
+</tr>
+<tr>
+<td><code>FileDrop</code></td>
+<td>File-based exchange</td>
+</tr>
+<tr>
+<td><code>FTP</code></td>
+<td>File Transfer Protocol</td>
+</tr>
+<tr>
+<td><code>SFTP</code></td>
+<td>Secure FTP</td>
+</tr>
+<tr>
+<td><code>FIX</code></td>
+<td>Financial Information eXchange</td>
+</tr>
+<tr>
+<td><code>Other</code></td>
+<td>Other integration patterns</td>
+</tr>
+</tbody></table>
+<h4>Interface Directions</h4>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Inbound</code></td>
+<td>Receives data from external</td>
+</tr>
+<tr>
+<td><code>Outbound</code></td>
+<td>Sends data to external</td>
+</tr>
+<tr>
+<td><code>Bidirectional</code></td>
+<td>Two-way communication</td>
+</tr>
+</tbody></table>
+<h4>Interface Frequency</h4>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>RealTime</code></td>
+<td>Immediate, synchronous</td>
+</tr>
+<tr>
+<td><code>NearRealTime</code></td>
+<td>Slight delay, async</td>
+</tr>
+<tr>
+<td><code>Batch</code></td>
+<td>Scheduled batches</td>
+</tr>
+</tbody></table>
+<h4>Component Types</h4>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>API</code></td>
+<td>REST/GraphQL/gRPC API</td>
+</tr>
+<tr>
+<td><code>UI</code></td>
+<td>Frontend/User Interface</td>
+</tr>
+<tr>
+<td><code>Batch</code></td>
+<td>Batch processing jobs</td>
+</tr>
+<tr>
+<td><code>RuleEngine</code></td>
+<td>Business rules engine</td>
+</tr>
+<tr>
+<td><code>DBSchema</code></td>
+<td>Database schema</td>
+</tr>
+<tr>
+<td><code>MessageProcessor</code></td>
+<td>Message queue consumer</td>
+</tr>
+<tr>
+<td><code>Job</code></td>
+<td>Scheduled/background job</td>
+</tr>
+<tr>
+<td><code>Lambda</code></td>
+<td>Serverless function</td>
+</tr>
+<tr>
+<td><code>Other</code></td>
+<td>Other component types</td>
+</tr>
+</tbody></table>
+<h4>Test Modes (Interface Endpoints)</h4>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Live</code></td>
+<td>Real connection to target</td>
+</tr>
+<tr>
+<td><code>Virtualised</code></td>
+<td>Service virtualization</td>
+</tr>
+<tr>
+<td><code>Stubbed</code></td>
+<td>Simple mock responses</td>
+</tr>
+<tr>
+<td><code>Disabled</code></td>
+<td>Interface turned off</td>
+</tr>
+</tbody></table>
+<h4>Deployment Status (Component Instances)</h4>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Deployed</code></td>
+<td>Successfully deployed</td>
+</tr>
+<tr>
+<td><code>PartiallyDeployed</code></td>
+<td>Partial deployment</td>
+</tr>
+<tr>
+<td><code>RollbackPending</code></td>
+<td>Rollback in progress</td>
+</tr>
+<tr>
+<td><code>Failed</code></td>
+<td>Deployment failed</td>
+</tr>
+</tbody></table>
+<h4>Deployment Models (App Deployments)</h4>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Monolith</code></td>
+<td>Single deployable unit</td>
+</tr>
+<tr>
+<td><code>Microservices</code></td>
+<td>Multiple services</td>
+</tr>
+<tr>
+<td><code>SaaS</code></td>
+<td>Third-party hosted</td>
+</tr>
+<tr>
+<td><code>COTS</code></td>
+<td>Commercial off-the-shelf</td>
+</tr>
+</tbody></table>
+<h4>App Deployment Status</h4>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Aligned</code></td>
+<td>All components at expected versions</td>
+</tr>
+<tr>
+<td><code>Mixed</code></td>
+<td>Some components at different versions</td>
+</tr>
+<tr>
+<td><code>OutOfSync</code></td>
+<td>Differs from planned state</td>
+</tr>
+<tr>
+<td><code>Broken</code></td>
+<td>Has failures</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Troubleshooting</h2>
+<h3>Common Upload Errors</h3>
+<table>
+<thead>
+<tr>
+<th>Error</th>
+<th>Cause</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>&quot;Environment not found&quot;</td>
+<td>Referenced environment doesn&#39;t exist</td>
+<td>Upload environments first</td>
+</tr>
+<tr>
+<td>&quot;Application not found&quot;</td>
+<td>Referenced application doesn&#39;t exist</td>
+<td>Upload applications first</td>
+</tr>
+<tr>
+<td>&quot;Instance not found&quot;</td>
+<td>Referenced instance doesn&#39;t exist</td>
+<td>Upload instances first</td>
+</tr>
+<tr>
+<td>&quot;Invalid category&quot;</td>
+<td>Wrong environment_category value</td>
+<td>Use: NonProd, PreProd, DR, Training, Sandpit</td>
+</tr>
+<tr>
+<td>&quot;Invalid criticality&quot;</td>
+<td>Wrong criticality value</td>
+<td>Use: High, Medium, Low</td>
+</tr>
+<tr>
+<td>&quot;Name is required&quot;</td>
+<td>Missing required field</td>
+<td>Fill in all fields marked with *</td>
+</tr>
+</tbody></table>
+<h3>Tips for Success</h3>
+<ol>
+<li><p><strong>Download templates first</strong> - Use the template download button to get correctly formatted CSV files</p>
+</li>
+<li><p><strong>Check your references</strong> - Make sure environments and applications exist before uploading items that reference them</p>
+</li>
+<li><p><strong>Use exact names</strong> - When referencing environments or applications, use the exact name (case-sensitive)</p>
+</li>
+<li><p><strong>Preview before upload</strong> - Always check the preview to catch issues before uploading</p>
+</li>
+<li><p><strong>Start small</strong> - Test with a few rows first before uploading hundreds of records</p>
+</li>
+</ol>
+<hr>
+<h2>Need Help?</h2>
+<ul>
+<li>Check the <strong>Dashboard</strong> for system status</li>
+<li>View <strong>Activities</strong> to see recent changes</li>
+<li>Contact your system administrator for access issues</li>
+<li>Check the <strong>Topology</strong> page to visualize your environment setup</li>
+</ul>
+<hr>
+<h2>Related Documentation</h2>
+<table>
+<thead>
+<tr>
+<th>Document</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="DEMO_GUIDE.md">DEMO_GUIDE.md</a></td>
+<td>Step-by-step demo walkthrough</td>
+</tr>
+<tr>
+<td><a href="USER_GUIDE.md">USER_GUIDE.md</a></td>
+<td>Complete user documentation</td>
+</tr>
+<tr>
+<td><a href="QUICK_REFERENCE.md">QUICK_REFERENCE.md</a></td>
+<td>Quick reference card</td>
+</tr>
+</tbody></table>
+<hr>
+<p><em>Document Version: 3.0 | Last Updated: December 2025</em></p>
+
+        <div class="footer">
+            <p>BookMyEnv v4.2.0 | January 2025</p>
+            <p>Documentation generated automatically</p>
+        </div>
     </div>
-    
-    <footer>
-        <p>BookMyEnv Data Setup Guide | Version 1.0 | December 2024</p>
-        <p>For support, contact your system administrator</p>
-    </footer>
 </body>
 </html>
