@@ -1177,9 +1177,23 @@ CREATE TABLE IF NOT EXISTS audit_events (
     error_message TEXT,
     metadata JSONB DEFAULT '{}',
     
-    -- Indexing columns (for performance)
-    event_date DATE GENERATED ALWAYS AS (DATE(timestamp_utc)) STORED
+    -- Indexing column (populated by trigger for performance)
+    event_date DATE
 );
+
+-- Trigger to auto-populate event_date from timestamp_utc
+CREATE OR REPLACE FUNCTION set_audit_event_date()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.event_date := (NEW.timestamp_utc AT TIME ZONE 'UTC')::DATE;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER audit_events_set_date
+    BEFORE INSERT ON audit_events
+    FOR EACH ROW
+    EXECUTE FUNCTION set_audit_event_date();
 
 -- Audit Report Templates
 CREATE TABLE IF NOT EXISTS audit_report_templates (
