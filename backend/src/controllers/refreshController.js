@@ -53,7 +53,7 @@ const refreshController = {
                 u1.email as requested_by_email,
                 u2.username as executed_by_username,
                 u2.email as executed_by_email,
-                r.release_name
+                r.name as release_name
          FROM refresh_history rh
          LEFT JOIN users u1 ON rh.requested_by_user_id = u1.user_id
          LEFT JOIN users u2 ON rh.executed_by_user_id = u2.user_id
@@ -103,7 +103,7 @@ const refreshController = {
         SELECT rh.*, 
                u1.username as requested_by_username,
                u2.username as executed_by_username,
-               r.release_name
+               r.name as release_name
         FROM refresh_history rh
         LEFT JOIN users u1 ON rh.requested_by_user_id = u1.user_id
         LEFT JOIN users u2 ON rh.executed_by_user_id = u2.user_id
@@ -212,7 +212,7 @@ const refreshController = {
         [
           entityType, entityId, entityName, refreshDate, refreshType,
           sourceEnvironmentId, sourceEnvironmentName, sourceSnapshotName, sourceSnapshotDate,
-          req.user.id, req.user.id,
+          req.user.user_id, req.user.user_id,
           changeTicketRef, releaseId, jiraRef, servicenowRef,
           executionStatus || 'SUCCESS', durationMinutes, dataVolumeGb, rowsAffected,
           notes, errorMessage, executionLogUrl, refreshIntentId
@@ -222,7 +222,7 @@ const refreshController = {
       // Update the entity's last refresh info based on entity type
       await refreshController.updateEntityLastRefresh(
         entityType, entityId, refreshDate, refreshType, 
-        sourceEnvironmentName || sourceSnapshotName, req.user.id
+        sourceEnvironmentName || sourceSnapshotName, req.user.user_id
       );
 
       res.status(201).json({ 
@@ -286,7 +286,7 @@ const refreshController = {
                u1.username as requested_by_username,
                u1.email as requested_by_email,
                u2.username as approved_by_username,
-               r.release_name,
+               r.name as release_name,
                (SELECT COUNT(*) FROM refresh_booking_conflicts rbc 
                 WHERE rbc.refresh_intent_id = ri.refresh_intent_id 
                 AND rbc.resolution_status = 'UNRESOLVED') as unresolved_conflicts
@@ -398,7 +398,7 @@ const refreshController = {
                 u1.email as requested_by_email,
                 u2.username as approved_by_username,
                 u3.username as rejected_by_username,
-                r.release_name
+                r.name as release_name
          FROM refresh_intents ri
          LEFT JOIN users u1 ON ri.requested_by_user_id = u1.user_id
          LEFT JOIN users u2 ON ri.approved_by_user_id = u2.user_id
@@ -414,11 +414,11 @@ const refreshController = {
 
       // Get conflicts for this intent
       const conflicts = await db.query(
-        `SELECT rbc.*, eb.start_date as booking_start, eb.end_date as booking_end,
+        `SELECT rbc.*, eb.start_datetime as booking_start, eb.end_datetime as booking_end,
                 u.username as booking_owner
          FROM refresh_booking_conflicts rbc
          JOIN environment_bookings eb ON rbc.booking_id = eb.booking_id
-         LEFT JOIN users u ON eb.booked_by = u.user_id
+         LEFT JOIN users u ON eb.requested_by_user_id = u.user_id
          WHERE rbc.refresh_intent_id = $1`,
         [id]
       );
@@ -498,7 +498,7 @@ const refreshController = {
           plannedDate, plannedEndDate, refreshType,
           sourceEnvironmentId, sourceEnvironmentName, sourceSnapshotName, useLatestSnapshot || false,
           impactScope, requiresDowntime || false, estimatedDowntimeMinutes, affectedApplications,
-          req.user.id, reason, businessJustification,
+          req.user.user_id, reason, businessJustification,
           requiresApproval, changeTicketRef, releaseId, jiraRef, servicenowRef,
           notificationGroups, notificationLeadDays || [7, 1]
         ]
@@ -647,7 +647,7 @@ const refreshController = {
            updated_at = NOW()
          WHERE refresh_intent_id = $3
          RETURNING *`,
-        [req.user.id, approvalNotes, id]
+        [req.user.user_id, approvalNotes, id]
       );
 
       res.json({ 
@@ -697,7 +697,7 @@ const refreshController = {
            updated_at = NOW()
          WHERE refresh_intent_id = $3
          RETURNING *`,
-        [req.user.id, rejectionReason, id]
+        [req.user.user_id, rejectionReason, id]
       );
 
       res.json({ 
@@ -803,7 +803,7 @@ const refreshController = {
         [
           intent.entity_type, intent.entity_id, intent.entity_name, intent.refresh_type,
           intent.source_environment_id, intent.source_environment_name, intent.source_snapshot_name,
-          intent.requested_by_user_id, intent.requested_at, req.user.id,
+          intent.requested_by_user_id, intent.requested_at, req.user.user_id,
           intent.change_ticket_ref, intent.release_id, intent.jira_ref, intent.servicenow_ref,
           executionStatus, durationMinutes, dataVolumeGb, rowsAffected,
           executionNotes, errorMessage, id
@@ -828,7 +828,7 @@ const refreshController = {
         await refreshController.updateEntityLastRefresh(
           intent.entity_type, intent.entity_id, new Date(),
           intent.refresh_type, intent.source_environment_name || intent.source_snapshot_name,
-          req.user.id
+          req.user.user_id
         );
       }
 
@@ -906,25 +906,29 @@ const refreshController = {
       if (intent.entity_type === 'EnvironmentInstance') {
         bookingQuery = `
           SELECT eb.* FROM environment_bookings eb
-          WHERE eb.env_instance_id = $1
-          AND eb.status IN ('Active', 'Confirmed')
+          JOIN booking_resources br ON eb.booking_id = br.booking_id
+          WHERE br.resource_type = 'EnvironmentInstance'
+          AND br.resource_ref_id = $1
+          AND eb.booking_status IN ('Active', 'Confirmed', 'Approved')
           AND (
-            (eb.start_date <= $2 AND eb.end_date >= $2) OR
-            (eb.start_date <= $3 AND eb.end_date >= $3) OR
-            (eb.start_date >= $2 AND eb.end_date <= $3)
+            (eb.start_datetime <= $2 AND eb.end_datetime >= $2) OR
+            (eb.start_datetime <= $3 AND eb.end_datetime >= $3) OR
+            (eb.start_datetime >= $2 AND eb.end_datetime <= $3)
           )
         `;
         bookingParams = [intent.entity_id, intent.planned_date, plannedEnd];
       } else if (intent.entity_type === 'Environment') {
         bookingQuery = `
           SELECT eb.* FROM environment_bookings eb
-          JOIN environment_instances ei ON eb.env_instance_id = ei.env_instance_id
-          WHERE ei.environment_id = $1
-          AND eb.status IN ('Active', 'Confirmed')
+          JOIN booking_resources br ON eb.booking_id = br.booking_id
+          JOIN environment_instances ei ON br.resource_ref_id = ei.env_instance_id
+          WHERE br.resource_type = 'EnvironmentInstance'
+          AND ei.environment_id = $1
+          AND eb.booking_status IN ('Active', 'Confirmed', 'Approved')
           AND (
-            (eb.start_date <= $2 AND eb.end_date >= $2) OR
-            (eb.start_date <= $3 AND eb.end_date >= $3) OR
-            (eb.start_date >= $2 AND eb.end_date <= $3)
+            (eb.start_datetime <= $2 AND eb.end_datetime >= $2) OR
+            (eb.start_datetime <= $3 AND eb.end_datetime >= $3) OR
+            (eb.start_datetime >= $2 AND eb.end_datetime <= $3)
           )
         `;
         bookingParams = [intent.entity_id, intent.planned_date, plannedEnd];
@@ -977,13 +981,13 @@ const refreshController = {
 
       const result = await db.query(
         `SELECT rbc.*, 
-                eb.start_date as booking_start, eb.end_date as booking_end,
-                eb.purpose as booking_purpose,
+                eb.start_datetime as booking_start, eb.end_datetime as booking_end,
+                eb.title as booking_purpose,
                 u.username as booking_owner,
                 u.email as booking_owner_email
          FROM refresh_booking_conflicts rbc
          JOIN environment_bookings eb ON rbc.booking_id = eb.booking_id
-         LEFT JOIN users u ON eb.booked_by = u.user_id
+         LEFT JOIN users u ON eb.requested_by_user_id = u.user_id
          WHERE rbc.refresh_intent_id = $1
          ORDER BY rbc.severity DESC, rbc.created_at`,
         [id]
@@ -1023,7 +1027,7 @@ const refreshController = {
            updated_at = NOW()
          WHERE conflict_id = $4
          RETURNING *`,
-        [resolutionStatus, req.user.id, resolutionNotes, conflictId]
+        [resolutionStatus, req.user.user_id, resolutionNotes, conflictId]
       );
 
       if (result.rows.length === 0) {

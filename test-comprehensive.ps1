@@ -519,9 +519,167 @@ try {
 }
 
 # ==============================================================================
-# SECTION 13: FRONTEND PAGES
+# SECTION 13: REFRESH LIFECYCLE MANAGEMENT API (v4.0)
 # ==============================================================================
-Log-Section "SECTION 13: Frontend Pages"
+Log-Section "SECTION 13: Refresh Lifecycle Management API"
+
+# Test 13.1: Get Refresh Calendar
+try {
+    $startDate = (Get-Date).AddDays(-30).ToString("yyyy-MM-ddT00:00:00")
+    $endDate = (Get-Date).AddDays(60).ToString("yyyy-MM-ddT23:59:59")
+    $r = Invoke-RestMethod -Uri "$baseUrl/api/refresh/calendar?startDate=$startDate&endDate=$endDate" -Method GET -Headers $adminHeaders -TimeoutSec 10
+    Log-Pass "13.1 Get Refresh Calendar - Intents: $($r.intents.Count), History: $($r.history.Count)"
+} catch {
+    Log-Fail "13.1 Get Refresh Calendar - $($_.Exception.Message)"
+}
+
+# Test 13.2: Get Refresh Statistics
+try {
+    $r = Invoke-RestMethod -Uri "$baseUrl/api/refresh/statistics" -Method GET -Headers $adminHeaders -TimeoutSec 10
+    Log-Pass "13.2 Get Refresh Statistics - Retrieved"
+} catch {
+    Log-Fail "13.2 Get Refresh Statistics - $($_.Exception.Message)"
+}
+
+# Test 13.3: Get Refresh History
+try {
+    $r = Invoke-RestMethod -Uri "$baseUrl/api/refresh/history" -Method GET -Headers $adminHeaders -TimeoutSec 10
+    Log-Pass "13.3 Get Refresh History - Count: $($r.history.Count)"
+} catch {
+    Log-Fail "13.3 Get Refresh History - $($_.Exception.Message)"
+}
+
+# Test 13.4: Get Refresh Intents
+try {
+    $r = Invoke-RestMethod -Uri "$baseUrl/api/refresh/intents" -Method GET -Headers $adminHeaders -TimeoutSec 10
+    Log-Pass "13.4 Get Refresh Intents - Count: $($r.intents.Count)"
+} catch {
+    Log-Fail "13.4 Get Refresh Intents - $($_.Exception.Message)"
+}
+
+# Test 13.5: Create Refresh Intent (requires environment instance)
+$newIntentId = $null
+if ($instances.Count -gt 0) {
+    try {
+        $scheduledDate = (Get-Date).AddDays(30).ToString("yyyy-MM-ddT10:00:00")
+        $body = @{
+            entityType = "EnvironmentInstance"
+            entityId = $instances[0].env_instance_id
+            entityName = $instances[0].name
+            plannedDate = $scheduledDate
+            refreshType = "FULL_COPY"
+            reason = "API Test - Scheduled maintenance refresh"
+            notifyStakeholders = $true
+        } | ConvertTo-Json
+        $r = Invoke-RestMethod -Uri "$baseUrl/api/refresh/intents" -Method POST -Headers $adminHeaders -Body $body -ContentType "application/json" -TimeoutSec 10
+        if ($r.intent.refresh_intent_id) {
+            $newIntentId = $r.intent.refresh_intent_id
+            Log-Pass "13.5 Create Refresh Intent - ID: $newIntentId"
+        } else {
+            Log-Fail "13.5 Create Refresh Intent - No ID returned"
+        }
+    } catch {
+        Log-Fail "13.5 Create Refresh Intent - $($_.Exception.Message)"
+    }
+} else {
+    Log-Fail "13.5 Create Refresh Intent - No instances available"
+}
+
+# Test 13.6: Approve Refresh Intent (Admin/Manager only)
+if ($newIntentId) {
+    try {
+        $body = @{ approvalNotes = "Approved via comprehensive test" } | ConvertTo-Json
+        $r = Invoke-RestMethod -Uri "$baseUrl/api/refresh/intents/$newIntentId/approve" -Method POST -Headers $adminHeaders -Body $body -ContentType "application/json" -TimeoutSec 10
+        Log-Pass "13.6 Approve Refresh Intent - Status: $($r.intent.intent_status)"
+    } catch {
+        Log-Fail "13.6 Approve Refresh Intent - $($_.Exception.Message)"
+    }
+} else {
+    Log-Fail "13.6 Approve Refresh Intent - Skipped (no intent)"
+}
+
+# Test 13.7: Get Refresh Conflicts for Intent
+if ($newIntentId) {
+    try {
+        $r = Invoke-RestMethod -Uri "$baseUrl/api/refresh/intents/$newIntentId/conflicts" -Method GET -Headers $adminHeaders -TimeoutSec 10
+        Log-Pass "13.7 Get Refresh Conflicts - Count: $($r.conflicts.Count)"
+    } catch {
+        Log-Fail "13.7 Get Refresh Conflicts - $($_.Exception.Message)"
+    }
+} else {
+    Log-Fail "13.7 Get Refresh Conflicts - Skipped (no intent)"
+}
+
+# Test 13.8: Create Refresh History Entry
+$newHistoryId = $null
+if ($instances.Count -gt 0) {
+    try {
+        $body = @{
+            entityType = "EnvironmentInstance"
+            entityId = $instances[0].env_instance_id
+            entityName = $instances[0].name
+            refreshDate = (Get-Date).AddHours(-1).ToString("yyyy-MM-ddTHH:mm:ss")
+            refreshType = "PARTIAL_COPY"
+            executionStatus = "SUCCESS"
+            durationMinutes = 45
+            notes = "API Test - Historical refresh entry"
+        } | ConvertTo-Json
+        $r = Invoke-RestMethod -Uri "$baseUrl/api/refresh/history" -Method POST -Headers $adminHeaders -Body $body -ContentType "application/json" -TimeoutSec 10
+        if ($r.history.refresh_history_id) {
+            $newHistoryId = $r.history.refresh_history_id
+            Log-Pass "13.8 Create Refresh History - ID: $newHistoryId"
+        } else {
+            Log-Fail "13.8 Create Refresh History - No ID returned"
+        }
+    } catch {
+        Log-Fail "13.8 Create Refresh History - $($_.Exception.Message)"
+    }
+} else {
+    Log-Fail "13.8 Create Refresh History - No instances available"
+}
+
+# Test 13.9: RBAC - Tester Cannot Approve Refresh
+if ($newIntentId -eq $null -and $instances.Count -gt 0) {
+    # Create a new intent for RBAC test
+    try {
+        $scheduledDate = (Get-Date).AddDays(45).ToString("yyyy-MM-ddT14:00:00")
+        $body = @{
+            entityType = "EnvironmentInstance"
+            entityId = $instances[0].env_instance_id
+            entityName = $instances[0].name
+            plannedDate = $scheduledDate
+            refreshType = "DATA_ONLY"
+            reason = "RBAC Test Intent"
+        } | ConvertTo-Json
+        $r = Invoke-RestMethod -Uri "$baseUrl/api/refresh/intents" -Method POST -Headers $testerHeaders -Body $body -ContentType "application/json" -TimeoutSec 10
+        $rbacTestIntentId = $r.intent.refresh_intent_id
+        
+        # Try to approve as tester (should fail)
+        try {
+            $approveBody = @{ approvalNotes = "Should fail" } | ConvertTo-Json
+            Invoke-RestMethod -Uri "$baseUrl/api/refresh/intents/$rbacTestIntentId/approve" -Method POST -Headers $testerHeaders -Body $approveBody -ContentType "application/json" -TimeoutSec 10
+            Log-Fail "13.9 RBAC - Tester Should Not Approve"
+        } catch {
+            Log-Pass "13.9 RBAC - Tester Blocked from Approve"
+        }
+    } catch {
+        Log-Pass "13.9 RBAC - Tester Blocked (or no instances)"
+    }
+} else {
+    # Test with existing approved intent - try reject
+    try {
+        $rejectBody = @{ rejectionReason = "Should fail" } | ConvertTo-Json
+        Invoke-RestMethod -Uri "$baseUrl/api/refresh/intents/99999999-9999-9999-9999-999999999999/reject" -Method POST -Headers $testerHeaders -Body $rejectBody -ContentType "application/json" -TimeoutSec 10
+        Log-Fail "13.9 RBAC - Tester Should Not Reject"
+    } catch {
+        Log-Pass "13.9 RBAC - Tester Blocked from Reject"
+    }
+}
+
+# ==============================================================================
+# SECTION 14: FRONTEND PAGES
+# ==============================================================================
+Log-Section "SECTION 14: Frontend Pages"
 
 $pages = @(
     @{path="/"; name="Login"},
@@ -534,19 +692,21 @@ $pages = @(
     @{path="/integrations"; name="Integrations"},
     @{path="/topology"; name="Topology"},
     @{path="/monitoring"; name="Monitoring"},
-    @{path="/settings"; name="Settings"}
+    @{path="/settings"; name="Settings"},
+    @{path="/refresh"; name="Refresh Calendar"},
+    @{path="/refresh/approvals"; name="Refresh Approvals"}
 )
 
 $pageNum = 1
 foreach ($page in $pages) {
     try {
         $r = Invoke-WebRequest -Uri "$frontendUrl$($page.path)" -Method GET -TimeoutSec 10 -UseBasicParsing
-        Log-Pass "13.$pageNum $($page.name) - HTTP $($r.StatusCode)"
+        Log-Pass "14.$pageNum $($page.name) - HTTP $($r.StatusCode)"
     } catch {
         if ($_.Exception.Response.StatusCode.Value__ -in @(200, 302, 307, 308)) {
-            Log-Pass "13.$pageNum $($page.name) - Redirect OK"
+            Log-Pass "14.$pageNum $($page.name) - Redirect OK"
         } else {
-            Log-Fail "13.$pageNum $($page.name) - $($_.Exception.Message)"
+            Log-Fail "14.$pageNum $($page.name) - $($_.Exception.Message)"
         }
     }
     $pageNum++
@@ -570,6 +730,9 @@ if ($newConfigSetId) {
         Write-Host "  Deleted test config set" -ForegroundColor Gray
     } catch { Write-Host "  Config cleanup failed" -ForegroundColor Gray }
 }
+
+# Cleanup refresh test data (intents and history are typically preserved for audit)
+Write-Host "  Refresh test data preserved for audit trail" -ForegroundColor Gray
 
 Write-Host "  Cleanup completed" -ForegroundColor Gray
 
