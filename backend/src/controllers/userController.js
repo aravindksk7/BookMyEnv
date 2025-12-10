@@ -375,6 +375,41 @@ const userController = {
       }
       res.status(500).json({ error: 'Failed to link SSO identity' });
     }
+  },
+
+  // Update own preferences (timezone, etc.) - any authenticated user
+  updateOwnPreferences: async (req, res) => {
+    try {
+      const userId = req.user.user_id;
+      const { time_zone, display_name } = req.body;
+
+      // Only allow updating safe preference fields
+      const result = await db.query(
+        `UPDATE users 
+         SET time_zone = COALESCE($1, time_zone),
+             display_name = COALESCE($2, display_name),
+             updated_at = NOW()
+         WHERE user_id = $3
+         RETURNING user_id, username, display_name, email, role, time_zone, is_active`,
+        [time_zone, display_name, userId]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Log activity
+      await db.query(
+        `INSERT INTO activities (user_id, action, entity_type, entity_id, entity_name)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [userId, 'UPDATE_PREFERENCES', 'User', userId, result.rows[0].display_name]
+      );
+
+      res.json(result.rows[0]);
+    } catch (error) {
+      console.error('Update preferences error:', error);
+      res.status(500).json({ error: 'Failed to update preferences' });
+    }
   }
 };
 

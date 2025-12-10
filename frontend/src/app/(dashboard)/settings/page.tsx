@@ -166,7 +166,23 @@ export default function SettingsPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
+  // Profile form state (for non-admin users to update their own settings)
+  const [profileFormData, setProfileFormData] = useState({
+    display_name: '',
+    time_zone: 'UTC',
+  });
+
   const isAdmin = currentUser?.role === 'Admin';
+
+  // Initialize profile form with current user data
+  useEffect(() => {
+    if (currentUser) {
+      setProfileFormData({
+        display_name: currentUser.display_name || '',
+        time_zone: currentUser.time_zone || 'UTC',
+      });
+    }
+  }, [currentUser]);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -213,6 +229,17 @@ export default function SettingsPage() {
 
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
+  };
+
+  // Save own profile preferences (available to all users)
+  const handleSaveProfilePreferences = async () => {
+    try {
+      await usersAPI.updateOwnPreferences(profileFormData);
+      showSnackbar('Preferences saved successfully', 'success');
+    } catch (error: any) {
+      console.error('Failed to save preferences:', error);
+      showSnackbar(error.response?.data?.error || 'Failed to save preferences', 'error');
+    }
   };
 
   const resetUserForm = () => {
@@ -447,7 +474,8 @@ export default function SettingsPage() {
                   label="Display Name"
                   fullWidth
                   margin="normal"
-                  defaultValue={currentUser?.display_name || ''}
+                  value={profileFormData.display_name}
+                  onChange={(e) => setProfileFormData({ ...profileFormData, display_name: e.target.value })}
                 />
                 <TextField
                   label="Email"
@@ -465,15 +493,28 @@ export default function SettingsPage() {
                 />
                 <FormControl fullWidth margin="normal">
                   <InputLabel>Time Zone</InputLabel>
-                  <Select defaultValue={currentUser?.time_zone || 'UTC'} label="Time Zone">
+                  <Select 
+                    value={profileFormData.time_zone} 
+                    label="Time Zone"
+                    onChange={(e) => setProfileFormData({ ...profileFormData, time_zone: e.target.value })}
+                  >
                     <MenuItem value="UTC">UTC</MenuItem>
                     <MenuItem value="Australia/Sydney">Australia/Sydney</MenuItem>
+                    <MenuItem value="Australia/Melbourne">Australia/Melbourne</MenuItem>
+                    <MenuItem value="Australia/Brisbane">Australia/Brisbane</MenuItem>
+                    <MenuItem value="Australia/Perth">Australia/Perth</MenuItem>
                     <MenuItem value="America/New_York">America/New York</MenuItem>
+                    <MenuItem value="America/Los_Angeles">America/Los Angeles</MenuItem>
+                    <MenuItem value="America/Chicago">America/Chicago</MenuItem>
                     <MenuItem value="Europe/London">Europe/London</MenuItem>
+                    <MenuItem value="Europe/Paris">Europe/Paris</MenuItem>
                     <MenuItem value="Asia/Singapore">Asia/Singapore</MenuItem>
+                    <MenuItem value="Asia/Tokyo">Asia/Tokyo</MenuItem>
+                    <MenuItem value="Asia/Shanghai">Asia/Shanghai</MenuItem>
+                    <MenuItem value="Asia/Kolkata">Asia/Kolkata</MenuItem>
                   </Select>
                 </FormControl>
-                <Button variant="contained" sx={{ mt: 2 }}>
+                <Button variant="contained" sx={{ mt: 2 }} onClick={handleSaveProfilePreferences}>
                   Save Changes
                 </Button>
               </Grid>

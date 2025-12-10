@@ -7,6 +7,9 @@ const { requireRole, checkResourceAccess } = require('../middleware/rbac');
 // All routes require authentication
 router.use(authenticate);
 
+// Update current user's own preferences (timezone, etc.) - no role restriction
+router.put('/me/preferences', userController.updateOwnPreferences);
+
 // Get all users (Admin only)
 router.get('/', requireRole('Admin'), userController.getAll);
 

@@ -313,10 +313,10 @@ export default function DashboardLayout({
               horizontal: 'right',
             }}
           >
-            <MenuItem onClick={handleClose}>
+            <MenuItem onClick={() => { handleClose(); router.push('/profile'); }}>
               <PersonIcon sx={{ mr: 1 }} /> Profile
             </MenuItem>
-            <MenuItem onClick={handleClose}>
+            <MenuItem onClick={() => { handleClose(); router.push('/settings'); }}>
               <SettingsIcon sx={{ mr: 1 }} /> Settings
             </MenuItem>
             <Divider />

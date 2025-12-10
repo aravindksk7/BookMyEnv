@@ -49,6 +49,7 @@ export const usersAPI = {
   getById: (id: string) => api.get(`/users/${id}`),
   create: (data: any) => api.post('/users', data),
   update: (id: string, data: any) => api.put(`/users/${id}`, data),
+  updateOwnPreferences: (data: { display_name?: string; time_zone?: string }) => api.put('/users/me/preferences', data),
   deactivate: (id: string) => api.delete(`/users/${id}`),
   resetPassword: (id: string, data: any) => api.post(`/users/${id}/reset-password`, data),
   getIdentities: (id: string) => api.get(`/users/${id}/identities`),

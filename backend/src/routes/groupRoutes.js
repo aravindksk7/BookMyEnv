@@ -7,10 +7,10 @@ const { requireRole } = require('../middleware/rbac');
 // All routes require authentication
 router.use(authenticate);
 
-// Get all groups
+// Get all groups (all authenticated users can view)
 router.get('/', groupController.getAll);
 
-// Get group by ID
+// Get group by ID (all authenticated users can view)
 router.get('/:id', groupController.getById);
 
 // Create group (Admin only)

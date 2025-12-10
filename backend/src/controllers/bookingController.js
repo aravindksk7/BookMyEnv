@@ -296,6 +296,14 @@ const bookingController = {
         return res.status(400).json({ error: 'Cannot modify completed or cancelled booking' });
       }
 
+      // If booking was Approved and dates are being changed, reset to Requested for re-approval
+      const needsReApproval = existing.rows[0].booking_status === 'Approved' && 
+        (start_datetime || end_datetime) &&
+        (start_datetime !== existing.rows[0].start_datetime?.toISOString() || 
+         end_datetime !== existing.rows[0].end_datetime?.toISOString());
+      
+      const newStatus = needsReApproval ? 'Requested' : existing.rows[0].booking_status;
+
       const result = await db.query(
         `UPDATE environment_bookings 
          SET title = COALESCE($1, title),
@@ -303,10 +311,12 @@ const bookingController = {
              start_datetime = COALESCE($3, start_datetime),
              end_datetime = COALESCE($4, end_datetime),
              test_phase = COALESCE($5, test_phase),
+             booking_status = $7,
+             approved_by_user_id = CASE WHEN $8 = true THEN NULL ELSE approved_by_user_id END,
              updated_at = NOW()
          WHERE booking_id = $6
          RETURNING *`,
-        [title, description, start_datetime, end_datetime, test_phase, id]
+        [title, description, start_datetime, end_datetime, test_phase, id, newStatus, needsReApproval]
       );
 
       // Audit log
