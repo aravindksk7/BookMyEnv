@@ -1,5 +1,6 @@
 const db = require('../config/database');
 const auditService = require('../services/auditService');
+const { parsePaginationParams, buildPaginationResponse } = require('../utils/pagination');
 
 // UUID validation regex - allow any hex characters in version/variant fields for compatibility with seed data
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -17,35 +18,30 @@ const isValidUUID = (id) => {
 };
 
 const environmentController = {
-  // Get all environments
+  // Get all environments with pagination
   getAll: async (req, res) => {
     try {
       const { category, lifecycle_stage, search } = req.query;
+      const { page, limit, offset } = parsePaginationParams(req.query);
       
-      let query = `
-        SELECT e.*, 
-               COUNT(DISTINCT ei.env_instance_id) as instance_count
-        FROM environments e
-        LEFT JOIN environment_instances ei ON e.environment_id = ei.environment_id
-        WHERE 1=1
-      `;
+      let whereClause = 'WHERE 1=1';
       const params = [];
 
       if (category) {
         // Validate category against allowed values
-        const validCategories = ['DEV', 'TEST', 'UAT', 'STAGING', 'PROD'];
+        const validCategories = ['DEV', 'TEST', 'UAT', 'STAGING', 'PROD', 'NonProd', 'PreProd', 'DR', 'Training', 'Sandpit', 'E2E', 'Integration', 'Performance', 'NFT', 'ITE', 'IWT', 'Production', 'Other'];
         if (validCategories.includes(category)) {
           params.push(category);
-          query += ` AND e.environment_category = $${params.length}`;
+          whereClause += ` AND e.environment_category = $${params.length}`;
         }
       }
 
       if (lifecycle_stage) {
         // Validate lifecycle_stage against allowed values
-        const validStages = ['Active', 'Provisioning', 'Decommissioning', 'Archived'];
+        const validStages = ['Active', 'Planned', 'Provisioning', 'Retiring', 'Decommissioned', 'Archived'];
         if (validStages.includes(lifecycle_stage)) {
           params.push(lifecycle_stage);
-          query += ` AND e.lifecycle_stage = $${params.length}`;
+          whereClause += ` AND e.lifecycle_stage = $${params.length}`;
         }
       }
 
@@ -53,21 +49,43 @@ const environmentController = {
         const sanitizedSearch = sanitizeSearch(search);
         if (sanitizedSearch) {
           params.push(`%${sanitizedSearch}%`);
-          query += ` AND (e.name ILIKE $${params.length} OR e.description ILIKE $${params.length})`;
+          whereClause += ` AND (e.name ILIKE $${params.length} OR e.description ILIKE $${params.length})`;
         }
       }
 
-      query += ' GROUP BY e.environment_id ORDER BY e.name ASC';
+      // Count query for pagination
+      const countQuery = `
+        SELECT COUNT(DISTINCT e.environment_id) 
+        FROM environments e
+        ${whereClause}
+      `;
+      const countResult = await db.query(countQuery, params);
+      const totalCount = parseInt(countResult.rows[0].count);
 
-      const result = await db.query(query, params);
-      res.json({ environments: result.rows });
+      // Data query with pagination
+      const dataQuery = `
+        SELECT e.*, 
+               COUNT(DISTINCT ei.env_instance_id) as instance_count
+        FROM environments e
+        LEFT JOIN environment_instances ei ON e.environment_id = ei.environment_id
+        ${whereClause}
+        GROUP BY e.environment_id 
+        ORDER BY e.name ASC
+        LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+      `;
+      params.push(limit, offset);
+
+      const result = await db.query(dataQuery, params);
+      
+      const response = buildPaginationResponse(result.rows, totalCount, page, limit);
+      res.json({ environments: response.data, pagination: response.pagination });
     } catch (error) {
       console.error('Get environments error:', error);
       res.status(500).json({ error: 'Failed to fetch environments' });
     }
   },
 
-  // Get environment by ID
+  // Get environment by ID - Optimized with single query using JOINs
   getById: async (req, res) => {
     try {
       const { id } = req.params;
@@ -77,30 +95,53 @@ const environmentController = {
         return res.status(400).json({ error: 'Invalid environment ID format' });
       }
 
-      const result = await db.query(
-        'SELECT * FROM environments WHERE environment_id = $1',
-        [id]
-      );
+      // Single optimized query with JOINs to fetch environment and instances with counts
+      const result = await db.query(`
+        SELECT 
+          e.*,
+          COALESCE(
+            json_agg(
+              DISTINCT jsonb_build_object(
+                'env_instance_id', ei.env_instance_id,
+                'environment_id', ei.environment_id,
+                'name', ei.name,
+                'operational_status', ei.operational_status,
+                'booking_status', ei.booking_status,
+                'active_booking_count', ei.active_booking_count,
+                'availability_window', ei.availability_window,
+                'capacity', ei.capacity,
+                'primary_location', ei.primary_location,
+                'bookable', ei.bookable,
+                'created_at', ei.created_at,
+                'updated_at', ei.updated_at,
+                'infra_count', COALESCE(ic_counts.count, 0),
+                'component_count', COALESCE(ci_counts.count, 0)
+              )
+            ) FILTER (WHERE ei.env_instance_id IS NOT NULL),
+            '[]'::json
+          ) as instances
+        FROM environments e
+        LEFT JOIN environment_instances ei ON e.environment_id = ei.environment_id
+        LEFT JOIN LATERAL (
+          SELECT COUNT(*) as count 
+          FROM infra_components ic 
+          WHERE ic.env_instance_id = ei.env_instance_id
+        ) ic_counts ON true
+        LEFT JOIN LATERAL (
+          SELECT COUNT(*) as count 
+          FROM component_instances ci 
+          WHERE ci.env_instance_id = ei.env_instance_id
+        ) ci_counts ON true
+        WHERE e.environment_id = $1
+        GROUP BY e.environment_id
+      `, [id]);
 
       if (result.rows.length === 0) {
         return res.status(404).json({ error: 'Environment not found' });
       }
 
-      // Get instances
-      const instances = await db.query(
-        `SELECT ei.*, 
-                COUNT(DISTINCT ic.infra_id) as infra_count,
-                COUNT(DISTINCT ci.component_instance_id) as component_count
-         FROM environment_instances ei
-         LEFT JOIN infra_components ic ON ei.env_instance_id = ic.env_instance_id
-         LEFT JOIN component_instances ci ON ei.env_instance_id = ci.env_instance_id
-         WHERE ei.environment_id = $1
-         GROUP BY ei.env_instance_id
-         ORDER BY ei.name`,
-        [id]
-      );
-
-      res.json({ ...result.rows[0], instances: instances.rows });
+      const environment = result.rows[0];
+      res.json({ ...environment, instances: environment.instances });
     } catch (error) {
       console.error('Get environment error:', error);
       res.status(500).json({ error: 'Failed to fetch environment' });
@@ -230,23 +271,64 @@ const environmentController = {
     }
   },
 
-  // Get all instances across all environments
+  // Get all instances across all environments with pagination
   getAllInstances: async (req, res) => {
     try {
-      const result = await db.query(
-        `SELECT ei.*, 
-                e.name as environment_name,
-                COUNT(DISTINCT ic.infra_id) as infra_count,
-                COUNT(DISTINCT ci.component_instance_id) as component_count
-         FROM environment_instances ei
-         LEFT JOIN environments e ON ei.environment_id = e.environment_id
-         LEFT JOIN infra_components ic ON ei.env_instance_id = ic.env_instance_id
-         LEFT JOIN component_instances ci ON ei.env_instance_id = ci.env_instance_id
-         GROUP BY ei.env_instance_id, e.name
-         ORDER BY e.name, ei.name`
-      );
+      const { search, operational_status, booking_status } = req.query;
+      const { page, limit, offset } = parsePaginationParams(req.query);
 
-      res.json({ instances: result.rows });
+      let whereClause = 'WHERE 1=1';
+      const params = [];
+
+      if (search) {
+        const sanitizedSearch = sanitizeSearch(search);
+        if (sanitizedSearch) {
+          params.push(`%${sanitizedSearch}%`);
+          whereClause += ` AND (ei.name ILIKE $${params.length} OR e.name ILIKE $${params.length})`;
+        }
+      }
+
+      if (operational_status) {
+        params.push(operational_status);
+        whereClause += ` AND ei.operational_status = $${params.length}`;
+      }
+
+      if (booking_status) {
+        params.push(booking_status);
+        whereClause += ` AND ei.booking_status = $${params.length}`;
+      }
+
+      // Count query
+      const countQuery = `
+        SELECT COUNT(DISTINCT ei.env_instance_id)
+        FROM environment_instances ei
+        LEFT JOIN environments e ON ei.environment_id = e.environment_id
+        ${whereClause}
+      `;
+      const countResult = await db.query(countQuery, params);
+      const totalCount = parseInt(countResult.rows[0].count);
+
+      // Data query with pagination
+      const dataQuery = `
+        SELECT ei.*, 
+               e.name as environment_name,
+               COUNT(DISTINCT ic.infra_id) as infra_count,
+               COUNT(DISTINCT ci.component_instance_id) as component_count
+        FROM environment_instances ei
+        LEFT JOIN environments e ON ei.environment_id = e.environment_id
+        LEFT JOIN infra_components ic ON ei.env_instance_id = ic.env_instance_id
+        LEFT JOIN component_instances ci ON ei.env_instance_id = ci.env_instance_id
+        ${whereClause}
+        GROUP BY ei.env_instance_id, e.name
+        ORDER BY e.name, ei.name
+        LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+      `;
+      params.push(limit, offset);
+
+      const result = await db.query(dataQuery, params);
+      
+      const response = buildPaginationResponse(result.rows, totalCount, page, limit);
+      res.json({ instances: response.data, pagination: response.pagination });
     } catch (error) {
       console.error('Get all instances error:', error);
       res.status(500).json({ error: 'Failed to fetch instances' });
@@ -452,46 +534,6 @@ const environmentController = {
     } catch (error) {
       console.error('Get availability error:', error);
       res.status(500).json({ error: 'Failed to fetch availability' });
-    }
-  },
-
-  // Get all instances (flat list)
-  getAllInstances: async (req, res) => {
-    try {
-      const { operational_status, booking_status, bookable } = req.query;
-
-      let query = `
-        SELECT ei.*, e.name as environment_name, e.environment_category,
-               COUNT(DISTINCT ic.infra_id) as infra_count
-        FROM environment_instances ei
-        JOIN environments e ON ei.environment_id = e.environment_id
-        LEFT JOIN infra_components ic ON ei.env_instance_id = ic.env_instance_id
-        WHERE 1=1
-      `;
-      const params = [];
-
-      if (operational_status) {
-        params.push(operational_status);
-        query += ` AND ei.operational_status = $${params.length}`;
-      }
-
-      if (booking_status) {
-        params.push(booking_status);
-        query += ` AND ei.booking_status = $${params.length}`;
-      }
-
-      if (bookable !== undefined) {
-        params.push(bookable === 'true');
-        query += ` AND ei.bookable = $${params.length}`;
-      }
-
-      query += ' GROUP BY ei.env_instance_id, e.name, e.environment_category ORDER BY e.name, ei.name';
-
-      const result = await db.query(query, params);
-      res.json({ instances: result.rows });
-    } catch (error) {
-      console.error('Get all instances error:', error);
-      res.status(500).json({ error: 'Failed to fetch instances' });
     }
   },
 

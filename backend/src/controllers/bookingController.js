@@ -1,6 +1,7 @@
 const db = require('../config/database');
 const conflictDetectionService = require('../services/conflictDetectionService');
 const auditService = require('../services/auditService');
+const { parsePaginationParams, buildPaginationResponse } = require('../utils/pagination');
 
 // UUID validation regex - allow any hex characters in version field
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -17,12 +18,68 @@ const isValidUUID = (id) => {
 };
 
 const bookingController = {
-  // Get all bookings
+  // Get all bookings with pagination
   getAll: async (req, res) => {
     try {
       const { booking_status, test_phase, start_date, end_date, search, environment_id } = req.query;
+      const { page, limit, offset } = parsePaginationParams(req.query);
       
-      let query = `
+      let whereClause = 'WHERE 1=1';
+      const params = [];
+
+      if (booking_status) {
+        const validStatuses = ['Requested', 'PendingApproval', 'Approved', 'Active', 'Completed', 'Cancelled'];
+        if (validStatuses.includes(booking_status)) {
+          params.push(booking_status);
+          whereClause += ` AND eb.booking_status = $${params.length}`;
+        }
+      }
+
+      if (test_phase) {
+        params.push(test_phase);
+        whereClause += ` AND eb.test_phase = $${params.length}`;
+      }
+
+      if (start_date) {
+        params.push(start_date);
+        whereClause += ` AND eb.end_datetime >= $${params.length}`;
+      }
+
+      if (end_date) {
+        params.push(end_date);
+        whereClause += ` AND eb.start_datetime <= $${params.length}`;
+      }
+
+      if (search) {
+        const sanitizedSearch = sanitizeSearch(search);
+        if (sanitizedSearch) {
+          params.push(`%${sanitizedSearch}%`);
+          whereClause += ` AND (eb.title ILIKE $${params.length} OR eb.description ILIKE $${params.length})`;
+        }
+      }
+
+      if (environment_id) {
+        params.push(environment_id);
+        whereClause += ` AND EXISTS (
+          SELECT 1 FROM booking_resources br3
+          LEFT JOIN environment_instances ei3a ON br3.resource_ref_id = ei3a.env_instance_id
+          LEFT JOIN environment_instances ei3b ON br3.source_env_instance_id = ei3b.env_instance_id
+          WHERE br3.booking_id = eb.booking_id 
+            AND (ei3a.environment_id = $${params.length} OR ei3b.environment_id = $${params.length})
+        )`;
+      }
+
+      // Count query for pagination
+      const countQuery = `
+        SELECT COUNT(DISTINCT eb.booking_id)
+        FROM environment_bookings eb
+        ${whereClause}
+      `;
+      const countResult = await db.query(countQuery, params);
+      const totalCount = parseInt(countResult.rows[0].count);
+
+      // Data query with pagination
+      const dataQuery = `
         SELECT eb.*, 
                u.display_name as requested_by_name,
                u2.display_name as approved_by_name,
@@ -46,53 +103,16 @@ const bookingController = {
         JOIN users u ON eb.requested_by_user_id = u.user_id
         LEFT JOIN users u2 ON eb.approved_by_user_id = u2.user_id
         LEFT JOIN user_groups ug ON eb.owning_group_id = ug.group_id
-        WHERE 1=1
+        ${whereClause}
+        ORDER BY eb.start_datetime DESC
+        LIMIT $${params.length + 1} OFFSET $${params.length + 2}
       `;
-      const params = [];
+      params.push(limit, offset);
 
-      if (booking_status) {
-        params.push(booking_status);
-        query += ` AND eb.booking_status = $${params.length}`;
-      }
-
-      if (test_phase) {
-        params.push(test_phase);
-        query += ` AND eb.test_phase = $${params.length}`;
-      }
-
-      if (start_date) {
-        params.push(start_date);
-        query += ` AND eb.end_datetime >= $${params.length}`;
-      }
-
-      if (end_date) {
-        params.push(end_date);
-        query += ` AND eb.start_datetime <= $${params.length}`;
-      }
-
-      if (search) {
-        const sanitizedSearch = sanitizeSearch(search);
-        if (sanitizedSearch) {
-          params.push(`%${sanitizedSearch}%`);
-          query += ` AND (eb.title ILIKE $${params.length} OR eb.description ILIKE $${params.length})`;
-        }
-      }
-
-      if (environment_id) {
-        params.push(environment_id);
-        query += ` AND EXISTS (
-          SELECT 1 FROM booking_resources br3
-          LEFT JOIN environment_instances ei3a ON br3.resource_ref_id = ei3a.env_instance_id
-          LEFT JOIN environment_instances ei3b ON br3.source_env_instance_id = ei3b.env_instance_id
-          WHERE br3.booking_id = eb.booking_id 
-            AND (ei3a.environment_id = $${params.length} OR ei3b.environment_id = $${params.length})
-        )`;
-      }
-
-      query += ' ORDER BY eb.start_datetime DESC';
-
-      const result = await db.query(query, params);
-      res.json({ bookings: result.rows });
+      const result = await db.query(dataQuery, params);
+      
+      const response = buildPaginationResponse(result.rows, totalCount, page, limit);
+      res.json({ bookings: response.data, pagination: response.pagination });
     } catch (error) {
       console.error('Get bookings error:', error);
       res.status(500).json({ error: 'Failed to fetch bookings' });

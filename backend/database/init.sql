@@ -1,10 +1,13 @@
 -- =====================================================
 -- TEST ENVIRONMENT MANAGEMENT - DATABASE SCHEMA
--- Version: 1.2
+-- Version: 1.3
 -- =====================================================
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Enable trigram extension for efficient text search (ILIKE operations)
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- =====================================================
 -- USER & IDENTITY MANAGEMENT
@@ -685,6 +688,30 @@ CREATE INDEX idx_activities_user ON activities(user_id);
 CREATE INDEX idx_activities_entity ON activities(entity_type, entity_id);
 CREATE INDEX idx_activities_created ON activities(created_at);
 CREATE INDEX idx_notifications_user ON notifications(user_id, is_read);
+
+-- =====================================================
+-- TEXT SEARCH INDEXES (for ILIKE operations using pg_trgm)
+-- =====================================================
+CREATE INDEX idx_environments_name_trgm ON environments USING gin (name gin_trgm_ops);
+CREATE INDEX idx_environments_description_trgm ON environments USING gin (description gin_trgm_ops);
+CREATE INDEX idx_environments_category ON environments(environment_category);
+CREATE INDEX idx_environments_lifecycle ON environments(lifecycle_stage);
+
+CREATE INDEX idx_applications_name_trgm ON applications USING gin (name gin_trgm_ops);
+CREATE INDEX idx_applications_description_trgm ON applications USING gin (description gin_trgm_ops);
+CREATE INDEX idx_applications_criticality ON applications(criticality);
+CREATE INDEX idx_applications_domain ON applications(business_domain);
+
+CREATE INDEX idx_bookings_title_trgm ON environment_bookings USING gin (title gin_trgm_ops);
+CREATE INDEX idx_bookings_description_trgm ON environment_bookings USING gin (description gin_trgm_ops);
+
+CREATE INDEX idx_interfaces_name_trgm ON interfaces USING gin (name gin_trgm_ops);
+
+CREATE INDEX idx_releases_name_trgm ON releases USING gin (name gin_trgm_ops);
+CREATE INDEX idx_releases_description_trgm ON releases USING gin (description gin_trgm_ops);
+
+CREATE INDEX idx_users_display_name_trgm ON users USING gin (display_name gin_trgm_ops);
+CREATE INDEX idx_users_username_trgm ON users USING gin (username gin_trgm_ops);
 
 -- =====================================================
 -- DEMO DATA

@@ -1,89 +1,134 @@
 const db = require('../config/database');
 const auditService = require('../services/auditService');
+const { parsePaginationParams, buildPaginationResponse } = require('../utils/pagination');
+
+// Sanitize search input
+const sanitizeSearch = (input) => {
+  if (!input) return null;
+  return String(input).substring(0, 100).replace(/[;'"\\]/g, '');
+};
 
 const applicationController = {
-  // Get all applications
+  // Get all applications with pagination
   getAll: async (req, res) => {
     try {
       const { criticality, business_domain, search } = req.query;
+      const { page, limit, offset } = parsePaginationParams(req.query);
       
-      let query = `
+      let whereClause = 'WHERE 1=1';
+      const params = [];
+
+      if (criticality) {
+        const validCriticality = ['High', 'Medium', 'Low'];
+        if (validCriticality.includes(criticality)) {
+          params.push(criticality);
+          whereClause += ` AND a.criticality = $${params.length}`;
+        }
+      }
+
+      if (business_domain) {
+        params.push(business_domain);
+        whereClause += ` AND a.business_domain = $${params.length}`;
+      }
+
+      if (search) {
+        const sanitizedSearch = sanitizeSearch(search);
+        if (sanitizedSearch) {
+          params.push(`%${sanitizedSearch}%`);
+          whereClause += ` AND (a.name ILIKE $${params.length} OR a.description ILIKE $${params.length})`;
+        }
+      }
+
+      // Count query for pagination
+      const countQuery = `
+        SELECT COUNT(DISTINCT a.application_id) 
+        FROM applications a
+        ${whereClause}
+      `;
+      const countResult = await db.query(countQuery, params);
+      const totalCount = parseInt(countResult.rows[0].count);
+
+      // Data query with pagination
+      const dataQuery = `
         SELECT a.*, 
                COUNT(DISTINCT ac.component_id) as component_count,
                COUNT(DISTINCT aei.env_instance_id) as deployment_count
         FROM applications a
         LEFT JOIN app_components ac ON a.application_id = ac.application_id
         LEFT JOIN application_environment_instances aei ON a.application_id = aei.application_id
-        WHERE 1=1
+        ${whereClause}
+        GROUP BY a.application_id 
+        ORDER BY a.name ASC
+        LIMIT $${params.length + 1} OFFSET $${params.length + 2}
       `;
-      const params = [];
+      params.push(limit, offset);
 
-      if (criticality) {
-        params.push(criticality);
-        query += ` AND a.criticality = $${params.length}`;
-      }
-
-      if (business_domain) {
-        params.push(business_domain);
-        query += ` AND a.business_domain = $${params.length}`;
-      }
-
-      if (search) {
-        params.push(`%${search}%`);
-        query += ` AND (a.name ILIKE $${params.length} OR a.description ILIKE $${params.length})`;
-      }
-
-      query += ' GROUP BY a.application_id ORDER BY a.name ASC';
-
-      const result = await db.query(query, params);
-      res.json({ applications: result.rows });
+      const result = await db.query(dataQuery, params);
+      
+      const response = buildPaginationResponse(result.rows, totalCount, page, limit);
+      res.json({ applications: response.data, pagination: response.pagination });
     } catch (error) {
       console.error('Get applications error:', error);
       res.status(500).json({ error: 'Failed to fetch applications' });
     }
   },
 
-  // Get application by ID
+  // Get application by ID - Optimized with single query using JOINs
   getById: async (req, res) => {
     try {
       const { id } = req.params;
 
-      const result = await db.query(
-        'SELECT * FROM applications WHERE application_id = $1',
-        [id]
-      );
+      // Single optimized query to fetch application with components and deployments
+      const result = await db.query(`
+        SELECT 
+          a.*,
+          COALESCE(
+            (SELECT json_agg(
+              jsonb_build_object(
+                'component_id', ac.component_id,
+                'application_id', ac.application_id,
+                'name', ac.name,
+                'component_type', ac.component_type,
+                'source_repo', ac.source_repo,
+                'build_pipeline_id', ac.build_pipeline_id,
+                'runtime_platform', ac.runtime_platform,
+                'owner_team', ac.owner_team,
+                'created_at', ac.created_at,
+                'updated_at', ac.updated_at,
+                'instance_count', (SELECT COUNT(*) FROM component_instances ci WHERE ci.component_id = ac.component_id)
+              ) ORDER BY ac.name
+            ) FROM app_components ac WHERE ac.application_id = a.application_id),
+            '[]'::json
+          ) as components,
+          COALESCE(
+            (SELECT json_agg(
+              jsonb_build_object(
+                'app_env_instance_id', aei.app_env_instance_id,
+                'application_id', aei.application_id,
+                'env_instance_id', aei.env_instance_id,
+                'deployment_model', aei.deployment_model,
+                'version', aei.version,
+                'deployment_status', aei.deployment_status,
+                'created_at', aei.created_at,
+                'updated_at', aei.updated_at,
+                'instance_name', ei.name,
+                'environment_name', e.name
+              ) ORDER BY e.name, ei.name
+            ) FROM application_environment_instances aei
+            JOIN environment_instances ei ON aei.env_instance_id = ei.env_instance_id
+            JOIN environments e ON ei.environment_id = e.environment_id
+            WHERE aei.application_id = a.application_id),
+            '[]'::json
+          ) as deployments
+        FROM applications a
+        WHERE a.application_id = $1
+      `, [id]);
 
       if (result.rows.length === 0) {
         return res.status(404).json({ error: 'Application not found' });
       }
 
-      // Get components
-      const components = await db.query(
-        `SELECT ac.*, COUNT(ci.component_instance_id) as instance_count
-         FROM app_components ac
-         LEFT JOIN component_instances ci ON ac.component_id = ci.component_id
-         WHERE ac.application_id = $1
-         GROUP BY ac.component_id
-         ORDER BY ac.name`,
-        [id]
-      );
-
-      // Get environment deployments
-      const deployments = await db.query(
-        `SELECT aei.*, ei.name as instance_name, e.name as environment_name
-         FROM application_environment_instances aei
-         JOIN environment_instances ei ON aei.env_instance_id = ei.env_instance_id
-         JOIN environments e ON ei.environment_id = e.environment_id
-         WHERE aei.application_id = $1
-         ORDER BY e.name, ei.name`,
-        [id]
-      );
-
-      res.json({
-        ...result.rows[0],
-        components: components.rows,
-        deployments: deployments.rows
-      });
+      res.json(result.rows[0]);
     } catch (error) {
       console.error('Get application error:', error);
       res.status(500).json({ error: 'Failed to fetch application' });
