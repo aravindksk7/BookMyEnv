@@ -10,6 +10,8 @@ A comprehensive, enterprise-grade Environment Booking and Management System (BME
 - **Refresh Lifecycle (v4.0)** - Schedule data refreshes with booking conflict detection and resolution workflows
 - **Email Notifications (v5.0)** - Configurable email alerts via SMTP, SendGrid, or AWS SES
 - **Dark Mode (v5.0)** - System-wide dark theme support with user preferences
+- **API Pagination (v6.0)** - Scalable list endpoints with pagination support
+- **Search Optimization (v6.0)** - GIN trigram indexes for fast text searches
 - **Release Management** - Plan and track releases across environments
 - **Bulk Data Upload** - Import data in bulk via CSV (7 entity types)
 - **Real-time Monitoring** - Dashboard with live activity feed
@@ -156,6 +158,35 @@ See [docs/SECURITY.md](docs/SECURITY.md) for complete security documentation.
 
 ## 📊 API Documentation
 
+### Pagination (v6.0)
+
+All list endpoints support pagination with query parameters:
+
+| Parameter | Type | Default | Max | Description |
+|-----------|------|---------|-----|-------------|
+| `page` | integer | 1 | - | Page number (1-indexed) |
+| `limit` | integer | 20 | 100 | Items per page |
+
+**Example Request:**
+```
+GET /api/environments?page=1&limit=10&search=prod
+```
+
+**Response includes pagination metadata:**
+```json
+{
+  "environments": [...],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "totalItems": 25,
+    "totalPages": 3,
+    "hasNextPage": true,
+    "hasPrevPage": false
+  }
+}
+```
+
 ### Authentication
 ```
 POST /api/auth/login         - Local login
@@ -165,9 +196,9 @@ GET  /api/auth/me            - Current user
 
 ### Environments
 ```
-GET    /api/environments                    - List environments
+GET    /api/environments                    - List environments (paginated)
 POST   /api/environments                    - Create environment
-GET    /api/environments/:id                - Get environment
+GET    /api/environments/:id                - Get environment with instances
 GET    /api/environments/:id/instances      - List instances
 POST   /api/environments/:id/instances      - Create instance
 GET    /api/environments/:id/applications   - List apps in environment

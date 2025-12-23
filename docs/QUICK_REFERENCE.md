@@ -38,7 +38,36 @@
 
 ---
 
-## 📋 Quick Actions
+## � API Pagination (v6.0) ⭐ NEW
+
+All list endpoints support pagination:
+
+| Parameter | Default | Max | Example |
+|-----------|---------|-----|---------|
+| `page` | 1 | - | `?page=2` |
+| `limit` | 20 | 100 | `?limit=50` |
+
+**Example Requests:**
+```
+GET /api/environments?page=1&limit=10
+GET /api/bookings?search=test&page=2&limit=25
+GET /api/applications?criticality=High&page=1&limit=20
+```
+
+**Response includes:**
+```json
+{
+  "environments": [...],
+  "pagination": {
+    "page": 1, "limit": 10, "totalItems": 50,
+    "totalPages": 5, "hasNextPage": true, "hasPrevPage": false
+  }
+}
+```
+
+---
+
+## �📋 Quick Actions
 
 ### Create a Booking
 1. Bookings → + New Booking

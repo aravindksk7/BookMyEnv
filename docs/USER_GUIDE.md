@@ -2,7 +2,7 @@
 
 A comprehensive guide to using the BookMyEnv environment booking and management system.
 
-**Version:** 4.2.0  
+**Version:** 6.0.0  
 **Last Updated:** December 2025
 
 ---
@@ -26,11 +26,12 @@ A comprehensive guide to using the BookMyEnv environment booking and management 
 15. [Bulk Data Upload](#bulk-data-upload)
 16. [Monitoring](#monitoring)
 17. [Integrations](#integrations)
-18. [**Audit & Compliance**](#audit--compliance) ⭐ v4.2 NEW
-19. [Settings & Administration](#settings--administration)
-20. [User Roles & Permissions](#user-roles--permissions)
-21. [Best Practices](#best-practices)
-22. [Troubleshooting](#troubleshooting)
+18. [**Audit & Compliance**](#audit--compliance) ⭐ v4.2
+19. [**API Pagination**](#api-pagination) ⭐ v6.0 NEW
+20. [Settings & Administration](#settings--administration)
+21. [User Roles & Permissions](#user-roles--permissions)
+22. [Best Practices](#best-practices)
+23. [Troubleshooting](#troubleshooting)
 
 > **📘 Related Documentation**: For detailed lifecycle diagrams and state transitions, see the [Lifecycle Guide](LIFECYCLE_GUIDE.md).
 
@@ -1574,6 +1575,79 @@ The audit system automatically tracks:
 - Default retention: **7 years** (2555 days)
 - Configurable per regulatory requirement
 - Automatic archival available for older events
+
+---
+
+## API Pagination
+
+⭐ **New in v6.0** - All list API endpoints now support pagination for improved performance and scalability.
+
+### Pagination Parameters
+
+When calling list endpoints (environments, applications, bookings, etc.), you can use:
+
+| Parameter | Type | Default | Maximum | Description |
+|-----------|------|---------|---------|-------------|
+| `page` | integer | 1 | - | Page number (1-indexed) |
+| `limit` | integer | 20 | 100 | Number of items per page |
+
+### Example API Call
+
+```
+GET /api/environments?page=2&limit=10&search=prod
+```
+
+### Response Format
+
+All paginated responses include a `pagination` object:
+
+```json
+{
+  "environments": [
+    { "environment_id": "...", "name": "PROD", ... },
+    { "environment_id": "...", "name": "PREPROD", ... }
+  ],
+  "pagination": {
+    "page": 2,
+    "limit": 10,
+    "totalItems": 25,
+    "totalPages": 3,
+    "hasNextPage": true,
+    "hasPrevPage": true
+  }
+}
+```
+
+### Paginated Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/environments` | List all environments |
+| `GET /api/applications` | List all applications |
+| `GET /api/bookings` | List all bookings |
+| `GET /api/instances` | List all environment instances |
+
+### Search with Pagination
+
+Pagination works with all search and filter parameters:
+
+```
+# Search environments containing "test" in name or description
+GET /api/environments?search=test&page=1&limit=20
+
+# Filter by lifecycle and paginate
+GET /api/environments?lifecycle_stage=Active&page=1&limit=10
+
+# Combined search, filter, and pagination
+GET /api/bookings?search=sprint&booking_status=Active&page=1&limit=25
+```
+
+### Performance Benefits
+
+- **Faster responses** - Only fetches requested page of data
+- **Lower memory usage** - Frontend handles smaller data sets
+- **Scalable** - Works efficiently with thousands of records
+- **Search optimization** - GIN trigram indexes accelerate ILIKE searches
 
 ---
 

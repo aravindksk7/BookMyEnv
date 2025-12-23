@@ -481,8 +481,23 @@
 │  │  • JSONB columns for flexible metadata                           │          │
 │  │  • Timestamp columns (created_at, updated_at)                    │          │
 │  │  • Foreign key constraints with cascading                        │          │
-│  │  • Indexes on frequently queried columns                         │          │
 │  │  • CHECK constraints for enums                                   │          │
+│  │                                                                   │          │
+│  │  INDEX STRATEGY (v6.0.0):                                        │          │
+│  │  • pg_trgm extension for fuzzy text search                       │          │
+│  │  • 11 GIN trigram indexes for ILIKE search optimization:         │          │
+│  │    - environments: name, code                                    │          │
+│  │    - environment_instances: name, hostname                       │          │
+│  │    - applications: name, code                                    │          │
+│  │    - app_components: name                                        │          │
+│  │    - integrations: name                                          │          │
+│  │    - users: name, email                                          │          │
+│  │    - user_groups: name                                           │          │
+│  │  • 4 B-tree indexes for filter optimization:                     │          │
+│  │    - environment_instances: environment_id                       │          │
+│  │    - environment_instances: status                               │          │
+│  │    - environment_bookings: status                                │          │
+│  │    - app_environment_instances: environment_instance_id          │          │
 │  │                                                                   │          │
 │  └──────────────────────────────────────────────────────────────────┘          │
 │                                                                                  │
@@ -601,6 +616,65 @@
 │ │  • Credentials via environment variables (not in code)                      │ │
 │ └─────────────────────────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## API Design Patterns (v6.0.0)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                            API PAGINATION                                        │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+Paginated Endpoints:
+  • GET /api/environments      - List environments with pagination
+  • GET /api/environments/instances - List all instances with pagination
+  • GET /api/applications      - List applications with pagination
+  • GET /api/bookings          - List bookings with pagination
+
+Request Parameters:
+  • page  - Page number (1-based), default: 1
+  • limit - Items per page (max: 100), default: 20
+
+Response Format:
+  {
+    "data": [...],           // Array of items
+    "pagination": {
+      "page": 1,             // Current page
+      "limit": 20,           // Items per page
+      "totalCount": 150,     // Total items
+      "totalPages": 8,       // Total pages
+      "hasNext": true,       // More pages available
+      "hasPrevious": false   // Previous pages available
+    }
+  }
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                        QUERY OPTIMIZATION                                        │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+N+1 Query Prevention:
+  • LATERAL JOINs for related data in single query
+  • Subqueries for aggregated counts (instances, components)
+  • Batch loading instead of per-item queries
+
+Example - Environment Detail Query:
+  SELECT e.*, 
+    COALESCE(inst.instances, '[]'::jsonb) as instances,
+    COALESCE(intf.interfaces, '[]'::jsonb) as interfaces
+  FROM environments e
+  LEFT JOIN LATERAL (
+    SELECT jsonb_agg(...) as instances 
+    FROM environment_instances
+    WHERE environment_id = e.id
+  ) inst ON true
+  LEFT JOIN LATERAL (
+    SELECT jsonb_agg(...) as interfaces
+    FROM interfaces 
+    WHERE environment_id = e.id
+  ) intf ON true
+  WHERE e.id = $1;
 ```
 
 ---
