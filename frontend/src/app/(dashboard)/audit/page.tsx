@@ -905,31 +905,14 @@ export default function AuditPage() {
                         onClick={() => setSelectedTemplate(template.template_id)}
                       >
                         <ListItemText
-                          primary={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Typography>{template.name}</Typography>
-                              {template.is_system_template && (
-                                <Chip label="System" size="small" variant="outlined" />
-                              )}
-                            </Box>
-                          }
+                          primary={template.name}
                           secondary={
-                            <Box>
-                              <Typography variant="caption" color="text.secondary">
-                                {template.description}
-                              </Typography>
-                              <br />
-                              <Chip
-                                label={template.category}
-                                size="small"
-                                sx={{ mt: 0.5 }}
-                                color={
-                                  template.category === 'SECURITY' ? 'error' :
-                                  template.category === 'COMPLIANCE' ? 'warning' :
-                                  'default'
-                                }
-                              />
-                            </Box>
+                            <>
+                              {template.description}
+                              {template.is_system_template && ' • System'}
+                              {' • '}
+                              {template.category}
+                            </>
                           }
                         />
                       </ListItem>

@@ -364,7 +364,10 @@ app.get('/api/dashboard/stats', authenticate, async (req, res) => {
         (SELECT COUNT(*) FROM environments) as total_environments,
         (SELECT COUNT(*) FROM environment_instances WHERE operational_status = 'Available') as available_instances,
         (SELECT COUNT(*) FROM environment_instances) as total_instances,
-        (SELECT COUNT(*) FROM environment_bookings WHERE booking_status = 'Active') as active_bookings,
+        (SELECT COUNT(*) FROM environment_bookings 
+         WHERE booking_status IN ('Active', 'Approved') 
+         AND start_datetime <= NOW() 
+         AND end_datetime >= NOW()) as active_bookings,
         (SELECT COUNT(*) FROM releases WHERE status IN ('InProgress', 'Testing')) as in_progress_releases,
         (SELECT COUNT(*) FROM applications) as total_applications,
         (SELECT COUNT(*) FROM users WHERE is_active = true) as total_users

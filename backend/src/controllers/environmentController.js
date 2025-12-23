@@ -506,7 +506,10 @@ const environmentController = {
           (SELECT COUNT(*) FROM environment_instances WHERE booking_status = 'FullyBooked') as fully_booked_instances,
           (SELECT COUNT(*) FROM environment_instances WHERE operational_status = 'Maintenance') as maintenance_instances,
           (SELECT COUNT(*) FROM infra_components) as total_infra_components,
-          (SELECT COUNT(*) FROM environment_bookings WHERE booking_status = 'Active') as active_bookings
+          (SELECT COUNT(*) FROM environment_bookings 
+           WHERE booking_status IN ('Active', 'Approved') 
+           AND start_datetime <= NOW() 
+           AND end_datetime >= NOW()) as active_bookings
       `);
 
       res.json(stats.rows[0]);

@@ -20,19 +20,32 @@ const bookingController = {
   // Get all bookings
   getAll: async (req, res) => {
     try {
-      const { booking_status, test_phase, start_date, end_date, search } = req.query;
+      const { booking_status, test_phase, start_date, end_date, search, environment_id } = req.query;
       
       let query = `
         SELECT eb.*, 
                u.display_name as requested_by_name,
                u2.display_name as approved_by_name,
                ug.name as owning_group_name,
-               COUNT(DISTINCT br.booking_resource_id) as resource_count
+               (SELECT COUNT(*) FROM booking_resources WHERE booking_id = eb.booking_id) as resource_count,
+               COALESCE(
+                 (SELECT json_agg(DISTINCT jsonb_build_object(
+                   'environment_id', COALESCE(ei_ref.environment_id, ei_src.environment_id),
+                   'environment_name', COALESCE(e_ref.name, e_src.name)
+                 ))
+                 FROM booking_resources br2
+                 LEFT JOIN environment_instances ei_ref ON br2.resource_ref_id = ei_ref.env_instance_id
+                 LEFT JOIN environments e_ref ON ei_ref.environment_id = e_ref.environment_id
+                 LEFT JOIN environment_instances ei_src ON br2.source_env_instance_id = ei_src.env_instance_id
+                 LEFT JOIN environments e_src ON ei_src.environment_id = e_src.environment_id
+                 WHERE br2.booking_id = eb.booking_id 
+                   AND (ei_ref.environment_id IS NOT NULL OR ei_src.environment_id IS NOT NULL)),
+                 '[]'
+               ) as resources
         FROM environment_bookings eb
         JOIN users u ON eb.requested_by_user_id = u.user_id
         LEFT JOIN users u2 ON eb.approved_by_user_id = u2.user_id
         LEFT JOIN user_groups ug ON eb.owning_group_id = ug.group_id
-        LEFT JOIN booking_resources br ON eb.booking_id = br.booking_id
         WHERE 1=1
       `;
       const params = [];
@@ -65,7 +78,18 @@ const bookingController = {
         }
       }
 
-      query += ' GROUP BY eb.booking_id, u.display_name, u2.display_name, ug.name ORDER BY eb.start_datetime DESC';
+      if (environment_id) {
+        params.push(environment_id);
+        query += ` AND EXISTS (
+          SELECT 1 FROM booking_resources br3
+          LEFT JOIN environment_instances ei3a ON br3.resource_ref_id = ei3a.env_instance_id
+          LEFT JOIN environment_instances ei3b ON br3.source_env_instance_id = ei3b.env_instance_id
+          WHERE br3.booking_id = eb.booking_id 
+            AND (ei3a.environment_id = $${params.length} OR ei3b.environment_id = $${params.length})
+        )`;
+      }
+
+      query += ' ORDER BY eb.start_datetime DESC';
 
       const result = await db.query(query, params);
       res.json({ bookings: result.rows });
@@ -604,10 +628,13 @@ const bookingController = {
     try {
       const stats = await db.query(`
         SELECT 
-          (SELECT COUNT(*) FROM environment_bookings WHERE booking_status = 'Active') as active_bookings,
+          (SELECT COUNT(*) FROM environment_bookings 
+           WHERE booking_status IN ('Active', 'Approved') 
+           AND start_datetime <= NOW() 
+           AND end_datetime >= NOW()) as active_bookings,
           (SELECT COUNT(*) FROM environment_bookings WHERE booking_status = 'PendingApproval') as pending_approvals,
           (SELECT COUNT(*) FROM environment_bookings WHERE booking_status = 'Approved' AND start_datetime > NOW()) as upcoming_bookings,
-          (SELECT COUNT(*) FROM environment_bookings WHERE conflict_status != 'None') as bookings_with_conflicts,
+          (SELECT COUNT(*) FROM environment_bookings WHERE conflict_status != 'None' AND booking_status NOT IN ('Completed', 'Cancelled')) as bookings_with_conflicts,
           (SELECT COUNT(*) FROM environment_bookings WHERE created_at > NOW() - INTERVAL '7 days') as bookings_last_week
       `);
 

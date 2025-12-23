@@ -648,14 +648,22 @@ export default function BookingsPage() {
 
   // Apply all filters
   const filteredBookings = bookings.filter((booking: Booking) => {
-    // Tab filter
-    if (tabValue === 1 && !['Active', 'Approved'].includes(booking.booking_status)) return false;
-    if (tabValue === 2 && !['Requested', 'PendingApproval'].includes(booking.booking_status)) return false;
-    if (tabValue === 3 && !['Completed', 'Cancelled'].includes(booking.booking_status)) return false;
-    if (tabValue === 4) {
-      // Conflicts tab - show only bookings with active conflicts
-      if (booking.conflict_status === 'None' || booking.conflict_status === 'Resolved') return false;
-      if (['Completed', 'Cancelled'].includes(booking.booking_status)) return false;
+    // Tab filter - only apply in table view, not calendar view
+    if (viewMode === 'table') {
+      if (tabValue === 1) {
+        // Active tab - must be Active/Approved AND not expired
+        if (!['Active', 'Approved'].includes(booking.booking_status)) return false;
+        const now = new Date();
+        const endDate = new Date(booking.end_datetime);
+        if (endDate < now) return false; // Exclude expired bookings
+      }
+      if (tabValue === 2 && !['Requested', 'PendingApproval'].includes(booking.booking_status)) return false;
+      if (tabValue === 3 && !['Completed', 'Cancelled'].includes(booking.booking_status)) return false;
+      if (tabValue === 4) {
+        // Conflicts tab - show only bookings with active conflicts
+        if (booking.conflict_status === 'None' || booking.conflict_status === 'Resolved') return false;
+        if (['Completed', 'Cancelled'].includes(booking.booking_status)) return false;
+      }
     }
 
     // Search filter
@@ -677,7 +685,8 @@ export default function BookingsPage() {
     if (filterStatus && booking.booking_status !== filterStatus) return false;
 
     // Environment filter - check if booking has resources from selected environment
-    if (filterEnvironment && booking.resources) {
+    if (filterEnvironment) {
+      if (!booking.resources || booking.resources.length === 0) return false;
       const hasMatchingEnv = booking.resources.some((r: any) => r.environment_id === filterEnvironment);
       if (!hasMatchingEnv) return false;
     }
@@ -864,6 +873,10 @@ export default function BookingsPage() {
               <Grid item xs={12} md={3}>
                 <Typography variant="subtitle2" color="text.secondary">Requested By</Typography>
                 <Typography>{viewingBooking.requested_by_name || '-'}</Typography>
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Typography variant="subtitle2" color="text.secondary">Approved By</Typography>
+                <Typography>{viewingBooking.approved_by_name || '-'}</Typography>
               </Grid>
               <Grid item xs={12} md={3}>
                 <Typography variant="subtitle2" color="text.secondary">Owning Group</Typography>
@@ -1441,7 +1454,7 @@ export default function BookingsPage() {
           <Card sx={{ mb: 3 }}>
             <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)} sx={{ borderBottom: 1, borderColor: 'divider' }}>
               <Tab label={`All (${bookings.length})`} />
-              <Tab label={`Active (${bookings.filter((b: any) => ['Active', 'Approved'].includes(b.booking_status)).length})`} />
+              <Tab label={`Active (${bookings.filter((b: any) => ['Active', 'Approved'].includes(b.booking_status) && new Date(b.end_datetime) >= new Date()).length})`} />
               <Tab label={`Pending (${bookings.filter((b: any) => ['Requested', 'PendingApproval'].includes(b.booking_status)).length})`} />
               <Tab label="Past" />
               <Tab 
@@ -1476,6 +1489,12 @@ export default function BookingsPage() {
                   headerName: 'Requested By',
                   width: 140,
                   valueGetter: (value) => value || 'Unknown',
+                },
+                {
+                  field: 'approved_by_name',
+                  headerName: 'Approved By',
+                  width: 140,
+                  valueGetter: (value) => value || '-',
                 },
                 {
                   field: 'start_datetime',

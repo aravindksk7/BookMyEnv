@@ -365,9 +365,9 @@ async function searchAuditEvents({
       paramIndex++;
     }
     
-    // Source channel filter
+    // Source channel filter (maps to source_system column)
     if (sourceChannel) {
-      whereConditions.push(`source_channel = $${paramIndex}`);
+      whereConditions.push(`source_system = $${paramIndex}`);
       values.push(sourceChannel);
       paramIndex++;
     }
