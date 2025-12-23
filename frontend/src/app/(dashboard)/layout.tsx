@@ -24,6 +24,7 @@ import {
   CardContent,
   CardHeader,
   Chip,
+  Tooltip,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -42,8 +43,11 @@ import {
   AccountTree as TopologyIcon,
   Autorenew as RefreshIcon,
   Security as AuditIcon,
+  LightMode as LightModeIcon,
+  DarkMode as DarkModeIcon,
 } from '@mui/icons-material';
 import { useAuth } from '@/contexts/AuthContext';
+import { useThemeContext } from '@/contexts/ThemeContext';
 import { dashboardAPI } from '@/lib/api';
 
 // BME Logo Component
@@ -118,6 +122,7 @@ export default function DashboardLayout({
   const [unreadCount, setUnreadCount] = useState(0);
   const [lastViewedTime, setLastViewedTime] = useState<string | null>(null);
   const { user, logout } = useAuth();
+  const { mode, toggleTheme } = useThemeContext();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -269,7 +274,7 @@ export default function DashboardLayout({
         sx={{
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           ml: { sm: `${drawerWidth}px` },
-          bgcolor: 'white',
+          bgcolor: 'background.paper',
           color: 'text.primary',
           boxShadow: 1,
         }}
@@ -290,6 +295,11 @@ export default function DashboardLayout({
               BookMyEnv
             </Typography>
           </Box>
+          <Tooltip title={mode === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}>
+            <IconButton color="inherit" onClick={toggleTheme} sx={{ mr: 1 }}>
+              {mode === 'light' ? <DarkModeIcon /> : <LightModeIcon />}
+            </IconButton>
+          </Tooltip>
           <IconButton color="inherit" onClick={handleNotificationClick}>
             <Badge badgeContent={unreadCount} color="error">
               <NotificationsIcon />

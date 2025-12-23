@@ -25,6 +25,7 @@ const topologyRoutes = require('./routes/topologyRoutes');
 const bulkUploadRoutes = require('./routes/bulkUploadRoutes');
 const refreshRoutes = require('./routes/refreshRoutes');
 const auditRoutes = require('./routes/auditRoutes');
+const emailRoutes = require('./routes/emailRoutes');
 
 // Import database
 const db = require('./config/database');
@@ -178,6 +179,7 @@ app.use('/api/topology', topologyRoutes);
 app.use('/api/bulk-upload', bulkUploadRoutes);
 app.use('/api/refresh', refreshRoutes);
 app.use('/api/audit', auditRoutes);
+app.use('/api/email', emailRoutes);
 
 // Import auth middleware for protected routes
 const { authenticate } = require('./middleware/auth');
@@ -461,11 +463,17 @@ const emitUpdate = (eventType, data) => {
 // Export for use in controllers
 app.set('emitUpdate', emitUpdate);
 
+// Start notification scheduler
+const { startScheduler } = require('./services/notificationScheduler');
+
 // Start server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  
+  // Start notification scheduler after server is ready
+  startScheduler();
 });
 
 module.exports = { app, server, io };

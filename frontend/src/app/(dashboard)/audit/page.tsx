@@ -439,7 +439,7 @@ export default function AuditPage() {
         {/* Stats Cards */}
         {stats && (
           <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+            <Grid item xs={12} sm={6} md={2}>
               <Card>
                 <CardContent sx={{ textAlign: 'center', py: 2 }}>
                   <Typography variant="h4" color="primary">
@@ -451,7 +451,7 @@ export default function AuditPage() {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+            <Grid item xs={12} sm={6} md={2}>
               <Card>
                 <CardContent sx={{ textAlign: 'center', py: 2 }}>
                   <Typography variant="h4" color="info.main">
@@ -463,7 +463,7 @@ export default function AuditPage() {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+            <Grid item xs={12} sm={6} md={2}>
               <Card>
                 <CardContent sx={{ textAlign: 'center', py: 2 }}>
                   <Typography variant="h4" color="secondary.main">
@@ -475,7 +475,7 @@ export default function AuditPage() {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+            <Grid item xs={12} sm={6} md={2}>
               <Card>
                 <CardContent sx={{ textAlign: 'center', py: 2 }}>
                   <Typography variant="h4">
@@ -487,7 +487,7 @@ export default function AuditPage() {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+            <Grid item xs={12} sm={6} md={2}>
               <Card>
                 <CardContent sx={{ textAlign: 'center', py: 2 }}>
                   <Typography variant="h4" color="error.main">
@@ -499,7 +499,7 @@ export default function AuditPage() {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+            <Grid item xs={12} sm={6} md={2}>
               <Card>
                 <CardContent sx={{ textAlign: 'center', py: 2 }}>
                   <Typography variant="h4" color="warning.main">
@@ -540,7 +540,7 @@ export default function AuditPage() {
               <AccordionDetails>
                 <Grid container spacing={2}>
                   {/* Search */}
-                  <Grid size={{ xs: 12, md: 4 }}>
+                  <Grid item xs={12} md={4}>
                     <TextField
                       fullWidth
                       label="Search"
@@ -558,7 +558,7 @@ export default function AuditPage() {
                   </Grid>
 
                   {/* Date Range */}
-                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                  <Grid item xs={12} sm={6} md={2}>
                     <DateTimePicker
                       label="From Date"
                       value={filters.dateFrom}
@@ -566,7 +566,7 @@ export default function AuditPage() {
                       slotProps={{ textField: { fullWidth: true, size: 'medium' } }}
                     />
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                  <Grid item xs={12} sm={6} md={2}>
                     <DateTimePicker
                       label="To Date"
                       value={filters.dateTo}
@@ -576,7 +576,7 @@ export default function AuditPage() {
                   </Grid>
 
                   {/* Entity Types */}
-                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                  <Grid item xs={12} sm={6} md={2}>
                     <FormControl fullWidth>
                       <InputLabel>Entity Type</InputLabel>
                       <Select
@@ -600,7 +600,7 @@ export default function AuditPage() {
                   </Grid>
 
                   {/* Action Types */}
-                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                  <Grid item xs={12} sm={6} md={2}>
                     <FormControl fullWidth>
                       <InputLabel>Action</InputLabel>
                       <Select
@@ -624,7 +624,7 @@ export default function AuditPage() {
                   </Grid>
 
                   {/* Source Channel */}
-                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                  <Grid item xs={12} sm={6} md={2}>
                     <FormControl fullWidth>
                       <InputLabel>Source</InputLabel>
                       <Select
@@ -641,7 +641,7 @@ export default function AuditPage() {
                   </Grid>
 
                   {/* Result */}
-                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                  <Grid item xs={12} sm={6} md={2}>
                     <FormControl fullWidth>
                       <InputLabel>Result</InputLabel>
                       <Select
@@ -658,7 +658,7 @@ export default function AuditPage() {
                   </Grid>
 
                   {/* Regulatory Tag */}
-                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                  <Grid item xs={12} sm={6} md={2}>
                     <FormControl fullWidth>
                       <InputLabel>Regulatory Tag</InputLabel>
                       <Select
@@ -675,7 +675,7 @@ export default function AuditPage() {
                   </Grid>
 
                   {/* Role */}
-                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                  <Grid item xs={12} sm={6} md={2}>
                     <FormControl fullWidth>
                       <InputLabel>Actor Role</InputLabel>
                       <Select
@@ -692,7 +692,7 @@ export default function AuditPage() {
                   </Grid>
 
                   {/* Actions */}
-                  <Grid size={{ xs: 12 }}>
+                  <Grid item xs={12}>
                     <Box sx={{ display: 'flex', gap: 1 }}>
                       <Button
                         variant="contained"
@@ -828,7 +828,7 @@ export default function AuditPage() {
         {activeTab === 1 && (
           <Grid container spacing={3}>
             {/* Report Templates */}
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid item xs={12} md={6}>
               <Card>
                 <CardHeader title="Report Templates" />
                 <CardContent>
@@ -889,7 +889,7 @@ export default function AuditPage() {
             </Grid>
 
             {/* Available Templates List */}
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid item xs={12} md={6}>
               <Card>
                 <CardHeader title="Available Templates" />
                 <CardContent sx={{ p: 0 }}>
@@ -970,19 +970,19 @@ export default function AuditPage() {
                 <CardContent>
                   <Typography variant="subtitle2" gutterBottom>Actor</Typography>
                   <Grid container spacing={1}>
-                    <Grid size={6}>
+                    <Grid item xs={6}>
                       <Typography variant="caption" color="text.secondary">Name</Typography>
                       <Typography variant="body2">{selectedEvent.actor_user_name}</Typography>
                     </Grid>
-                    <Grid size={6}>
+                    <Grid item xs={6}>
                       <Typography variant="caption" color="text.secondary">Role</Typography>
                       <Typography variant="body2">{selectedEvent.actor_role}</Typography>
                     </Grid>
-                    <Grid size={6}>
+                    <Grid item xs={6}>
                       <Typography variant="caption" color="text.secondary">Source</Typography>
                       <Typography variant="body2">{selectedEvent.source_channel}</Typography>
                     </Grid>
-                    <Grid size={6}>
+                    <Grid item xs={6}>
                       <Typography variant="caption" color="text.secondary">IP Address</Typography>
                       <Typography variant="body2">{selectedEvent.ip_address || 'N/A'}</Typography>
                     </Grid>
@@ -1013,7 +1013,7 @@ export default function AuditPage() {
                   <AccordionDetails>
                     <Grid container spacing={2}>
                       {selectedEvent.before_snapshot && (
-                        <Grid size={6}>
+                        <Grid item xs={6}>
                           <Typography variant="caption" color="text.secondary">Before</Typography>
                           <Paper variant="outlined" sx={{ p: 1, bgcolor: 'error.light', maxHeight: 200, overflow: 'auto' }}>
                             <pre style={{ margin: 0, fontSize: '0.75rem', whiteSpace: 'pre-wrap' }}>
@@ -1023,7 +1023,7 @@ export default function AuditPage() {
                         </Grid>
                       )}
                       {selectedEvent.after_snapshot && (
-                        <Grid size={6}>
+                        <Grid item xs={6}>
                           <Typography variant="caption" color="text.secondary">After</Typography>
                           <Paper variant="outlined" sx={{ p: 1, bgcolor: 'success.light', maxHeight: 200, overflow: 'auto' }}>
                             <pre style={{ margin: 0, fontSize: '0.75rem', whiteSpace: 'pre-wrap' }}>

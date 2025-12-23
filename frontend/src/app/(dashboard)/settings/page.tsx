@@ -41,6 +41,7 @@ import {
   Tooltip,
   InputAdornment,
   LinearProgress,
+  CircularProgress,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -57,6 +58,11 @@ import {
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
   CloudUpload as BulkUploadIcon,
+  Email as EmailIcon,
+  Send as SendIcon,
+  CheckCircle as CheckCircleIcon,
+  Error as ErrorIcon,
+  Preview as PreviewIcon,
 } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -90,6 +96,44 @@ interface IdentityProvider {
   idp_type: string;
   issuer_url: string;
   is_active: boolean;
+}
+
+interface EmailStatus {
+  enabled: boolean;
+  provider: string;
+  from: { name: string; email: string };
+  verified: boolean;
+  message: string;
+}
+
+interface EmailTemplate {
+  name: string;
+  subject: string;
+}
+
+interface EmailConfig {
+  enabled: boolean;
+  provider: 'smtp' | 'sendgrid' | 'ses';
+  smtp: {
+    host: string;
+    port: number;
+    secure: boolean;
+    user: string;
+    pass: string;
+  };
+  sendgrid: {
+    apiKey: string;
+  };
+  ses: {
+    region: string;
+    accessKeyId: string;
+    secretAccessKey: string;
+  };
+  from: {
+    name: string;
+    email: string;
+  };
+  appUrl: string;
 }
 
 interface TabPanelProps {
@@ -166,6 +210,27 @@ export default function SettingsPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
+  // Email configuration state
+  const [emailStatus, setEmailStatus] = useState<EmailStatus | null>(null);
+  const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
+  const [testEmailAddress, setTestEmailAddress] = useState('');
+  const [sendingTestEmail, setSendingTestEmail] = useState(false);
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const [previewTemplate, setPreviewTemplate] = useState<{ name: string; subject: string; html: string } | null>(null);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailConfigDialogOpen, setEmailConfigDialogOpen] = useState(false);
+  const [savingEmailConfig, setSavingEmailConfig] = useState(false);
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [emailConfig, setEmailConfig] = useState<EmailConfig>({
+    enabled: false,
+    provider: 'smtp',
+    smtp: { host: '', port: 587, secure: false, user: '', pass: '' },
+    sendgrid: { apiKey: '' },
+    ses: { region: 'us-east-1', accessKeyId: '', secretAccessKey: '' },
+    from: { name: 'BookMyEnv', email: 'noreply@example.com' },
+    appUrl: 'http://localhost:3000'
+  });
+
   // Profile form state (for non-admin users to update their own settings)
   const [profileFormData, setProfileFormData] = useState({
     display_name: '',
@@ -220,8 +285,178 @@ export default function SettingsPage() {
       fetchUsers();
       fetchGroups();
       fetchIdentityProviders();
+      fetchEmailStatus();
+      fetchEmailTemplates();
     }
   }, [isAdmin, fetchUsers, fetchGroups, fetchIdentityProviders]);
+
+  // Fetch email status
+  const fetchEmailStatus = async () => {
+    try {
+      setEmailLoading(true);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/email/status`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setEmailStatus(data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch email status:', error);
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  // Fetch email templates
+  const fetchEmailTemplates = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/email/templates`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setEmailTemplates(data.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch email templates:', error);
+    }
+  };
+
+  // Send test email
+  const handleSendTestEmail = async () => {
+    if (!testEmailAddress) {
+      showSnackbar('Please enter an email address', 'error');
+      return;
+    }
+    
+    setSendingTestEmail(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/email/test`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: testEmailAddress }),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        showSnackbar('Test email sent successfully!', 'success');
+        setTestEmailAddress('');
+      } else {
+        showSnackbar(data.message || 'Failed to send test email', 'error');
+      }
+    } catch {
+      showSnackbar('Failed to send test email', 'error');
+    } finally {
+      setSendingTestEmail(false);
+    }
+  };
+
+  // Preview email template
+  const handlePreviewTemplate = async (templateName: string) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/email/templates/${templateName}/preview`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setPreviewTemplate(data.data);
+        setPreviewDialogOpen(true);
+      }
+    } catch {
+      showSnackbar('Failed to load template preview', 'error');
+    }
+  };
+
+  // Fetch email configuration
+  const fetchEmailConfig = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/email/config`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setEmailConfig(data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch email config:', error);
+    }
+  };
+
+  // Save email configuration
+  const handleSaveEmailConfig = async () => {
+    setSavingEmailConfig(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/email/config`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ config: emailConfig }),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        showSnackbar('Email configuration saved successfully', 'success');
+        setEmailConfigDialogOpen(false);
+        // Refresh status
+        fetchEmailStatus();
+      } else {
+        showSnackbar(data.message || 'Failed to save email configuration', 'error');
+      }
+    } catch {
+      showSnackbar('Failed to save email configuration', 'error');
+    } finally {
+      setSavingEmailConfig(false);
+    }
+  };
+
+  // Test email connection
+  const handleTestConnection = async () => {
+    setTestingConnection(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/email/test-connection`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        showSnackbar('Connection successful!', 'success');
+      } else {
+        showSnackbar(data.message || 'Connection failed', 'error');
+      }
+    } catch {
+      showSnackbar('Failed to test connection', 'error');
+    } finally {
+      setTestingConnection(false);
+    }
+  };
+
+  // Open email config dialog
+  const handleOpenEmailConfig = () => {
+    fetchEmailConfig();
+    setEmailConfigDialogOpen(true);
+  };
 
   const showSnackbar = (message: string, severity: 'success' | 'error') => {
     setSnackbar({ open: true, message, severity });
@@ -460,6 +695,7 @@ export default function SettingsPage() {
           {isAdmin && <Tab icon={<GroupIcon />} label="User Management" iconPosition="start" />}
           {isAdmin && <Tab icon={<SsoIcon />} label="SSO Configuration" iconPosition="start" />}
           {isAdmin && <Tab icon={<BulkUploadIcon />} label="Data Management" iconPosition="start" />}
+          {isAdmin && <Tab icon={<EmailIcon />} label="Email Configuration" iconPosition="start" />}
         </Tabs>
 
         {/* Profile Tab */}
@@ -1042,6 +1278,226 @@ export default function SettingsPage() {
             </CardContent>
           </TabPanel>
         )}
+
+        {/* Email Configuration Tab (Admin only) */}
+        {isAdmin && (
+          <TabPanel value={tabValue} index={5}>
+            <CardContent>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Box>
+                  <Typography variant="h6" gutterBottom>
+                    Email Configuration
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Configure email notifications and test email delivery.
+                  </Typography>
+                </Box>
+                <Button
+                  variant="contained"
+                  startIcon={<EditIcon />}
+                  onClick={handleOpenEmailConfig}
+                >
+                  Edit Configuration
+                </Button>
+              </Box>
+
+              {/* Email Status Card */}
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <EmailIcon sx={{ fontSize: 40, color: emailStatus?.enabled ? 'success.main' : 'text.disabled', mr: 2 }} />
+                        <Box>
+                          <Typography variant="h6">Email Status</Typography>
+                          <Chip 
+                            icon={emailStatus?.enabled ? <CheckCircleIcon /> : <ErrorIcon />}
+                            label={emailStatus?.enabled ? 'Enabled' : 'Disabled'} 
+                            color={emailStatus?.enabled ? 'success' : 'default'}
+                            size="small"
+                          />
+                        </Box>
+                      </Box>
+                      
+                      {emailLoading ? (
+                        <LinearProgress sx={{ my: 2 }} />
+                      ) : emailStatus ? (
+                        <Box>
+                          <Paper sx={{ p: 2, bgcolor: 'background.default', mb: 2 }}>
+                            <Grid container spacing={2}>
+                              <Grid item xs={6}>
+                                <Typography variant="caption" color="text.secondary">Provider</Typography>
+                                <Typography variant="body2" fontWeight="medium">{emailStatus.provider?.toUpperCase()}</Typography>
+                              </Grid>
+                              <Grid item xs={6}>
+                                <Typography variant="caption" color="text.secondary">Connection</Typography>
+                                <Typography variant="body2" fontWeight="medium">
+                                  {emailStatus.verified ? (
+                                    <Chip label="Verified" color="success" size="small" />
+                                  ) : (
+                                    <Chip label="Not Verified" color="warning" size="small" />
+                                  )}
+                                </Typography>
+                              </Grid>
+                              <Grid item xs={12}>
+                                <Typography variant="caption" color="text.secondary">From Address</Typography>
+                                <Typography variant="body2" fontWeight="medium">
+                                  {emailStatus.from?.name} &lt;{emailStatus.from?.email}&gt;
+                                </Typography>
+                              </Grid>
+                            </Grid>
+                          </Paper>
+                          
+                          {!emailStatus.enabled && (
+                            <Alert severity="info" sx={{ mb: 2 }}>
+                              Email is disabled. Click &quot;Edit Configuration&quot; to enable notifications.
+                            </Alert>
+                          )}
+                          
+                          <Button 
+                            variant="outlined" 
+                            startIcon={<RefreshIcon />}
+                            onClick={fetchEmailStatus}
+                            size="small"
+                          >
+                            Refresh Status
+                          </Button>
+                        </Box>
+                      ) : (
+                        <Alert severity="warning">
+                          Unable to fetch email status. Check backend configuration.
+                        </Alert>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                {/* Test Email Card */}
+                <Grid item xs={12} md={6}>
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <SendIcon sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
+                        <Box>
+                          <Typography variant="h6">Send Test Email</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Verify email delivery
+                          </Typography>
+                        </Box>
+                      </Box>
+                      
+                      <TextField
+                        label="Recipient Email"
+                        type="email"
+                        fullWidth
+                        value={testEmailAddress}
+                        onChange={(e) => setTestEmailAddress(e.target.value)}
+                        placeholder="test@example.com"
+                        margin="normal"
+                        disabled={!emailStatus?.enabled}
+                      />
+                      
+                      <Button
+                        variant="contained"
+                        startIcon={sendingTestEmail ? <RefreshIcon className="spin" /> : <SendIcon />}
+                        onClick={handleSendTestEmail}
+                        disabled={!emailStatus?.enabled || sendingTestEmail || !testEmailAddress}
+                        fullWidth
+                        sx={{ mt: 1 }}
+                      >
+                        {sendingTestEmail ? 'Sending...' : 'Send Test Email'}
+                      </Button>
+                      
+                      {!emailStatus?.enabled && (
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                          Enable email to send test messages
+                        </Typography>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+
+              <Divider sx={{ my: 4 }} />
+
+              {/* Email Templates Section */}
+              <Typography variant="h6" gutterBottom>
+                Email Templates
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Preview the email templates used for notifications.
+              </Typography>
+
+              <TableContainer component={Paper} variant="outlined">
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Template Name</TableCell>
+                      <TableCell>Subject Line</TableCell>
+                      <TableCell align="right">Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {emailTemplates.map((template) => (
+                      <TableRow key={template.name} hover>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight="medium">
+                            {template.name.replace(/([A-Z])/g, ' $1').trim()}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" color="text.secondary">
+                            {template.subject}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Tooltip title="Preview Template">
+                            <IconButton 
+                              size="small"
+                              onClick={() => handlePreviewTemplate(template.name)}
+                            >
+                              <PreviewIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {emailTemplates.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={3} align="center">
+                          <Typography variant="body2" color="text.secondary">
+                            No templates available
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              <Divider sx={{ my: 4 }} />
+
+              {/* Configuration Tips */}
+              <Typography variant="h6" gutterBottom>
+                Configuration Tips
+              </Typography>
+              <Alert severity="info" sx={{ mb: 2 }}>
+                <Typography variant="body2" gutterBottom>
+                  <strong>SMTP (Gmail):</strong> Use smtp.gmail.com with port 587. You&apos;ll need to generate an App Password in your Google Account settings.
+                </Typography>
+                <Typography variant="body2" gutterBottom>
+                  <strong>SendGrid:</strong> Create an API key at sendgrid.com with &quot;Mail Send&quot; permissions.
+                </Typography>
+                <Typography variant="body2">
+                  <strong>AWS SES:</strong> Verify your sender email address in AWS SES console and use IAM credentials with ses:SendEmail permission.
+                </Typography>
+              </Alert>
+              <Typography variant="body2" color="text.secondary">
+                Configuration is stored securely in the database. Sensitive fields like passwords and API keys are encrypted.
+              </Typography>
+            </CardContent>
+          </TabPanel>
+        )}
       </Card>
 
       {/* Create/Edit User Dialog */}
@@ -1370,6 +1826,286 @@ export default function SettingsPage() {
             disabled={!idpFormData.name}
           >
             Create Provider
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Email Template Preview Dialog */}
+      <Dialog 
+        open={previewDialogOpen} 
+        onClose={() => setPreviewDialogOpen(false)} 
+        maxWidth="md" 
+        fullWidth
+      >
+        <DialogTitle>
+          Template Preview: {previewTemplate?.name?.replace(/([A-Z])/g, ' $1').trim()}
+        </DialogTitle>
+        <DialogContent>
+          {!previewTemplate ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : previewTemplate.html ? (
+            <Box>
+              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                Subject: {previewTemplate.subject}
+              </Typography>
+              <Paper 
+                variant="outlined" 
+                sx={{ 
+                  p: 2, 
+                  mt: 2, 
+                  maxHeight: '60vh', 
+                  overflow: 'auto',
+                  '& img': { maxWidth: '100%' }
+                }}
+              >
+                <div dangerouslySetInnerHTML={{ __html: previewTemplate.html }} />
+              </Paper>
+            </Box>
+          ) : (
+            <Alert severity="error">
+              Unable to load template preview
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPreviewDialogOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Email Configuration Dialog */}
+      <Dialog 
+        open={emailConfigDialogOpen} 
+        onClose={() => setEmailConfigDialogOpen(false)} 
+        maxWidth="md" 
+        fullWidth
+      >
+        <DialogTitle>Email Configuration</DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
+            {/* Enable/Disable Toggle */}
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={emailConfig.enabled}
+                  onChange={(e) => setEmailConfig({ ...emailConfig, enabled: e.target.checked })}
+                />
+              }
+              label="Enable Email Notifications"
+            />
+            
+            <Divider sx={{ my: 2 }} />
+            
+            {/* Provider Selection */}
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Email Provider</InputLabel>
+              <Select
+                value={emailConfig.provider}
+                label="Email Provider"
+                onChange={(e) => setEmailConfig({ ...emailConfig, provider: e.target.value as 'smtp' | 'sendgrid' | 'ses' })}
+              >
+                <MenuItem value="smtp">SMTP</MenuItem>
+                <MenuItem value="sendgrid">SendGrid</MenuItem>
+                <MenuItem value="ses">AWS SES</MenuItem>
+              </Select>
+            </FormControl>
+
+            {/* SMTP Configuration */}
+            {emailConfig.provider === 'smtp' && (
+              <Paper variant="outlined" sx={{ p: 2, mt: 2 }}>
+                <Typography variant="subtitle2" gutterBottom>SMTP Settings</Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={8}>
+                    <TextField
+                      label="SMTP Host"
+                      fullWidth
+                      value={emailConfig.smtp.host}
+                      onChange={(e) => setEmailConfig({
+                        ...emailConfig,
+                        smtp: { ...emailConfig.smtp, host: e.target.value }
+                      })}
+                      placeholder="smtp.gmail.com"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      label="Port"
+                      type="number"
+                      fullWidth
+                      value={emailConfig.smtp.port}
+                      onChange={(e) => setEmailConfig({
+                        ...emailConfig,
+                        smtp: { ...emailConfig.smtp, port: parseInt(e.target.value) || 587 }
+                      })}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Username"
+                      fullWidth
+                      value={emailConfig.smtp.user}
+                      onChange={(e) => setEmailConfig({
+                        ...emailConfig,
+                        smtp: { ...emailConfig.smtp, user: e.target.value }
+                      })}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Password"
+                      type="password"
+                      fullWidth
+                      value={emailConfig.smtp.pass}
+                      onChange={(e) => setEmailConfig({
+                        ...emailConfig,
+                        smtp: { ...emailConfig.smtp, pass: e.target.value }
+                      })}
+                      helperText="Leave as ******** to keep existing password"
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={emailConfig.smtp.secure}
+                          onChange={(e) => setEmailConfig({
+                            ...emailConfig,
+                            smtp: { ...emailConfig.smtp, secure: e.target.checked }
+                          })}
+                        />
+                      }
+                      label="Use SSL/TLS (port 465)"
+                    />
+                  </Grid>
+                </Grid>
+              </Paper>
+            )}
+
+            {/* SendGrid Configuration */}
+            {emailConfig.provider === 'sendgrid' && (
+              <Paper variant="outlined" sx={{ p: 2, mt: 2 }}>
+                <Typography variant="subtitle2" gutterBottom>SendGrid Settings</Typography>
+                <TextField
+                  label="API Key"
+                  type="password"
+                  fullWidth
+                  value={emailConfig.sendgrid.apiKey}
+                  onChange={(e) => setEmailConfig({
+                    ...emailConfig,
+                    sendgrid: { apiKey: e.target.value }
+                  })}
+                  helperText="Leave as ******** to keep existing API key"
+                />
+              </Paper>
+            )}
+
+            {/* AWS SES Configuration */}
+            {emailConfig.provider === 'ses' && (
+              <Paper variant="outlined" sx={{ p: 2, mt: 2 }}>
+                <Typography variant="subtitle2" gutterBottom>AWS SES Settings</Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <TextField
+                      label="Region"
+                      fullWidth
+                      value={emailConfig.ses.region}
+                      onChange={(e) => setEmailConfig({
+                        ...emailConfig,
+                        ses: { ...emailConfig.ses, region: e.target.value }
+                      })}
+                      placeholder="us-east-1"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Access Key ID"
+                      type="password"
+                      fullWidth
+                      value={emailConfig.ses.accessKeyId}
+                      onChange={(e) => setEmailConfig({
+                        ...emailConfig,
+                        ses: { ...emailConfig.ses, accessKeyId: e.target.value }
+                      })}
+                      helperText="Leave as ******** to keep existing"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Secret Access Key"
+                      type="password"
+                      fullWidth
+                      value={emailConfig.ses.secretAccessKey}
+                      onChange={(e) => setEmailConfig({
+                        ...emailConfig,
+                        ses: { ...emailConfig.ses, secretAccessKey: e.target.value }
+                      })}
+                      helperText="Leave as ******** to keep existing"
+                    />
+                  </Grid>
+                </Grid>
+              </Paper>
+            )}
+
+            <Divider sx={{ my: 2 }} />
+
+            {/* From Address Settings */}
+            <Typography variant="subtitle2" gutterBottom>Sender Settings</Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="From Name"
+                  fullWidth
+                  value={emailConfig.from.name}
+                  onChange={(e) => setEmailConfig({
+                    ...emailConfig,
+                    from: { ...emailConfig.from, name: e.target.value }
+                  })}
+                  placeholder="BookMyEnv"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="From Email"
+                  type="email"
+                  fullWidth
+                  value={emailConfig.from.email}
+                  onChange={(e) => setEmailConfig({
+                    ...emailConfig,
+                    from: { ...emailConfig.from, email: e.target.value }
+                  })}
+                  placeholder="noreply@example.com"
+                />
+              </Grid>
+            </Grid>
+
+            {/* App URL */}
+            <TextField
+              label="Application URL"
+              fullWidth
+              margin="normal"
+              value={emailConfig.appUrl}
+              onChange={(e) => setEmailConfig({ ...emailConfig, appUrl: e.target.value })}
+              placeholder="https://bookmyenv.example.com"
+              helperText="Used for links in email templates"
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEmailConfigDialogOpen(false)}>Cancel</Button>
+          <Button 
+            variant="outlined" 
+            onClick={handleTestConnection}
+            disabled={testingConnection || !emailConfig.enabled}
+          >
+            {testingConnection ? 'Testing...' : 'Test Connection'}
+          </Button>
+          <Button 
+            variant="contained" 
+            onClick={handleSaveEmailConfig}
+            disabled={savingEmailConfig}
+          >
+            {savingEmailConfig ? 'Saving...' : 'Save Configuration'}
           </Button>
         </DialogActions>
       </Dialog>

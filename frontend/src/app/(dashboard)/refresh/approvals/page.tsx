@@ -206,7 +206,7 @@ export default function RefreshApprovalsPage() {
     return (
       <div className="p-6">
         <div className="bg-yellow-50 text-yellow-800 p-4 rounded-lg">
-          You don't have permission to approve refresh requests. Only Admins and Environment Managers can approve.
+          You don&apos;t have permission to approve refresh requests. Only Admins and Environment Managers can approve.
         </div>
       </div>
     );

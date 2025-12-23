@@ -8,6 +8,8 @@ A comprehensive, enterprise-grade Environment Booking and Management System (BME
 - **Application Deployments** - Track application deployments across environment instances
 - **Booking System** - Book environments with conflict detection and resolution
 - **Refresh Lifecycle (v4.0)** - Schedule data refreshes with booking conflict detection and resolution workflows
+- **Email Notifications (v5.0)** - Configurable email alerts via SMTP, SendGrid, or AWS SES
+- **Dark Mode (v5.0)** - System-wide dark theme support with user preferences
 - **Release Management** - Plan and track releases across environments
 - **Bulk Data Upload** - Import data in bulk via CSV (7 entity types)
 - **Real-time Monitoring** - Dashboard with live activity feed
@@ -305,8 +307,24 @@ test-env-management/
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture, data model, flows |
 | [SECURITY.md](docs/SECURITY.md) | Security features and configuration |
 | [DATA_SETUP_GUIDE.md](docs/DATA_SETUP_GUIDE.md) | Data import and setup guide |
+| [UPGRADE_GUIDE_v5.0.0.md](docs/UPGRADE_GUIDE_v5.0.0.md) | **v5.0.0 upgrade guide with migration scripts** |
 | [ENTERPRISE_APPROVAL.md](docs/ENTERPRISE_APPROVAL.md) | Enterprise architecture & security approval |
 | [terraform/README.md](terraform/README.md) | AWS Terraform deployment guide |
+
+## 🔄 Upgrading
+
+### Upgrade to v5.0.0 (Email, Dark Mode, Schedule-X Calendar)
+
+```powershell
+# Windows
+.\upgrade-v5.ps1
+
+# Linux/Mac
+chmod +x upgrade-v5.sh
+./upgrade-v5.sh
+```
+
+See [UPGRADE_GUIDE_v5.0.0.md](docs/UPGRADE_GUIDE_v5.0.0.md) for detailed instructions.
 
 ## ☁️ AWS Cloud Deployment
 

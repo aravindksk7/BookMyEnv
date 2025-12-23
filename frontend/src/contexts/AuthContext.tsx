@@ -11,6 +11,8 @@ interface User {
   role: string;
   auth_mode?: string;
   time_zone?: string;
+  is_active?: boolean;
+  last_login_at?: string;
 }
 
 interface AuthContextType {

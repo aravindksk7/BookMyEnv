@@ -1573,4 +1573,77 @@ INSERT INTO audit_report_templates (template_id, name, description, category, fi
 ('a0000001-0001-0001-0001-000000000006', 'Compliance Report', 'Regulatory compliance audit report', 'COMPLIANCE', '{"regulatory_tag": "NOT NULL"}', ARRAY['timestamp_utc', 'actor_username', 'entity_type', 'action_type', 'regulatory_tag', 'data_classification'], true)
 ON CONFLICT DO NOTHING;
 
+-- =====================================================
+-- EMAIL NOTIFICATION TRACKING
+-- =====================================================
+
+-- Add email notification tracking columns to environment_bookings
+ALTER TABLE environment_bookings 
+ADD COLUMN IF NOT EXISTS reminder_sent BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS expiring_notification_sent BOOLEAN DEFAULT FALSE;
+
+-- Add preferences column to users for notification settings
+ALTER TABLE users 
+ADD COLUMN IF NOT EXISTS preferences JSONB DEFAULT '{"notifications": {"bookingRequested": true, "bookingApproved": true, "bookingRejected": true, "bookingConflict": true, "bookingReminder": true, "bookingExpiring": true, "maintenanceScheduled": true, "approvalRequest": true}}';
+
+-- Email notification log for tracking sent emails
+CREATE TABLE IF NOT EXISTS email_notification_log (
+    log_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    template_name VARCHAR(100) NOT NULL,
+    recipient_email VARCHAR(255) NOT NULL,
+    recipient_user_id UUID REFERENCES users(user_id),
+    subject VARCHAR(500),
+    booking_id UUID REFERENCES environment_bookings(booking_id),
+    status VARCHAR(20) DEFAULT 'SENT' CHECK (status IN ('SENT', 'FAILED', 'BOUNCED', 'DELIVERED')),
+    message_id VARCHAR(255),
+    error_message TEXT,
+    sent_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_email_log_recipient ON email_notification_log(recipient_email);
+CREATE INDEX IF NOT EXISTS idx_email_log_booking ON email_notification_log(booking_id);
+CREATE INDEX IF NOT EXISTS idx_email_log_sent ON email_notification_log(sent_at);
+
+-- =====================================================
+-- SYSTEM SETTINGS
+-- =====================================================
+
+-- System settings table for storing configuration
+CREATE TABLE IF NOT EXISTS system_settings (
+    setting_key VARCHAR(100) PRIMARY KEY,
+    setting_value JSONB NOT NULL,
+    description TEXT,
+    is_sensitive BOOLEAN DEFAULT FALSE,
+    updated_by UUID REFERENCES users(user_id),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Insert default email configuration
+INSERT INTO system_settings (setting_key, setting_value, description, is_sensitive) VALUES
+('email_config', '{
+    "enabled": false,
+    "provider": "smtp",
+    "smtp": {
+        "host": "",
+        "port": 587,
+        "secure": false,
+        "user": "",
+        "pass": ""
+    },
+    "sendgrid": {
+        "apiKey": ""
+    },
+    "ses": {
+        "region": "us-east-1",
+        "accessKeyId": "",
+        "secretAccessKey": ""
+    },
+    "from": {
+        "name": "BookMyEnv",
+        "email": "noreply@example.com"
+    },
+    "appUrl": "http://localhost:3000"
+}', 'Email notification configuration', true)
+ON CONFLICT (setting_key) DO NOTHING;
+
 COMMIT;

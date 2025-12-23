@@ -12,6 +12,7 @@ import {
 } from '@schedule-x/calendar';
 import { createDragAndDropPlugin } from '@schedule-x/drag-and-drop';
 import { createEventsServicePlugin } from '@schedule-x/events-service';
+import { useThemeContext } from '@/contexts/ThemeContext';
 import '@schedule-x/theme-default/dist/index.css';
 
 interface Booking {
@@ -99,6 +100,7 @@ export default function BookingCalendar({
 }: BookingCalendarProps) {
   const [isClient, setIsClient] = useState(false);
   const eventsServiceRef = useRef(createEventsServicePlugin());
+  const { mode } = useThemeContext();
 
   useEffect(() => {
     setIsClient(true);
@@ -143,6 +145,7 @@ export default function BookingCalendar({
       views: [createViewMonthGrid(), createViewWeek(), createViewDay()] as [ReturnType<typeof createViewMonthGrid>, ...ReturnType<typeof createViewWeek>[]],
       plugins,
       defaultView: 'month-grid',
+      isDark: mode === 'dark',
       events: events,
       calendars: {
         active: {
@@ -288,7 +291,7 @@ export default function BookingCalendar({
       firstDayOfWeek: 7, // Sunday (1=Monday, 7=Sunday)
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [events, bookings, onEventClick, onEventUpdate, canEdit]);
+  }, [events, bookings, onEventClick, onEventUpdate, canEdit, mode]);
 
   const calendar = useCalendarApp(calendarConfig);
 
@@ -302,7 +305,7 @@ export default function BookingCalendar({
   }
 
   return (
-    <div style={{ height: 600 }}>
+    <div style={{ height: 600 }} key={`calendar-${mode}`}>
       <ScheduleXCalendar calendarApp={calendar} />
     </div>
   );
