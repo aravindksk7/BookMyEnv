@@ -237,7 +237,20 @@ POST /api/applications/:id/instances      # Deploy app to instance
 DEL  /api/applications/:id/instances/:iid # Undeploy app
 GET  /api/interfaces              # List interfaces
 GET  /api/interfaces/:id/endpoints        # Get interface endpoints
+
+# Groups Endpoints
 GET  /api/groups                  # List groups
+GET  /api/groups/:id              # Get group details with members
+POST /api/groups                  # Create group (Admin)
+PUT  /api/groups/:id              # Update group (Admin)
+DEL  /api/groups/:id              # Delete group (Admin)
+POST /api/groups/:id/members      # Add member (Admin)
+DEL  /api/groups/:id/members/:uid # Remove member (Admin)
+
+# Group Member Payload
+# POST /api/groups/:id/members
+# { "user_id": "uuid", "membership_role": "Member|Lead|Owner" }
+
 GET  /api/dashboard/stats         # Get statistics
 GET  /health                      # Health check
 

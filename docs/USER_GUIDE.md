@@ -2,7 +2,7 @@
 
 A comprehensive guide to using the BookMyEnv environment booking and management system.
 
-**Version:** 6.0.0  
+**Version:** 6.0.1  
 **Last Updated:** December 2025
 
 ---
@@ -1334,16 +1334,36 @@ Example: payment-api versions
 2. Fill in:
    - **Name** - Group name (e.g., "QA Team")
    - **Description** - Group purpose
-   - **Group Type** - Team, Project, Department
+   - **Group Type** - Team, Project, Department, External
 3. Click **Create**
 
 ### Managing Members
 
 1. Select a group
-2. Go to **Members** tab
-3. Click **+ Add Member**
-4. Select users to add
-5. Click **Add**
+2. Click **View Details** (eye icon)
+3. Click **+ Add Member** button
+4. Select a user from the dropdown
+5. Choose a **Membership Role**:
+   - **Member** - Standard group membership
+   - **Lead** - Team lead with elevated visibility
+   - **Owner** - Full control over group settings
+6. Click **Add**
+
+### Membership Roles
+
+| Role | Description | Typical Use |
+|------|-------------|-------------|
+| **Member** | Standard membership | Regular team members |
+| **Lead** | Team leadership role | Tech leads, scrum masters |
+| **Owner** | Group administrator | Team managers, owners |
+| **GroupAdmin** | Legacy admin role | System compatibility |
+
+### Removing Members
+
+1. Open group details
+2. Find the member in the list
+3. Click the **Remove** (person minus icon) button
+4. Confirm removal
 
 ---
 

@@ -69,22 +69,20 @@ interface AuditEvent {
   audit_id: string;
   timestamp_utc: string;
   actor_user_id: string | null;
-  actor_user_name: string;
+  actor_username: string;
+  actor_display_name: string;
   actor_role: string;
   entity_type: string;
   entity_id: string | null;
-  entity_display_name: string;
+  entity_name: string;
   action_type: string;
-  action_result: string;
-  source_channel: string;
-  ip_address: string | null;
+  action_description: string | null;
+  actor_ip_address: string | null;
   regulatory_tag: string | null;
-  correlation_id: string | null;
+  session_id: string | null;
   changed_fields: string[] | null;
-  comment: string | null;
   before_snapshot: Record<string, unknown> | null;
   after_snapshot: Record<string, unknown> | null;
-  error_message: string | null;
 }
 
 interface AuditStats {
@@ -752,7 +750,7 @@ export default function AuditPage() {
                           </TableCell>
                           <TableCell>
                             <Box>
-                              <Typography variant="body2">{event.actor_user_name}</Typography>
+                              <Typography variant="body2">{event.actor_display_name || event.actor_username}</Typography>
                               <Typography variant="caption" color="text.secondary">
                                 {event.actor_role}
                               </Typography>
@@ -767,7 +765,7 @@ export default function AuditPage() {
                           </TableCell>
                           <TableCell>{event.entity_type}</TableCell>
                           <TableCell>
-                            <Tooltip title={event.entity_display_name || 'N/A'}>
+                            <Tooltip title={event.entity_name || 'N/A'}>
                               <Typography
                                 variant="body2"
                                 sx={{
@@ -777,18 +775,20 @@ export default function AuditPage() {
                                   whiteSpace: 'nowrap',
                                 }}
                               >
-                                {event.entity_display_name || 'N/A'}
+                                {event.entity_name || 'N/A'}
                               </Typography>
                             </Tooltip>
                           </TableCell>
                           <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                              {getResultIcon(event.action_result)}
-                              <Typography variant="body2">{event.action_result}</Typography>
-                            </Box>
+                            <Chip
+                              label={event.action_type}
+                              size="small"
+                              color={getActionColor(event.action_type)}
+                              variant="outlined"
+                            />
                           </TableCell>
                           <TableCell>
-                            <Typography variant="caption">{event.source_channel}</Typography>
+                            <Typography variant="caption">{event.action_description || '-'}</Typography>
                           </TableCell>
                           <TableCell>
                             {event.regulatory_tag && (
@@ -953,13 +953,8 @@ export default function AuditPage() {
                     label={selectedEvent.entity_type}
                     variant="outlined"
                   />
-                  <Chip
-                    label={selectedEvent.action_result}
-                    color={getResultColor(selectedEvent.action_result)}
-                    size="small"
-                  />
                 </Box>
-                <Typography variant="h6">{selectedEvent.entity_display_name || 'N/A'}</Typography>
+                <Typography variant="h6">{selectedEvent.entity_name || 'N/A'}</Typography>
                 <Typography variant="body2" color="text.secondary">
                   {formatDate(selectedEvent.timestamp_utc)}
                 </Typography>
@@ -972,19 +967,19 @@ export default function AuditPage() {
                   <Grid container spacing={1}>
                     <Grid item xs={6}>
                       <Typography variant="caption" color="text.secondary">Name</Typography>
-                      <Typography variant="body2">{selectedEvent.actor_user_name}</Typography>
+                      <Typography variant="body2">{selectedEvent.actor_display_name || selectedEvent.actor_username}</Typography>
                     </Grid>
                     <Grid item xs={6}>
                       <Typography variant="caption" color="text.secondary">Role</Typography>
                       <Typography variant="body2">{selectedEvent.actor_role}</Typography>
                     </Grid>
                     <Grid item xs={6}>
-                      <Typography variant="caption" color="text.secondary">Source</Typography>
-                      <Typography variant="body2">{selectedEvent.source_channel}</Typography>
+                      <Typography variant="caption" color="text.secondary">Description</Typography>
+                      <Typography variant="body2">{selectedEvent.action_description || '-'}</Typography>
                     </Grid>
                     <Grid item xs={6}>
                       <Typography variant="caption" color="text.secondary">IP Address</Typography>
-                      <Typography variant="body2">{selectedEvent.ip_address || 'N/A'}</Typography>
+                      <Typography variant="body2">{selectedEvent.actor_ip_address || 'N/A'}</Typography>
                     </Grid>
                   </Grid>
                 </CardContent>

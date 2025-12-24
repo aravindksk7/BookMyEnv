@@ -238,6 +238,39 @@ DROP EXTENSION IF EXISTS pg_trgm;
 
 ---
 
+## Patch: v6.0.1 (2025-12-24)
+
+If upgrading directly to v6.0.1 or applying fixes to v6.0.0:
+
+### Fix 1: Group Membership Roles
+
+Run this SQL to allow 'Lead' and 'Owner' membership roles:
+
+```sql
+ALTER TABLE user_group_memberships 
+DROP CONSTRAINT IF EXISTS user_group_memberships_membership_role_check;
+
+ALTER TABLE user_group_memberships 
+ADD CONSTRAINT user_group_memberships_membership_role_check 
+CHECK (membership_role IN ('Member', 'Lead', 'Owner', 'GroupAdmin'));
+```
+
+Or apply the migration:
+```bash
+docker exec -i tem-postgres psql -U tem_user -d tem_db < backend/database/migrations/V5.2.0__fix_membership_roles_and_audit.sql
+```
+
+### Fix 2: Audit Events
+
+The audit events fix is in the application code. Simply rebuild and restart:
+
+```bash
+docker-compose build backend --no-cache
+docker-compose up -d backend
+```
+
+---
+
 ## Support
 
 For issues during upgrade:
@@ -246,6 +279,7 @@ For issues during upgrade:
 2. Verify database connection: `docker exec tem-postgres pg_isready`
 3. Run health check: `curl http://localhost:5000/health`
 4. Review [GitHub Issues](https://github.com/aravindksk7/BookMyEnv/issues)
+5. **Schema Reference**: See `docs/PRODUCTION_SCHEMA_REFERENCE.md` for actual deployed column names
 
 ---
 
@@ -253,6 +287,7 @@ For issues during upgrade:
 
 | Version | Release Date | Key Features |
 |---------|--------------|--------------|
+| 6.0.1 | 2025-12-24 | Bug fixes: Group roles, Audit events loading |
 | 6.0.0 | 2025-12-24 | Performance & Scalability (Pagination, Search Indexes, N+1 Fixes) |
 | 5.0.0 | 2025-12-15 | Email Notifications, Dark Mode, UI Enhancements |
 | 4.2.0 | 2025-12-09 | Audit & Compliance System |

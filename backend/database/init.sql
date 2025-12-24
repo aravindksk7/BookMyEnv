@@ -72,7 +72,7 @@ CREATE TABLE user_group_memberships (
     membership_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     group_id UUID NOT NULL REFERENCES user_groups(group_id) ON DELETE CASCADE,
-    membership_role VARCHAR(20) NOT NULL CHECK (membership_role IN ('Member', 'GroupAdmin')),
+    membership_role VARCHAR(20) NOT NULL CHECK (membership_role IN ('Member', 'Lead', 'Owner', 'GroupAdmin')),
     joined_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE(user_id, group_id)
 );

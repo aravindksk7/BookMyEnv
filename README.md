@@ -2,16 +2,20 @@
 
 A comprehensive, enterprise-grade Environment Booking and Management System (BME) for managing environments, applications, deployments, bookings, releases, and more.
 
+**Current Version:** 6.0.1 | **Last Updated:** December 24, 2025
+
 ## ✨ Key Features
 
 - **Environment Management** - Create and manage environments with multiple instances
 - **Application Deployments** - Track application deployments across environment instances
 - **Booking System** - Book environments with conflict detection and resolution
 - **Refresh Lifecycle (v4.0)** - Schedule data refreshes with booking conflict detection and resolution workflows
+- **Audit & Compliance (v4.2)** - Full CRUD traceability with audit events dashboard
 - **Email Notifications (v5.0)** - Configurable email alerts via SMTP, SendGrid, or AWS SES
 - **Dark Mode (v5.0)** - System-wide dark theme support with user preferences
 - **API Pagination (v6.0)** - Scalable list endpoints with pagination support
 - **Search Optimization (v6.0)** - GIN trigram indexes for fast text searches
+- **Group Management (v6.0.1)** - Team groups with Member, Lead, Owner roles
 - **Release Management** - Plan and track releases across environments
 - **Bulk Data Upload** - Import data in bulk via CSV (7 entity types)
 - **Real-time Monitoring** - Dashboard with live activity feed

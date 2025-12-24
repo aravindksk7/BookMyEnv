@@ -4,6 +4,27 @@ All notable changes to BookMyEnv are documented here.
 
 ---
 
+## [6.0.1] - 2025-12-24
+
+### 🐛 Bug Fixes
+
+#### Group Membership Roles (Critical)
+- **Fixed**: Members could not be added with 'Lead' or 'Owner' roles
+- **Cause**: Database constraint only allowed 'Member' and 'GroupAdmin'
+- **Solution**: Updated constraint to allow 'Member', 'Lead', 'Owner', 'GroupAdmin'
+- **Migration**: `V5.2.0__fix_membership_roles_and_audit.sql`
+
+#### Audit Events Loading (Critical)
+- **Fixed**: Audit page failed to load with "column does not exist" errors
+- **Cause**: SQL column names in auditService.js didn't match deployed schema
+- **Affected columns**: `actor_username`, `entity_name`, `action_description`, `actor_ip_address`
+- **Solution**: Aligned queries with actual database schema
+
+### 📚 Documentation
+- Added `docs/PRODUCTION_SCHEMA_REFERENCE.md` - Quick reference for database schema and debugging
+
+---
+
 ## [6.0.0] - 2025-12-24
 
 ### ⭐ Performance & Scalability Improvements

@@ -1,6 +1,6 @@
 {
   "name": "tem-backend",
-  "version": "4.0.0",
+  "version": "6.0.1",
   "description": "Test Environment Management Backend API - with Refresh Lifecycle Management",
   "main": "src/server.js",
   "scripts": {
