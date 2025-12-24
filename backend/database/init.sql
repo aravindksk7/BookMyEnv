@@ -694,6 +694,7 @@ CREATE INDEX idx_notifications_user ON notifications(user_id, is_read);
 -- =====================================================
 CREATE INDEX idx_environments_name_trgm ON environments USING gin (name gin_trgm_ops);
 CREATE INDEX idx_environments_description_trgm ON environments USING gin (description gin_trgm_ops);
+CREATE INDEX idx_environments_description ON environments(description);
 CREATE INDEX idx_environments_category ON environments(environment_category);
 CREATE INDEX idx_environments_lifecycle ON environments(lifecycle_stage);
 
@@ -1152,7 +1153,11 @@ CREATE TABLE IF NOT EXISTS audit_events (
     -- Actor information
     actor_user_id UUID REFERENCES users(user_id),
     actor_user_name VARCHAR(255),
+    actor_username VARCHAR(100), -- Alias used by auditService.js
+    actor_display_name VARCHAR(255), -- Alias used by auditService.js
     actor_role VARCHAR(50),
+    actor_ip_address VARCHAR(45), -- Used by auditService.js
+    actor_user_agent TEXT, -- Used by auditService.js
     
     -- Entity being audited
     entity_type VARCHAR(50) NOT NULL CHECK (entity_type IN (
@@ -1163,6 +1168,7 @@ CREATE TABLE IF NOT EXISTS audit_events (
     )),
     entity_id UUID,
     entity_display_name VARCHAR(500),
+    entity_name VARCHAR(255), -- Alias used by auditService.js
     
     -- Action details
     action_type VARCHAR(50) NOT NULL CHECK (action_type IN (
@@ -1176,11 +1182,13 @@ CREATE TABLE IF NOT EXISTS audit_events (
     action_result VARCHAR(20) DEFAULT 'SUCCESS' CHECK (action_result IN (
         'SUCCESS', 'FAILED', 'UNAUTHORIZED', 'PARTIAL'
     )),
+    action_description TEXT, -- Used by auditService.js
     
     -- Source information
     source_channel VARCHAR(30) NOT NULL DEFAULT 'WEB_UI' CHECK (source_channel IN (
         'WEB_UI', 'API', 'BATCH_JOB', 'INTEGRATION_SYSTEM', 'SCHEDULER', 'CLI'
     )),
+    source_system VARCHAR(50) DEFAULT 'BookMyEnv', -- Used by auditService.js
     ip_address INET,
     user_agent TEXT,
     client_app VARCHAR(100),
@@ -1196,13 +1204,22 @@ CREATE TABLE IF NOT EXISTS audit_events (
         'SOX_CHANGE', 'AU_APRA_CPS_230', 'GDPR', 'PCI_DSS', 'HIPAA', 
         'ISO_27001', 'SOC2', 'CUSTOM'
     )),
+    data_classification VARCHAR(20) CHECK (data_classification IN ('Public', 'Internal', 'Confidential', 'Restricted')),
     correlation_id UUID,
     session_id UUID,
+    request_id VARCHAR(255), -- Used by auditService.js
+    
+    -- Parent entity for hierarchical tracking
+    parent_entity_type VARCHAR(50),
+    parent_entity_id VARCHAR(255),
     
     -- Additional context
     comment TEXT,
     error_message TEXT,
     metadata JSONB DEFAULT '{}',
+    additional_context JSONB, -- Used by auditService.js
+    retention_days INTEGER DEFAULT 2555, -- Used by auditService.js
+    is_sensitive BOOLEAN DEFAULT false, -- Used by auditService.js
     
     -- Indexing column (populated by trigger for performance)
     event_date DATE
@@ -1230,6 +1247,8 @@ CREATE TABLE IF NOT EXISTS audit_report_templates (
     category VARCHAR(50) CHECK (category IN (
         'COMPLIANCE', 'SECURITY', 'OPERATIONS', 'INVESTIGATION', 'CUSTOM'
     )),
+    -- Aliases for backward compatibility with code
+    report_type VARCHAR(50),
     
     -- Filter configuration
     entity_types TEXT[],
@@ -1239,9 +1258,12 @@ CREATE TABLE IF NOT EXISTS audit_report_templates (
     
     -- Query template
     filter_template JSONB NOT NULL,
+    filters JSONB, -- Alias for filter_template used by code
     
     -- Output configuration
     output_columns TEXT[],
+    columns JSONB, -- Alias for output_columns used by code
+    grouping JSONB,
     sort_by VARCHAR(50) DEFAULT 'timestamp_utc',
     sort_order VARCHAR(4) DEFAULT 'DESC',
     
@@ -1252,6 +1274,7 @@ CREATE TABLE IF NOT EXISTS audit_report_templates (
     
     -- Metadata
     created_by_user_id UUID REFERENCES users(user_id),
+    created_by UUID REFERENCES users(user_id), -- Alias for created_by_user_id used by code
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     is_system_template BOOLEAN DEFAULT false
@@ -1286,6 +1309,22 @@ CREATE TABLE IF NOT EXISTS audit_report_executions (
     
     -- Audit the audit (who generated what report)
     audit_event_id UUID REFERENCES audit_events(audit_id)
+);
+
+-- Generated Audit Reports (used by auditService.js)
+CREATE TABLE IF NOT EXISTS audit_generated_reports (
+    report_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    template_id UUID REFERENCES audit_report_templates(template_id),
+    report_name VARCHAR(255) NOT NULL,
+    generated_by UUID REFERENCES users(user_id),
+    generated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    date_range_start TIMESTAMP WITH TIME ZONE,
+    date_range_end TIMESTAMP WITH TIME ZONE,
+    filters_applied JSONB,
+    total_records INTEGER,
+    file_path VARCHAR(500),
+    file_format VARCHAR(10) CHECK (file_format IN ('CSV', 'PDF', 'JSON', 'XLSX')),
+    status VARCHAR(20) DEFAULT 'COMPLETED' CHECK (status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'))
 );
 
 -- Saved Audit Filters (user-defined views)
@@ -1517,88 +1556,6 @@ SET impact_type = 'DATA_OVERWRITE',
     conflict_flag = 'MAJOR',
     conflict_summary = '{"totalConflicts": 1, "majorConflicts": 1, "minorConflicts": 0, "affectedBookings": ["f0222222-2222-2222-2222-222222222222"]}'::jsonb
 WHERE refresh_intent_id = 'e2222222-2222-2222-2222-222222222222';
-
--- =====================================================
--- AUDIT & COMPLIANCE TABLES
--- =====================================================
-
--- Audit Events - Full CRUD traceability
-CREATE TABLE IF NOT EXISTS audit_events (
-    audit_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    timestamp_utc TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    actor_user_id UUID REFERENCES users(user_id),
-    actor_username VARCHAR(100),
-    actor_display_name VARCHAR(255),
-    actor_role VARCHAR(30),
-    actor_ip_address VARCHAR(45),
-    actor_user_agent TEXT,
-    entity_type VARCHAR(50) NOT NULL,
-    entity_id VARCHAR(255),
-    entity_name VARCHAR(255),
-    action_type VARCHAR(20) NOT NULL CHECK (action_type IN ('CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'EXPORT', 'IMPORT', 'APPROVE', 'REJECT', 'EXECUTE')),
-    action_description TEXT,
-    before_snapshot JSONB,
-    after_snapshot JSONB,
-    changed_fields JSONB,
-    parent_entity_type VARCHAR(50),
-    parent_entity_id VARCHAR(255),
-    session_id VARCHAR(255),
-    request_id VARCHAR(255),
-    source_system VARCHAR(50) DEFAULT 'BookMyEnv',
-    regulatory_tag VARCHAR(50),
-    data_classification VARCHAR(20) CHECK (data_classification IN ('Public', 'Internal', 'Confidential', 'Restricted')),
-    retention_days INTEGER DEFAULT 2555,
-    is_sensitive BOOLEAN DEFAULT false,
-    additional_context JSONB
-);
-
--- Indexes for audit_events
-CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_events(timestamp_utc DESC);
-CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_events(entity_type, entity_id);
-CREATE INDEX IF NOT EXISTS idx_audit_actor ON audit_events(actor_user_id);
-CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_events(action_type);
-CREATE INDEX IF NOT EXISTS idx_audit_regulatory ON audit_events(regulatory_tag) WHERE regulatory_tag IS NOT NULL;
-
--- Audit Report Templates
-CREATE TABLE IF NOT EXISTS audit_report_templates (
-    template_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(100) NOT NULL,
-    description TEXT,
-    report_type VARCHAR(50) NOT NULL,
-    filters JSONB,
-    columns JSONB,
-    grouping JSONB,
-    created_by UUID REFERENCES users(user_id),
-    is_system_template BOOLEAN DEFAULT false,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Generated Audit Reports
-CREATE TABLE IF NOT EXISTS audit_generated_reports (
-    report_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    template_id UUID REFERENCES audit_report_templates(template_id),
-    report_name VARCHAR(255) NOT NULL,
-    generated_by UUID REFERENCES users(user_id),
-    generated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    date_range_start TIMESTAMP WITH TIME ZONE,
-    date_range_end TIMESTAMP WITH TIME ZONE,
-    filters_applied JSONB,
-    total_records INTEGER,
-    file_path VARCHAR(500),
-    file_format VARCHAR(10) CHECK (file_format IN ('CSV', 'PDF', 'JSON', 'XLSX')),
-    status VARCHAR(20) DEFAULT 'COMPLETED' CHECK (status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'))
-);
-
--- Insert default audit report templates
-INSERT INTO audit_report_templates (template_id, name, description, category, filter_template, output_columns, is_system_template) VALUES
-('a0000001-0001-0001-0001-000000000001', 'All Activity Report', 'Complete audit trail of all system activities', 'OPERATIONS', '{}', ARRAY['timestamp_utc', 'actor_username', 'entity_type', 'action_type', 'action_description'], true),
-('a0000001-0001-0001-0001-000000000002', 'User Activity Report', 'All activities performed by a specific user', 'OPERATIONS', '{"groupBy": "actor_user_id"}', ARRAY['timestamp_utc', 'entity_type', 'action_type', 'entity_name', 'action_description'], true),
-('a0000001-0001-0001-0001-000000000003', 'Environment Changes', 'All changes to environment configurations', 'OPERATIONS', '{"entity_type": "Environment"}', ARRAY['timestamp_utc', 'actor_username', 'action_type', 'entity_name', 'changed_fields'], true),
-('a0000001-0001-0001-0001-000000000004', 'Booking Audit Trail', 'Complete history of booking operations', 'OPERATIONS', '{"entity_type": "Booking"}', ARRAY['timestamp_utc', 'actor_username', 'action_type', 'entity_name', 'before_snapshot', 'after_snapshot'], true),
-('a0000001-0001-0001-0001-000000000005', 'Security Events', 'Login/logout and access-related events', 'SECURITY', '{"action_type": ["LOGIN", "LOGOUT"]}', ARRAY['timestamp_utc', 'actor_username', 'actor_ip_address', 'action_type', 'action_description'], true),
-('a0000001-0001-0001-0001-000000000006', 'Compliance Report', 'Regulatory compliance audit report', 'COMPLIANCE', '{"regulatory_tag": "NOT NULL"}', ARRAY['timestamp_utc', 'actor_username', 'entity_type', 'action_type', 'regulatory_tag', 'data_classification'], true)
-ON CONFLICT DO NOTHING;
 
 -- =====================================================
 -- EMAIL NOTIFICATION TRACKING
